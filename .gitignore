@@ -1,0 +1,11 @@
+.env
+*.log
+__pycache__/
+*.pyc
+bot.py.*bak
+owners.json
+bot_config.json
+warns.json
+*.backup
+patch_*.py
+fix_*.py
