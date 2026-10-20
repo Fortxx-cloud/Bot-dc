@@ -9,3 +9,6 @@ warns.json
 *.backup
 patch_*.py
 fix_*.py
+bot.py.*
+*.bak
+*.preclean
