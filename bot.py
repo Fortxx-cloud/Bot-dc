@@ -226,46 +226,56 @@ async def unmute(ctx, member: discord.Member):
     except:
         await ctx.send("❌ Bot gak punya izin.")
 
-@bot.command()
-async def warn(ctx, member: discord.Member, *, reason="Tidak ada alasan"):
-    """Kasih warning ke member (interaktif: tanya Nama IC & alasan)."""
-    if not is_mod(ctx) or member.top_role >= ctx.guild.me.top_role:
-        return await ctx.send("❌ Kamu bukan mod ATAU role target di atas role bot.")
+class WarnModal(discord.ui.Modal, title='Form Warning Anggota'):
+    nama_ic = discord.ui.TextInput(
+        label='Nama IC',
+        placeholder='Contoh: Zoma_Haci',
+        required=True
+    )
+    alasan = discord.ui.TextInput(
+        label='Alasan Warn',
+        style=discord.TextStyle.paragraph,
+        placeholder='Contoh: Spam chat OOC',
+        required=True
+    )
 
-    warns = load_warns()
-    gid, uid = str(ctx.guild.id), str(member.id)
-    warns.setdefault(gid, {}).setdefault(uid, []).append({"reason": reason, "by": str(ctx.author), "time": str(discord.utils.utcnow())})
-    save_warns(warns)
-    total = len(warns[gid][uid])
+    def __init__(self, member: discord.Member):
+        super().__init__()
+        self.member = member
 
-    target_role = discord.utils.get(ctx.guild.roles, name=WARN_ROLES.get(total, ""))
-    all_warn_roles = [discord.utils.get(ctx.guild.roles, name=n) for n in WARN_ROLES.values()]
-    
-    if target_role:
-        try:
-            for r in all_warn_roles:
-                if r and r in member.roles and r != target_role:
-                    await member.remove_roles(r)
-            if target_role not in member.roles:
-                await member.add_roles(target_role)
-        except:
-            pass
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=False)
+        member = self.member
+        nama_ic = self.nama_ic.value
+        reason = self.alasan.value
 
-    if total >= MAX_WARN:
-        try:
-            await member.kick(reason=f"Auto-kick: {MAX_WARN} warn")
-            await send_log(ctx.guild, "☠️ AUTO-EXPULSADO (3 WARN)", f"**Target:** {member.mention} (`{member.id}`)\n**Alasan terakhir:** {reason}\n**Total Warn:** {total}", discord.Color.dark_red())
-            await ctx.send(embed=discord.Embed(title="☠️ AUTO-EXPULSADO", description=f"**{member.display_name}** mencapai {MAX_WARN} warn & ditendang.\n**Alasan terakhir:** {reason}", color=discord.Color.from_rgb(60, 0, 0)))
-            warns[gid][uid] = []
-            save_warns(warns)
-        except:
-            await ctx.send(f"⚠️ {MAX_WARN} warn, tapi bot gagal nge-kick.")
-    else:
-        await send_log(ctx.guild, f"⚠️ WARN {total}/{MAX_WARN}", f"**Target:** {member.mention} (`{member.id}`)\n**Moderator:** {ctx.author.mention}\n**Alasan:** {reason}", discord.Color.orange())
-        tag_role = f"<@&{WARN_TAG_ROLE_ID}>" if WARN_TAG_ROLE_ID else ""
-        role_kasih = target_role.mention if target_role else "(gak ada)"
-        nama_ic = member.display_name
-        tag_mention = f"<@&{_get_warn_tag_id()}>" if _get_warn_tag_id() else "(gak ada)"
+        warns = load_warns()
+        gid, uid = str(interaction.guild.id), str(member.id)
+        warns.setdefault(gid, {}).setdefault(uid, []).append({
+            "reason": reason,
+            "nama_ic": nama_ic,
+            "by": str(interaction.user),
+            "time": str(discord.utils.utcnow())
+        })
+        save_warns(warns)
+        total = len(warns[gid][uid])
+
+        target_role = discord.utils.get(interaction.guild.roles, name=WARN_ROLES.get(total, ""))
+        all_warn_roles = [discord.utils.get(interaction.guild.roles, name=n) for n in WARN_ROLES.values()]
+
+        if target_role:
+            try:
+                for r in all_warn_roles:
+                    if r and r in member.roles and r != target_role:
+                        await member.remove_roles(r)
+                if target_role not in member.roles:
+                    await member.add_roles(target_role)
+            except Exception as e:
+                print(f"[WARN] Gagal set role: {e}")
+
+        _tid = _get_warn_tag_id() if '_get_warn_tag_id' in globals() else globals().get("WARN_TAG_ROLE_ID", 0)
+        tag_mention = f"<@&{_tid}>" if _tid else "(gak ada)"
+        
         embed = discord.Embed(
             title="🛑  Warn anggota",
             description=f"!warn {member.mention}",
@@ -274,7 +284,49 @@ async def warn(ctx, member: discord.Member, *, reason="Tidak ada alasan"):
         embed.add_field(name="Nama ic", value=nama_ic, inline=False)
         embed.add_field(name="Alasannya", value=reason, inline=False)
         embed.add_field(name="NOTE", value=f"Tag : {tag_mention}", inline=False)
-        await ctx.send(embed=embed)
+        
+        log_name = _get_warn_log_name() if '_get_warn_log_name' in globals() else "logs-warning"
+        log_channel = discord.utils.get(interaction.guild.channels, name=log_name)
+        if log_channel:
+            try:
+                await log_channel.send(embed=embed)
+            except Exception:
+                pass
+        
+        if total >= MAX_WARN:
+            try:
+                await member.kick(reason=f"Auto-kick: {MAX_WARN} warn")
+                await interaction.channel.send(f"☠️ **{member.display_name}** mencapai {MAX_WARN} warn & ditendang.")
+                warns[gid][uid] = []
+                save_warns(warns)
+            except Exception:
+                await interaction.channel.send(f"⚠️ {MAX_WARN} warn, tapi bot gagal nge-kick.")
+        else:
+            await interaction.channel.send(embed=embed)
+            await interaction.channel.send(f"✅ Warn {total}/{MAX_WARN} berhasil dicatat.")
+
+class WarnView(discord.ui.View):
+    def __init__(self, member: discord.Member, author: discord.Member):
+        super().__init__(timeout=60)
+        self.member = member
+        self.author = author
+
+    @discord.ui.button(label="Isi Form Warn", style=discord.ButtonStyle.primary, emoji="📝")
+    async def open_form(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.author.id:
+            return await interaction.response.send_message("❌ Ini bukan form untuk kamu.", ephemeral=True)
+        
+        await interaction.response.send_modal(WarnModal(self.member))
+        self.stop()
+
+@bot.command()
+async def warn(ctx, member: discord.Member):
+    """Kasih warning ke member lewat form pop-up."""
+    if not is_mod(ctx) or member.top_role >= ctx.guild.me.top_role:
+        return await ctx.send("❌ Kamu bukan mod ATAU role target di atas role bot.")
+
+    view = WarnView(member, ctx.author)
+    await ctx.send(f"Silakan klik tombol di bawah untuk mengisi form warning untuk {member.mention}.", view=view)
 
 @bot.command()
 async def warns(ctx, member: discord.Member):
