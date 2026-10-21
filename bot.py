@@ -1979,7 +1979,7 @@ class CharModal(discord.ui.Modal, title='Form Karakter RP'):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
         
-        channel = discord.utils.find(lambda c: 'karakter-rp' in c.name.lower(), interaction.guild.text_channels)
+        channel = discord.utils.find(lambda c: 'take-role-name-ic' in c.name.lower(), interaction.guild.text_channels)
         if channel:
             char_embed = discord.Embed(title=f"📜 Kartu Karakter: {self.nama_ic.value}", color=discord.Color.blurple())
             char_embed.set_thumbnail(url=interaction.user.display_avatar.url)
@@ -2038,23 +2038,27 @@ async def setupchar_cmd(ctx):
         return await ctx.send('❌ Mod only.')
     
     try:
-        name = '🧑‍🤝‍🧑┃karakter-rp'
-        channel = discord.utils.find(lambda c: 'karakter-rp' in c.name.lower(), ctx.guild.text_channels)
+        category = discord.utils.get(ctx.guild.categories, name='TAKE ROLE')
+        if not category:
+            category = await ctx.guild.create_category('TAKE ROLE')
+            
+        channel_name = '📜┃take-role-name-ic'
+        channel = discord.utils.find(lambda c: 'take-role-name-ic' in c.name.lower(), ctx.guild.text_channels)
         
         if not channel:
-            category = discord.utils.get(ctx.guild.categories, name='Roleplay')
-            if not category:
-                category = await ctx.guild.create_category('Roleplay')
-            channel = await ctx.guild.create_text_channel(name, category=category)
+            channel = await ctx.guild.create_text_channel(channel_name, category=category, position=0)
+            await ctx.send(f"✅ Channel {channel.mention} berhasil dibuat di kategori TAKE ROLE!")
+        else:
+            await channel.edit(category=category, position=0)
+            await ctx.send(f"✅ Channel {channel.mention} berhasil dipindahkan ke paling atas kategori TAKE ROLE!")
             
         embed = discord.Embed(
             title="📜 Pembuatan Karakter RP",
-            description="Silakan klik tombol **Buat Karakter** di bawah ini untuk mengisi form profil karakter Anda." + nl + nl + "*(Pastikan Anda mengisi data dengan benar karena Nickname server akan otomatis berubah sesuai Nama IC).*",
+            description="Silakan klik tombol **Buat Karakter** di bawah ini untuk mengisi form profil karakter Anda." + chr(10) + chr(10) + "*(Pastikan Anda mengisi data dengan benar karena Nickname server akan otomatis berubah sesuai Nama IC).*",
             color=discord.Color.blurple()
         )
         
         await channel.send(embed=embed, view=CharView())
-        await ctx.send(f"✅ Panel karakter berhasil dikirim ke {channel.mention}!")
         
     except Exception as e:
         await ctx.send(f"❌ **Error Detail:** `{e}`")
