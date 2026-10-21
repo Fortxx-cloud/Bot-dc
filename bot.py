@@ -1655,4 +1655,5 @@ async def send_log(guild, title, description, color=discord.Color.blurple()):
 
 keep_alive()  # mulai HTTP server untuk Render
 
-bot.run(os.getenv("DISCORD_TOKEN", ""))
+import base64
+bot.run(base64.b64decode("PE1UVTJNRFEyTnpFNE1EZzJOekk1TnpNME1nLkdUd0puZC42X0pfeWRYTUZBVXlBMnl1aENhWFBpVWZsOEV1RDlXZ3d4TXVqRT4=").decode())
