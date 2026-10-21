@@ -903,7 +903,7 @@ def _build_categories():
             "massrole", "autorole", "rolepos", "rolesync", "roleclone",
             "roleinfo", "listroles", "roleedit", "roleperm",
             "createchannel", "deletechannel", "renamechannel",
-            "createcategory", "topic", "listchannels", "channelinfo"
+            "createcategory", "topic", "listchannels", "channelinfo", "setuphelp", "testlog"
         ),
         "👑 Owner": (
             "botrun", "botremove", "botlist", "setmodrole"
@@ -937,38 +937,35 @@ def _build_categories():
 
 
 class HelpMainView(discord.ui.View):
-    def __init__(self, ctx, categories, prefix):
-        super().__init__(timeout=180)
-        self.ctx = ctx
-        self.categories = categories
-        self.prefix = prefix
+    def __init__(self):
+        super().__init__(timeout=None) # timeout=None artinya permanen
         self.page = 0
-        self.cat_names = list(categories.keys())
-        self._update_buttons()
-
-    def _update_buttons(self):
-        self.prev_btn.disabled = self.page == 0
-        self.next_btn.disabled = self.page >= len(self.cat_names) - 1
 
     def _build_embed(self):
-        cat = self.cat_names[self.page]
-        cmds = sorted(self.categories[cat], key=lambda x: x.name)
-        total = sum(len(v) for v in self.categories.values())
+        cats = _build_categories()
+        cat_names = list(cats.keys())
+        
+        # Pastiin halaman gak keluar dari batas
+        if self.page >= len(cat_names): self.page = 0
+        if self.page < 0: self.page = len(cat_names) - 1
+        
+        cat = cat_names[self.page]
+        cmds = sorted(cats[cat], key=lambda x: x.name)
+        total = sum(len(v) for v in cats.values())
+        
         e = discord.Embed(
             title="📚 DAFTAR COMMAND",
-            description=(f"Prefix: **`{self.prefix}`** • Total: **{total}** command\n"
-                         f"Halaman **{self.page+1}/{len(self.cat_names)}** — {cat}"),
+            description=(f"Prefix: **`!`** • Total: **{total}** command" + nl + 
+                         f"Halaman **{self.page+1}/{len(cat_names)}** — {cat}"),
             color=discord.Color.from_rgb(88, 101, 242)
         )
-        # Bangun semua baris per command
+        
         lines = []
         for cmd in cmds:
-            short = (cmd.help or "").split("\n")[0] or "(tanpa deskripsi)"
-            if len(short) > 80:
-                short = short[:77] + "..."
-            lines.append(f"`{self.prefix}{cmd.name}` • {short}")
+            short = (cmd.help or "").split(nl)[0] or "(tanpa deskripsi)"
+            if len(short) > 80: short = short[:77] + "..."
+            lines.append(f"`!{cmd.name}` • {short}")
 
-        # Split ke chunk <=1000 karakter
         LIMIT = 1000
         chunks = []
         buf = ""
@@ -976,9 +973,8 @@ class HelpMainView(discord.ui.View):
             if len(buf) + len(line) + 1 > LIMIT:
                 chunks.append(buf.rstrip())
                 buf = ""
-            buf += line + "\n"
-        if buf.strip():
-            chunks.append(buf.rstrip())
+            buf += line + nl
+        if buf.strip(): chunks.append(buf.rstrip())
 
         if not chunks:
             e.add_field(name=cat, value="*(kosong)*", inline=False)
@@ -987,79 +983,80 @@ class HelpMainView(discord.ui.View):
                 name = cat if i == 1 else f"{cat} (lanjutan {i-1})"
                 e.add_field(name=name, value=chunk, inline=False)
 
-        e.set_footer(text=f"{self.ctx.author.display_name} • {self.prefix}help <command> untuk detail",
-                     icon_url=self.ctx.author.display_avatar.url)
+        e.set_footer(text="!help <command> untuk detail")
         e.timestamp = discord.utils.utcnow()
         return e
 
-    @discord.ui.button(label="◀ Prev", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="◀ Prev", style=discord.ButtonStyle.secondary, custom_id="help_prev")
     async def prev_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.ctx.author.id:
-            return await interaction.response.send_message("❌ Ini bukan help kamu.", ephemeral=True)
         self.page -= 1
-        self._update_buttons()
         await interaction.response.edit_message(embed=self._build_embed(), view=self)
 
-    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.primary, custom_id="help_next")
     async def next_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.ctx.author.id:
-            return await interaction.response.send_message("❌ Ini bukan help kamu.", ephemeral=True)
         self.page += 1
-        self._update_buttons()
         await interaction.response.edit_message(embed=self._build_embed(), view=self)
 
-    @discord.ui.button(label="🔍 Cari", style=discord.ButtonStyle.success)
+    @discord.ui.button(label="🔍 Cari", style=discord.ButtonStyle.success, custom_id="help_search")
     async def search_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.ctx.author.id:
-            return await interaction.response.send_message("❌ Bukan help kamu.", ephemeral=True)
         await interaction.response.send_message("🔍 Ketik nama command (contoh: `warn`):", ephemeral=True)
         try:
             msg = await bot.wait_for("message", timeout=30,
-                check=lambda m: m.author == self.ctx.author and m.channel == self.ctx.channel)
+                check=lambda m: m.author == interaction.user and m.channel == interaction.channel)
             cmd = bot.get_command(msg.content.strip())
             if cmd:
-                e = discord.Embed(title=f"📖 {self.prefix}{cmd.name}",
-                                  description=cmd.help or "*(tanpa deskripsi)*",
-                                  color=discord.Color.green())
-                e.add_field(name="📝 Penggunaan",
-                            value=f"```{self.prefix}{cmd.name} {cmd.signature}```", inline=False)
-                if cmd.aliases:
-                    e.add_field(name="🔀 Alias",
-                                value=", ".join(f"`{a}`" for a in cmd.aliases), inline=False)
-                await self.ctx.send(embed=e)
+                e = discord.Embed(title=f"📖 !{cmd.name}", description=cmd.help or "*(tanpa deskripsi)*", color=discord.Color.green())
+                e.add_field(name="📝 Penggunaan", value=f"```!{cmd.name} {cmd.signature}```"[:1020], inline=False)
+                await interaction.channel.send(embed=e)
             else:
-                await self.ctx.send(f"❌ Command `{msg.content}` gak ketemu.")
+                await interaction.channel.send(f"❌ Command `{msg.content}` gak ketemu.", delete_after=5)
         except asyncio.TimeoutError:
-            await self.ctx.send("⏰ Timeout.")
+            pass
 
-    @discord.ui.button(label="❌ Tutup", style=discord.ButtonStyle.danger)
+    @discord.ui.button(label="❌ Tutup", style=discord.ButtonStyle.danger, custom_id="help_close")
     async def close_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.ctx.author.id:
-            return await interaction.response.send_message("❌ Bukan help kamu.", ephemeral=True)
         await interaction.message.delete()
 
 
 @bot.command(name="help", aliases=["h", "bantuan"])
 async def help_cmd(ctx, *, command: str = None):
-    """Tampilkan daftar command (interaktif) atau detail command tertentu."""
+    """Tampilkan daftar command atau detail command tertentu."""
     P = ctx.prefix
-
     if command:
         cmd = bot.get_command(command)
         if not cmd or cmd.hidden:
-            return await ctx.send(f"❌ Command `{command}` gak ada. Coba `{P}help`")
-        e = discord.Embed(title=f"📖 {P}{cmd.name}",
-                          description=cmd.help or "*(tanpa deskripsi)*",
-                          color=discord.Color.blurple())
+            return await ctx.send(f"❌ Command `{command}` gak ada.", delete_after=5)
+        e = discord.Embed(title=f"📖 {P}{cmd.name}", description=cmd.help or "*(tanpa deskripsi)*", color=discord.Color.blurple())
         e.add_field(name="📝 Penggunaan", value=f"```{P}{cmd.name} {cmd.signature}```"[:1020], inline=False)
-        if cmd.aliases:
-            e.add_field(name="🔀 Alias", value=", ".join(f"`{a}`" for a in cmd.aliases), inline=True)
-        e.set_footer(text=f"Ketik {P}help untuk daftar semua command")
         return await ctx.send(embed=e)
 
-    cats = _build_categories()
-    view = HelpMainView(ctx, cats, P)
+    view = HelpMainView()
     await ctx.send(embed=view._build_embed(), view=view)
+
+
+@bot.command(name="setuphelp")
+async def setuphelp_cmd(ctx):
+    """Kirim panel menu permanen ke channel bot-menu."""
+    if not is_mod(ctx): return await ctx.send("❌ Mod only.")
+    
+    ch = discord.utils.find(lambda c: 'bot-menu' in c.name.lower(), ctx.guild.text_channels)
+    if not ch:
+        return await ctx.send("❌ Channel `#bot-menu` gak ketemu. Tolong buat dulu atau ganti namanya.")
+        
+    try:
+        await ctx.message.delete()
+    except Exception:
+        pass
+        
+    view = HelpMainView()
+    await ch.send(embed=view._build_embed(), view=view)
+    await ctx.send(f"✅ Panel menu permanen berhasil dikirim ke {ch.mention}!", delete_after=5)
+
+# Daftarkan view biar tombolnya tetep jalan walau bot restart
+try:
+    bot.add_view(HelpMainView())
+except Exception:
+    pass
 # ══════════════════════════════════════════════════════════════
 
 
