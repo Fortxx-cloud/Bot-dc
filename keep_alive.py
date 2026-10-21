@@ -1,4 +1,3 @@
-"""Server HTTP kecil biar Render gak tidur."""
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading
 import os
@@ -11,12 +10,13 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
         self.wfile.write(b"Bot is alive!")
 
     def log_message(self, *args):
-        pass  # matikan log biar gak spam
+        pass # Matikan log biar gak spam di console
 
 def _run_server():
-    port = int(os.environ.get("PORT", 8080))
+    # Wispbyte ngeset port ke 11963 buat subdomain
+    port = int(os.environ.get("PORT", 11963))
     server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
-    print(f"[keep_alive] Server jalan di port {port}")
+    print(f"[keep_alive] Web server jalan di 0.0.0.0:{port}")
     server.serve_forever()
 
 def keep_alive():
