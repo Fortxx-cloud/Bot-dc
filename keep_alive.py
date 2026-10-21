@@ -145,7 +145,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 }}
                 .features-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 40px; }}
                 
-                /* Fitur Card - Bisa di-klik */
                 .feature-card {{
                     background: var(--panel); backdrop-filter: blur(10px);
                     border: 1px solid var(--border); padding: 20px;
@@ -180,7 +179,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 .loading {{ font-family: 'JetBrains Mono', monospace; color: var(--red); text-align: center; padding: 20px; animation: pulse 1.5s infinite; }}
                 .footer {{ text-align: center; padding: 25px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #444; border-top: 1px solid var(--border); }}
 
-                /* MODAL / POP-UP CSS */
                 .modal {{
                     display: none; position: fixed; z-index: 100;
                     left: 0; top: 0; width: 100%; height: 100%;
@@ -191,7 +189,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     background: #111; border: 1px solid var(--red);
                     padding: 30px; border-radius: 12px; max-width: 500px; width: 90%;
                     box-shadow: 0 0 40px rgba(255,26,26,0.2); position: relative;
-                    animation: modalFade 0.3s ease;
+                    animation: modalFade 0.3s ease; max-height: 80vh; overflow-y: auto;
                 }}
                 @keyframes modalFade {{ from {{ opacity: 0; transform: scale(0.9); }} to {{ opacity: 1; transform: scale(1); }} }}
                 .close-btn {{
@@ -228,39 +226,32 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     <div class="stat-box"><div class="stat-val">{uptime_str}</div><div class="stat-lbl">Uptime</div></div>
                 </div>
 
-                <div class="section-title"><span>&#128736;</span> System Modules & Features</div>
+                <div class="section-title"><span>&#128736;</span> All System Modules (12)</div>
                 <div class="features-grid">
-                    <!-- Klik ini bakal buka pop-up -->
-                    <div class="feature-card" onclick="openModal('mod')">
-                        <div class="f-icon">&#128737;</div>
-                        <div class="f-info"><h4>Moderation</h4><p>Auto-warn pop-up, Cartel Hitlist, Kick & Ban system.</p></div>
-                        <span class="f-arrow">&#128269;</span>
-                    </div>
-                    <div class="feature-card" onclick="openModal('ticket')">
-                        <div class="f-icon">&#127915;</div>
-                        <div class="f-info"><h4>Ticket System</h4><p>Dropdown support tickets with private channels & transcript.</p></div>
-                        <span class="f-arrow">&#128269;</span>
-                    </div>
-                    <div class="feature-card" onclick="openModal('rp')">
-                        <div class="f-icon">&#128220;</div>
-                        <div class="f-info"><h4>Roleplay Character</h4><p>ID card generator, Auto-Nickname, and Auto-Role Origin.</p></div>
-                        <span class="f-arrow">&#128269;</span>
-                    </div>
-                    <div class="feature-card" onclick="openModal('ai')">
-                        <div class="f-icon">&#129302;</div>
-                        <div class="f-info"><h4>AI Assistant</h4><p>Powered by Aion Labs. Private AI channels for members.</p></div>
-                        <span class="f-arrow">&#128269;</span>
-                    </div>
-                    <div class="feature-card" onclick="openModal('setup')">
-                        <div class="f-icon">&#127912;</div>
-                        <div class="f-info"><h4>Auto-Decorator</h4><p>One-click channel renaming, Embed builder & Verify system.</p></div>
-                        <span class="f-arrow">&#128269;</span>
-                    </div>
-                    <div class="feature-card" onclick="openModal('logs')">
-                        <div class="f-icon">&#128202;</div>
-                        <div class="f-info"><h4>Server Logs</h4><p>Comprehensive audit logs for bans, kicks, warns, and edits.</p></div>
-                        <span class="f-arrow">&#128269;</span>
-                    </div>
+                    <!-- 1. MODERATION -->
+                    <div class="feature-card" onclick="openModal('mod')"><div class="f-icon">&#128737;</div><div class="f-info"><h4>Moderation</h4><p>Warn, Kick, Ban, Timeout & Snipe.</p></div><span class="f-arrow">&#128269;</span></div>
+                    <!-- 2. TICKET -->
+                    <div class="feature-card" onclick="openModal('ticket')"><div class="f-icon">&#127915;</div><div class="f-info"><h4>Ticket System</h4><p>Dropdown support tickets & Hitlist.</p></div><span class="f-arrow">&#128269;</span></div>
+                    <!-- 3. ROLEPLAY -->
+                    <div class="feature-card" onclick="openModal('rp')"><div class="f-icon">&#128220;</div><div class="f-info"><h4>Roleplay Char</h4><p>ID card, Auto-Nick, Auto-Role.</p></div><span class="f-arrow">&#128269;</span></div>
+                    <!-- 4. AI -->
+                    <div class="feature-card" onclick="openModal('ai')"><div class="f-icon">&#129302;</div><div class="f-info"><h4>AI Assistant</h4><p>Private AI channels (Aion Labs).</p></div><span class="f-arrow">&#128269;</span></div>
+                    <!-- 5. AUTO DECORATOR -->
+                    <div class="feature-card" onclick="openModal('setup')"><div class="f-icon">&#127912;</div><div class="f-info"><h4>Auto-Decorator</h4><p>One-click rename & Embed builder.</p></div><span class="f-arrow">&#128269;</span></div>
+                    <!-- 6. LOGS -->
+                    <div class="feature-card" onclick="openModal('logs')"><div class="f-icon">&#128202;</div><div class="f-info"><h4>Server Logs</h4><p>Audit logs for ban, kick, warn.</p></div><span class="f-arrow">&#128269;</span></div>
+                    <!-- 7. ROLE MANAGEMENT -->
+                    <div class="feature-card" onclick="openModal('role')"><div class="f-icon">&#127917;</div><div class="f-info"><h4>Role Manager</h4><p>Add, remove, mass-role & auto-role.</p></div><span class="f-arrow">&#128269;</span></div>
+                    <!-- 8. CHANNEL MANAGEMENT -->
+                    <div class="feature-card" onclick="openModal('channel')"><div class="f-icon">&#128421;</div><div class="f-info"><h4>Channel Manager</h4><p>Create, delete, lock & slowmode.</p></div><span class="f-arrow">&#128269;</span></div>
+                    <!-- 9. VERIFICATION -->
+                    <div class="feature-card" onclick="openModal('verify')"><div class="f-icon">&#9989;</div><div class="f-info"><h4>Gatekeeper Verify</h4><p>Reaction role lock for new members.</p></div><span class="f-arrow">&#128269;</span></div>
+                    <!-- 10. UTILITY -->
+                    <div class="feature-card" onclick="openModal('utility')"><div class="f-icon">&#128295;</div><div class="f-info"><h4>Utility & Info</h4><p>Ping, Uptime, Avatar, Userinfo.</p></div><span class="f-arrow">&#128269;</span></div>
+                    <!-- 11. FUN -->
+                    <div class="feature-card" onclick="openModal('fun')"><div class="f-icon">&#127881;</div><div class="f-info"><h4>Fun & Social</h4><p>Poll, Say, Embed, AFK, Remind.</p></div><span class="f-arrow">&#128269;</span></div>
+                    <!-- 12. OWNER -->
+                    <div class="feature-card" onclick="openModal('owner')"><div class="f-icon">&#128081;</div><div class="f-info"><h4>Owner Tools</h4><p>Bot admin, Setmodrole, Warnlog.</p></div><span class="f-arrow">&#128269;</span></div>
                 </div>
 
                 <div class="section-title"><span>&#127760;</span> Connected Networks</div>
@@ -277,9 +268,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeModal()">&times;</span>
                     <h3 class="modal-title" id="modalTitle">Title</h3>
-                    <ul class="cmd-list" id="modalList">
-                        <!-- List command bakal masuk sini -->
-                    </ul>
+                    <ul class="cmd-list" id="modalList"></ul>
                 </div>
             </div>
 
@@ -291,76 +280,85 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 setInterval(updateClock, 1000);
                 updateClock();
 
-                // Data Command
                 const featureData = {{
-                    'mod': {{
-                        title: '🛡 Moderation System',
-                        cmds: [
-                            {{ name: '!warn @user', desc: 'Kasih warning (Form Pop-up + Role)' }},
-                            {{ name: '!warns @user', desc: 'Liat history warning' }},
-                            {{ name: '!clearwarns @user', desc: 'Hapus semua warning' }},
-                            {{ name: '!kick / !ban', desc: 'Usir / Ban member dari server' }},
-                            {{ name: '!timeout @user', desc: 'Mute sementara' }},
-                            {{ name: '!snipe / !editsnipe', desc: 'Liat chat yang dihapus/diedit' }}
-                        ]
-                    }},
-                    'ticket': {{
-                        title: '🎫 Ticket System',
-                        cmds: [
-                            {{ name: '!ticket setup', desc: 'Bikin panel bantuan (Dropdown)' }},
-                            {{ name: '!setupwarnlist', desc: 'Bikin Live Dashboard Cartel Hitlist' }}
-                        ]
-                    }},
-                    'rp': {{
-                        title: '📜 Roleplay Character',
-                        cmds: [
-                            {{ name: '!setupchar', desc: 'Bikin panel pendaftaran karakter' }},
-                            {{ name: '!char set', desc: 'Bikin ID Card (Auto-Nickname)' }},
-                            {{ name: '!char @user', desc: 'Liat profil karakter orang lain' }}
-                        ]
-                    }},
-                    'ai': {{
-                        title: '🤖 AI Assistant',
-                        cmds: [
-                            {{ name: '!setupai', desc: 'Bikin channel AI pribadi' }},
-                            {{ name: '!ai [teks]', desc: 'Tanya AI (Global)' }},
-                            {{ name: '!rp [aksi]', desc: 'Roleplay bareng AI' }},
-                            {{ name: '!testai', desc: 'Cek koneksi API AI' }}
-                        ]
-                    }},
-                    'setup': {{
-                        title: '🎨 Auto-Decorator & Setup',
-                        cmds: [
-                            {{ name: '!dekorasi', desc: 'Rapihin nama channel & kategori otomatis' }},
-                            {{ name: '!buatpesan', desc: 'Bikin pengumuman Embed cantik (Form)' }},
-                            {{ name: '!setupverify', desc: 'Sistem gerbang verifikasi member baru' }},
-                            {{ name: '!setupwelcome', desc: 'Setup pesan Welcome & Goodbye' }}
-                        ]
-                    }},
-                    'logs': {{
-                        title: '📊 Server Logs',
-                        cmds: [
-                            {{ name: '!setbotlog', desc: 'Set channel buat pantau aktivitas bot' }},
-                            {{ name: '!setwarnlog', desc: 'Set channel khusus log warning' }},
-                            {{ name: '!testlog', desc: 'Ngetes apakah channel log berfungsi' }}
-                        ]
-                    }}
+                    'mod': {{ title: '🛡 Moderation System', cmds: [
+                        {{ name: '!warn @user', desc: 'Kasih warning (Form Pop-up + Role)' }},
+                        {{ name: '!warns @user', desc: 'Liat history warning' }},
+                        {{ name: '!clearwarns @user', desc: 'Hapus semua warning' }},
+                        {{ name: '!kick / !ban', desc: 'Usir / Ban member' }},
+                        {{ name: '!timeout @user', desc: 'Mute sementara' }},
+                        {{ name: '!snipe / !editsnipe', desc: 'Liat chat yang dihapus/diedit' }}
+                    ]}},
+                    'ticket': {{ title: '🎫 Ticket System', cmds: [
+                        {{ name: '!ticket setup', desc: 'Bikin panel bantuan (Dropdown)' }},
+                        {{ name: '!setupwarnlist', desc: 'Bikin Live Dashboard Cartel Hitlist' }}
+                    ]}},
+                    'rp': {{ title: '📜 Roleplay Character', cmds: [
+                        {{ name: '!setupchar', desc: 'Bikin panel pendaftaran karakter' }},
+                        {{ name: '!char set', desc: 'Bikin ID Card (Auto-Nickname)' }},
+                        {{ name: '!char @user', desc: 'Liat profil karakter orang lain' }}
+                    ]}},
+                    'ai': {{ title: '🤖 AI Assistant', cmds: [
+                        {{ name: '!setupai', desc: 'Bikin channel AI pribadi' }},
+                        {{ name: '!ai [teks]', desc: 'Tanya AI (Global)' }},
+                        {{ name: '!rp [aksi]', desc: 'Roleplay bareng AI' }}
+                    ]}},
+                    'setup': {{ title: '🎨 Auto-Decorator & Setup', cmds: [
+                        {{ name: '!dekorasi', desc: 'Rapihin nama channel otomatis' }},
+                        {{ name: '!buatpesan', desc: 'Bikin pengumuman Embed cantik' }},
+                        {{ name: '!setupwelcome', desc: 'Setup pesan Welcome & Goodbye' }}
+                    ]}},
+                    'logs': {{ title: '📊 Server Logs', cmds: [
+                        {{ name: '!setbotlog', desc: 'Set channel pantau aktivitas bot' }},
+                        {{ name: '!setwarnlog', desc: 'Set channel khusus log warning' }},
+                        {{ name: '!testlog', desc: 'Ngetes apakah channel log berfungsi' }}
+                    ]}},
+                    'role': {{ title: '🏷 Role Manager', cmds: [
+                        {{ name: '!addrole / !removerole', desc: 'Kasih / cabut role member' }},
+                        {{ name: '!massrole @role', desc: 'Kasih role ke semua member' }},
+                        {{ name: '!autorole @role', desc: 'Role otomatis pas join' }},
+                        {{ name: '!roleedit / !roleperm', desc: 'Edit warna / izin role' }}
+                    ]}},
+                    'channel': {{ title: '💻 Channel Manager', cmds: [
+                        {{ name: '!createchannel / !deletechannel', desc: 'Bikin / Hapus channel' }},
+                        {{ name: '!lock / !unlock', desc: 'Kunci channel biar gak bisa chat' }},
+                        {{ name: '!slowmode [detik]', desc: 'Atur jeda chat (anti-spam)' }},
+                        {{ name: '!purge [jumlah]', desc: 'Hapus pesan massal' }}
+                    ]}},
+                    'verify': {{ title: '✅ Gatekeeper Verify', cmds: [
+                        {{ name: '!setupverify', desc: 'Bikin sistem klik emoji untuk buka channel' }},
+                        {{ name: '!setupwarnlog', desc: 'Sistem privasi channel' }}
+                    ]}},
+                    'utility': {{ title: '🔧 Utility & Info', cmds: [
+                        {{ name: '!ping / !uptime', desc: 'Cek kesehatan bot' }},
+                        {{ name: '!userinfo / !serverinfo', desc: 'Info profil / server' }},
+                        {{ name: '!avatar @user', desc: 'Ambil foto profil HD' }},
+                        {{ name: '!dm @user', desc: 'Kirim pesan pribadi via bot' }}
+                    ]}},
+                    'fun': {{ title: '🎉 Fun & Social', cmds: [
+                        {{ name: '!poll', desc: 'Bikin voting dengan reaction' }},
+                        {{ name: '!say / !embed', desc: 'Bot ngomong / bikin pesan keren' }},
+                        {{ name: '!afk', desc: 'Status AFK (auto-reply kalau di-tag)' }},
+                        {{ name: '!remind', desc: 'Set alarm / pengingat' }}
+                    ]}},
+                    'owner': {{ title: '👑 Owner Tools', cmds: [
+                        {{ name: '!botrun / !botremove', desc: 'Tambah / cabut akses admin bot' }},
+                        {{ name: '!setmodrole', desc: 'Daftarin role yang boleh jadi Mod' }},
+                        {{ name: '!setwarnlog / !setwarntag', desc: 'Kustomisasi sistem warning' }}
+                    ]}}
                 }};
 
                 function openModal(key) {{
                     const data = featureData[key];
                     if (!data) return;
-                    
                     document.getElementById('modalTitle').innerText = data.title;
                     const list = document.getElementById('modalList');
                     list.innerHTML = '';
-                    
                     data.cmds.forEach(cmd => {{
                         const li = document.createElement('li');
                         li.innerHTML = `<span class="cmd-name">${{cmd.name}}</span><br><span class="cmd-desc">${{cmd.desc}}</span>`;
                         list.appendChild(li);
                     }});
-                    
                     document.getElementById('cmdModal').style.display = 'flex';
                 }}
 
@@ -368,12 +366,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     document.getElementById('cmdModal').style.display = 'none';
                 }}
 
-                // Tutup modal kalau klik di luar area kotak
                 window.onclick = function(event) {{
                     const modal = document.getElementById('cmdModal');
-                    if (event.target == modal) {{
-                        closeModal();
-                    }}
+                    if (event.target == modal) {{ closeModal(); }}
                 }}
             </script>
         </body>
