@@ -878,28 +878,37 @@ def _build_categories():
             "mute", "unmute", "kick", "ban",
             "purge", "slowmode", "lock", "unlock",
             "timeout", "untimeout", "banlist", "unban",
+            "snipe", "editsnipe"
         ),
-        "🎭 Role": (
+        "🎫 Ticket & RP": (
+            "ticket", "char", "setupchar", "setupwelcome"
+        ),
+        "🎭 Role & Channel": (
             "role", "addrole", "removerole", "createrole", "deleterole",
             "massrole", "autorole", "rolepos", "rolesync", "roleclone",
             "roleinfo", "listroles", "roleedit", "roleperm",
-        ),
-        "📺 Channel": (
             "createchannel", "deletechannel", "renamechannel",
-            "createcategory", "topic", "listchannels", "channelinfo",
+            "createcategory", "topic", "listchannels", "channelinfo"
         ),
-        "🔥 Log": ("setbotlog", "setwarnlog", "setwarntag", "loginfo"),
-        "👑 Owner": ("botrun", "botremove", "botlist", "setmodrole"),
+        "🔥 Logs": (
+            "setbotlog", "setwarnlog", "setwarntag", "loginfo"
+        ),
+        "👑 Owner": (
+            "botrun", "botremove", "botlist", "setmodrole"
+        ),
         "🔧 Utility": (
             "help", "ping", "uptime", "avatar", "userinfo", "serverinfo",
-            "announce", "dm", "remind", "afk", "test",
+            "announce", "dm", "remind", "afk", "test"
         ),
-        "🎉 Fun": ("say", "embed", "poll"),
+        "🎉 Fun": (
+            "say", "embed", "poll"
+        ),
     }
-    # inisialisasi semua key dari _map dulu
+    # Inisialisasi semua key
     for k in _map:
         cats[k] = []
 
+    # Masukkan command ke kategorinya
     for cmd in bot.commands:
         if cmd.hidden or cmd.name == "help":
             continue
