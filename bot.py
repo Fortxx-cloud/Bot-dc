@@ -2187,9 +2187,50 @@ async def on_raw_reaction_add(payload):
         if not guild: return
         role = guild.get_role(int(cfg.get('verify_role_id', 0)))
         member = guild.get_member(payload.user_id)
+        
         if role and member:
-            try: await member.add_roles(role)
-            except: pass
+            try: 
+                await member.add_roles(role)
+                
+                # --- BIKIN CHANNEL AI PRIVAT OTOMATIS ---
+                has_ch = False
+                for ch in guild.text_channels:
+                    if ch.topic and f'AI_CHANNEL_OWNER:{member.id}' in ch.topic:
+                        has_ch = True
+                        break
+                
+                if not has_ch:
+                    category = discord.utils.find(lambda c: c.name.upper() == 'SETTINGS', guild.categories)
+                    if not category:
+                        category = await guild.create_category('SETTINGS')
+                        
+                    overwrites = {
+                        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                        member: discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True, embed_links=True),
+                        guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
+                    }
+                    staff_roles = ["Staff", "Moderator", "Admin", "Owner", "Mod", "⚠️HANDLE CJNG", "OWNER X CO OWNER"]
+                    for role_name in staff_roles:
+                        r = discord.utils.get(guild.roles, name=role_name)
+                        if r:
+                            overwrites[r] = discord.PermissionOverwrite(read_messages=True, send_messages=True)
+                            
+                    ai_ch = await guild.create_text_channel(
+                        name=f'🤖┃ai-{member.name}',
+                        category=category,
+                        overwrites=overwrites,
+                        topic=f'AI_CHANNEL_OWNER:{member.id} | Channel AI pribadi milik {member.name}.'
+                    )
+                    
+                    embed = discord.Embed(
+                        title='🤖 AI Asisten Pribadi',
+                        description=f'Halo {member.mention}! Ini channel AI pribadimu. Ketik apa aja di sini **tanpa command** buat ngobrol sama AI.',
+                        color=discord.Color.green()
+                    )
+                    await ai_ch.send(content=member.mention, embed=embed)
+                    
+            except Exception as e:
+                print(f"Error di reaction add: {e}")
 
 @bot.event
 async def on_raw_reaction_remove(payload):
