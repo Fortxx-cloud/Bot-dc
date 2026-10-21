@@ -2382,39 +2382,40 @@ async def testai_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 @bot.command(name='dekorasi')
 async def dekorasi_cmd(ctx, style: int = 1):
-    """Bersihin nama channel & kategori dari teks aneh."""
+    """Hapus garis panjang dan teks aneh di nama kategori/channel."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
     
-    msg = await ctx.send('🧹 **Sapu bersih!** Lagi ngerapihin nama channel & kategori...')
+    msg = await ctx.send('🧹 **Sapu bersih v3!** Menghapus garis panjang dan teks aneh...')
     
-    # 1. Sapu bersih Kategori
-    cat_map = {
-        'PUBLIC ROOM': '📁 〢 PUBLIC ROOM',
-        'CJNG RULES': '📁 〢 CJNG RULES',
-        'REPORT ROOM': '📁 〢 REPORT ROOM',
-        'BLACK MARKET': '📁 〢 BLACK MARKET',
-        'TAKE ROLE': '📁 〢 TAKE ROLE',
-        'SETTINGS': '⚙️ 〢 SETTINGS',
-        'PATNER': '📁 〢 PARTNER',
-        'OFFICIAL LINK': '📁 〢 OFFICIAL LINK',
-        'ANNOUNCEMENT': '📁 〢 ANNOUNCEMENT',
-        'BOT RUN': '📁 〢 BOT RUN',
-        'REQ AREA': '📁 〢 REQ AREA'
-    }
-    
+    # --- 1. BERSIHIN KATEGORI ---
     for cat in ctx.guild.categories:
-        for key, new_name in cat_map.items():
-            if key in cat.name.upper():
-                try:
-                    await cat.edit(name=new_name)
-                    await asyncio.sleep(1.5)
-                except: pass
-                break
+        name_upper = cat.name.upper()
+        new_name = cat.name
+        
+        # Deteksi berdasarkan emoji atau teks biasa
+        if "🟥" in cat.name or "REPORT" in name_upper: new_name = "📁 〢 REPORT ROOM"
+        elif "🟦" in cat.name or "PUBLIC" in name_upper: new_name = "📁 〢 PUBLIC ROOM"
+        elif "🟪" in cat.name or "CJNG" in name_upper: new_name = "📁 〢 CJNG RULES"
+        elif "🟩" in cat.name or "BLACK" in name_upper: new_name = "📁 〢 BLACK MARKET"
+        elif "🟨" in cat.name or "TAKE" in name_upper: new_name = "📁 〢 TAKE ROLE"
+        elif "⚙️" in cat.name or "SETTING" in name_upper: new_name = "⚙️ 〢 SETTINGS"
+        elif "🤝" in cat.name or "PATNER" in name_upper or "PARTNER" in name_upper: new_name = "📁 〢 PARTNER"
+        elif "🔗" in cat.name or "OFFICIAL" in name_upper: new_name = "📁 〢 OFFICIAL LINK"
+        elif "📢" in cat.name or "ANNOUNC" in name_upper: new_name = "📁 〢 ANNOUNCEMENT"
+        elif "🤖" in cat.name or "BOT" in name_upper: new_name = "📁 〢 BOT RUN"
+        elif "📝" in cat.name or "REQ" in name_upper: new_name = "📁 〢 REQ AREA"
+        
+        if new_name != cat.name:
+            try:
+                await cat.edit(name=new_name)
+                await asyncio.sleep(1.5)
+            except: pass
             
-    # 2. Sapu bersih Channel
+    # --- 2. BERSIHIN CHANNEL ---
+    # Urutkan dari yang paling spesifik biar gak salah ganti
     ch_map = {
         'daftar-karakter': '📜・daftar-karakter',
-        'take-role-name-ic': '📜・take-role-ic',
+        'take-role-name': '📜・take-role-ic',
         'take • role': '👤・take-role',
         'welcome': '👋・welcome',
         'bot-run': '🔥・bot-run',
@@ -2438,18 +2439,16 @@ async def dekorasi_cmd(ctx, style: int = 1):
     }
     
     for ch in ctx.guild.text_channels:
-        ch_name_lower = ch.name.lower()
-        # Cek apakah nama channel mengandung keyword di atas
+        ch_lower = ch.name.lower()
         for key, new_name in ch_map.items():
-            if key in ch_name_lower:
+            if key in ch_lower:
                 try:
-                    # Edit nama jadi yang baru
                     await ch.edit(name=new_name)
                     await asyncio.sleep(1.5)
                 except: pass
                 break
                 
-    await msg.edit(content='✅ **Beres Total Bang!** Semua kotak warna dan sisa teks `- || -` udah dihapus.' + chr(10) + 'Nama kategori dan channel sekarang udah super rapi.')
+    await msg.edit(content='✅ **Beres Bang!** Semua garis ══════ dan teks aneh udah dihapus.' + chr(10) + 'Nama kategori dan channel sekarang udah rapi dan pendek.')
 
 # ══════════════════════════════════════════════════════════════
 
