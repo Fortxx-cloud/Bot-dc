@@ -1993,23 +1993,28 @@ class CharModal(discord.ui.Modal, title='Form Karakter RP'):
 class CharOriginSelect(discord.ui.Select):
     def __init__(self):
         regions = [
-            "Aceh", "Medan", "Padang", "Pekanbaru", "Palembang",
-            "Lampung", "Batam", "Jakarta", "Bandung", "Semarang",
-            "Yogyakarta", "Solo", "Surabaya", "Malang", "Banten",
-            "Bali", "Lombok", "Pontianak", "Banjarmasin", "Samarinda",
-            "Manado", "Makassar", "Palu", "Ambon", "Jayapura"
+            "Jakarta Pusat", "Jakarta Barat", "Jakarta Timur", "Jakarta Selatan", "Jakarta Utara",
+            "Jawa Barat (Bandung)", "Jawa Tengah (Semarang)", "Jawa Timur (Surabaya)", "Banten (Tangerang)", "DIY (Yogyakarta)",
+            "Bali (Denpasar)", "Sumatera Utara (Medan)", "Sumatera Barat (Padang)", "Sumatera Selatan (Palembang)", "Riau (Pekanbaru)",
+            "Lampung (Bandar Lampung)", "Aceh (Banda Aceh)", "Kalimantan Timur (Samarinda)", "Kalimantan Selatan (Banjarmasin)", "Kalimantan Barat (Pontianak)",
+            "Sulawesi Selatan (Makassar)", "Sulawesi Utara (Manado)", "Sulawesi Tengah (Palu)", "Maluku (Ambon)", "Papua (Jayapura)"
         ]
         options = [discord.SelectOption(label=r, value=r, emoji="📍") for r in regions]
         super().__init__(placeholder="Pilih Asal Daerah...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         origin_name = self.values[0]
-        role = discord.utils.get(interaction.guild.roles, name=origin_name)
+        
+        # Ambil nama role aja (misal "Jawa Barat (Bandung)" jadi "Jawa Barat")
+        role_name = origin_name.split(" (")[0]
+        
+        role = discord.utils.get(interaction.guild.roles, name=role_name)
         if not role:
             try:
-                role = await interaction.guild.create_role(name=origin_name, reason="Auto-create role asal daerah RP")
+                role = await interaction.guild.create_role(name=role_name, reason="Auto-create role asal daerah RP")
             except Exception:
                 pass 
+                
         await interaction.response.send_modal(CharModal(origin_name, role))
         self.view.stop()
 
