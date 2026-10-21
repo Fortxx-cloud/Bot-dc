@@ -273,6 +273,7 @@ class WarnModal(discord.ui.Modal, title='Form Warning Anggota'):
             "time": str(discord.utils.utcnow())
         })
         save_warns(warns)
+        await update_cartel_list(interaction.guild)
         total = len(warns[gid][uid])
 
         target_role = discord.utils.get(interaction.guild.roles, name=WARN_ROLES.get(total, ""))
@@ -333,14 +334,14 @@ class WarnModal(discord.ui.Modal, title='Form Warning Anggota'):
         if total >= MAX_WARN:
             try:
                 await member.kick(reason=f"Auto-kick: {MAX_WARN} warn")
-                await interaction.channel.send(f"☠️ **{member.display_name}** mencapai {MAX_WARN} warn & ditendang.")
+                await interaction.channel.send(f"☠️ **{member.display_name}** mencapai {MAX_WARN} warn & ditendang.", delete_after=15)
                 warns[gid][uid] = []
                 save_warns(warns)
             except Exception:
                 await interaction.channel.send(f"⚠️ {MAX_WARN} warn, tapi bot gagal nge-kick.")
         else:
-            await interaction.channel.send(embed=embed)
-            await interaction.channel.send(f"✅ Warn {total}/{MAX_WARN} berhasil dicatat.")
+            await interaction.channel.send(embed=embed, delete_after=10)
+            await interaction.channel.send(f"✅ Warn {total}/{MAX_WARN} berhasil dicatat.", delete_after=10)
 
 class WarnView(discord.ui.View):
     def __init__(self, member: discord.Member, author: discord.Member):
@@ -384,6 +385,7 @@ async def clearwarns(ctx, member: discord.Member):
     if uid in warns.get(gid, {}):
         warns[gid][uid] = []
         save_warns(warns)
+        await update_cartel_list(ctx.guild)
         
         for name in WARN_ROLES.values():
             role = discord.utils.get(ctx.guild.roles, name=name)
@@ -2593,5 +2595,97 @@ async def testlog_cmd(ctx):
         await ctx.send("❌ Channel logs-warning gak ketemu.")
         
     await ctx.send("✅ Selesai! Cek channel masing-masing.")
+
+
+async def update_cartel_list(guild):
+    """Update list warning di channel Cartel Hitlist secara otomatis."""
+    cfg = _cfg_load()
+    ch_id = cfg.get("warn_list_channel")
+    msg_id = cfg.get("warn_list_msg")
+    if not ch_id or not msg_id: return
+    
+    ch = guild.get_channel(int(ch_id))
+    if not ch: return
+
+    try:
+        msg = await ch.fetch_message(int(msg_id))
+    except Exception:
+        return
+
+    warns = load_warns()
+    gid = str(guild.id)
+    guild_warns = warns.get(gid, {})
+
+    desc = ""
+    count = 1
+    for uid, w_list in guild_warns.items():
+        if not w_list: continue
+        total = len(w_list)
+        last_reason = w_list[-1].get('reason', 'Tidak ada alasan')
+        
+        if total >= MAX_WARN:
+            status = "💀 𝗧𝗘𝗥𝗘𝗟𝗜𝗠𝗜𝗡𝗔𝗦𝗜 (DI-KICK)"
+            emoji = "🩸"
+        elif total == MAX_WARN - 1:
+            status = "⚠️ 𝗧𝗔𝗥𝗚𝗘𝗧 𝗨𝗧𝗔𝗠𝗔"
+            emoji = "🔴"
+        else:
+            status = "👁️ 𝗗𝗜𝗔𝗪𝗔𝗦𝗜"
+            emoji = "🟡"
+            
+        desc += f"{emoji} **{count}. <@{uid}>** `[{total}/{MAX_WARN}]`" + nl
+        desc += f"┣ 📜 **Alasan:** *{last_reason}*" + nl
+        desc += f"┗ ⚔️ **Status:** {status}" + nl + nl
+        count += 1
+
+    if not desc:
+        desc = "🕊️ **DAFTAR BERSIH.** Saat ini tidak ada warga yang masuk daftar hitam Cartel."
+
+    embed = discord.Embed(
+        title="🩸 𝗖𝗔𝗥𝗧𝗘𝗟 𝗛𝗜𝗧𝗟𝗜𝗦𝗧 (WARN LIST) 🩸",
+        description=desc,
+        color=discord.Color.dark_red()
+    )
+    embed.set_footer(text="Cártel de Jalisco Nueva Generación • Sistem Peringatan Otomatis")
+    embed.timestamp = discord.utils.utcnow()
+    
+    try:
+        await msg.edit(embed=embed)
+    except Exception:
+        pass
+
+
+@bot.command(name='setupwarnlist')
+async def setupwarnlist_cmd(ctx):
+    """Bikin channel Cartel Hitlist di REPORT ROOM."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    category = discord.utils.find(lambda c: 'REPORT ROOM' in c.name.upper(), ctx.guild.categories)
+    ch_name = '🩸・cartel-hitlist'
+    
+    ch = discord.utils.find(lambda c: 'cartel-hitlist' in c.name.lower(), ctx.guild.text_channels)
+    if not ch:
+        ch = await ctx.guild.create_text_channel(ch_name, category=category)
+        
+    # Hapus pesan lama bot di channel itu biar bersih
+    async for msg in ch.history(limit=50):
+        if msg.author == bot.user:
+            await msg.delete()
+            
+    embed = discord.Embed(
+        title="🩸 𝗖𝗔𝗥𝗧𝗘𝗟 𝗛𝗜𝗧𝗟𝗜𝗦𝗧 (WARN LIST) 🩸",
+        description="🕊️ **DAFTAR BERSIH.** Saat ini tidak ada warga yang masuk daftar hitam Cartel.",
+        color=discord.Color.dark_red()
+    )
+    embed.set_footer(text="Cártel de Jalisco Nueva Generación • Sistem Peringatan Otomatis")
+    
+    msg = await ch.send(embed=embed)
+    
+    cfg = _cfg_load()
+    cfg['warn_list_channel'] = ch.id
+    cfg['warn_list_msg'] = msg.id
+    _cfg_save(cfg)
+    
+    await ctx.send(f"✅ Cartel Hitlist berhasil di-setup di {ch.mention}!")
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
