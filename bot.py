@@ -2248,7 +2248,8 @@ async def tanya_aion(prompt: str, system_prompt: str = None, model: str = 'aion-
         async with aiohttp.ClientSession() as session:
             async with session.post(f'{AION_BASE_URL}/chat/completions', headers=headers, json=payload) as resp:
                 if resp.status != 200:
-                    return f'❌ Error API Aion: HTTP {resp.status}'
+                    err_text = await resp.text()
+                    return f'❌ Error API Aion: HTTP {resp.status} - {err_text[:100]}'
                 data = await resp.json()
                 return data['choices'][0]['message']['content']
     except Exception as e:
