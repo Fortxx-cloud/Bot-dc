@@ -1849,4 +1849,144 @@ async def ticket_cmd(ctx, action: str = None):
         await ctx.send('❌ Format salah. Gunakan `!ticket setup` di channel yang kamu inginkan.')
 # ══════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════
+# 🕵️‍♂️ SNIPE & 📜 KARAKTER RP
+# ══════════════════════════════════════════════════════════════
+snipe_cache = {}
+editsnipe_cache = {}
+CHARS_FILE = 'chars.json'
+
+def load_chars():
+    if os.path.exists(CHARS_FILE):
+        try:
+            with open(CHARS_FILE, 'r') as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def save_chars(data):
+    with open(CHARS_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
+
+@bot.event
+async def on_message_delete(message):
+    if message.author.bot or not message.guild: return
+    snipe_cache[message.channel.id] = {
+        'content': message.content or '*[File/Embed]*',
+        'author': message.author,
+        'time': discord.utils.utcnow()
+    }
+
+@bot.event
+async def on_message_edit(before, after):
+    if before.author.bot or not before.guild or before.content == after.content: return
+    editsnipe_cache[before.channel.id] = {
+        'before': before.content or '*[Embed]*',
+        'after': after.content or '*[Embed]*',
+        'author': before.author,
+        'time': discord.utils.utcnow()
+    }
+
+@bot.command(name='snipe')
+async def snipe_cmd(ctx):
+    """Liat pesan yang barusan dihapus di channel ini."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    data = snipe_cache.get(ctx.channel.id)
+    if not data: return await ctx.send('❌ Gak ada pesan yang baru dihapus.')
+    embed = discord.Embed(title='🕵️‍♂️ Snipe Pesan', description=data['content'], color=discord.Color.red())
+    embed.set_author(name=str(data['author']), icon_url=data['author'].display_avatar.url)
+    embed.set_footer(text=f"Dihapus {discord.utils.format_dt(data['time'], 'R')}")
+    await ctx.send(embed=embed)
+    snipe_cache.pop(ctx.channel.id, None)
+
+@bot.command(name='editsnipe', aliases=['esnipe'])
+async def editsnipe_cmd(ctx):
+    """Liat pesan yang barusan diedit di channel ini."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    data = editsnipe_cache.get(ctx.channel.id)
+    if not data: return await ctx.send('❌ Gak ada pesan yang baru diedit.')
+    embed = discord.Embed(title='🕵️‍♂️ Edit Snipe', color=discord.Color.orange())
+    embed.set_author(name=str(data['author']), icon_url=data['author'].display_avatar.url)
+    embed.add_field(name='📝 Sebelum', value=data['before'][:1024], inline=False)
+    embed.add_field(name='📝 Sesudah', value=data['after'][:1024], inline=False)
+    embed.set_footer(text=f"Diedit {discord.utils.format_dt(data['time'], 'R')}")
+    await ctx.send(embed=embed)
+    editsnipe_cache.pop(ctx.channel.id, None)
+
+class CharModal(discord.ui.Modal, title='Buat Karakter RP'):
+    nama_ic = discord.ui.TextInput(label='Nama IC', placeholder='Contoh: Zoma Haci', required=True)
+    umur = discord.ui.TextInput(label='Umur', placeholder='Contoh: 25 Tahun', required=True)
+    asal = discord.ui.TextInput(label='Asal / Fakultas', placeholder='Contoh: Warga Asli', required=True)
+    bio = discord.ui.TextInput(label='Bio Singkat', style=discord.TextStyle.paragraph, placeholder='Ceritakan latar belakang karakter lu...', required=True)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        chars = load_chars()
+        uid = str(interaction.user.id)
+        chars[uid] = {
+            'nama': self.nama_ic.value,
+            'umur': self.umur.value,
+            'asal': self.asal.value,
+            'bio': self.bio.value
+        }
+        save_chars(chars)
+        embed = discord.Embed(title='✅ Karakter Berhasil Dibuat', description='Data karakter lu udah disimpan. Ketik `!char` untuk melihatnya.', color=discord.Color.green())
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        channel = discord.utils.find(lambda c: 'karakter-rp' in c.name.lower(), interaction.guild.text_channels)
+        if channel:
+            char_embed = discord.Embed(title=f"📜 Kartu Karakter: {self.nama_ic.value}", color=discord.Color.blurple())
+            char_embed.set_thumbnail(url=interaction.user.display_avatar.url)
+            char_embed.add_field(name='👤 Nama IC', value=self.nama_ic.value, inline=True)
+            char_embed.add_field(name='🎂 Umur', value=self.umur.value, inline=True)
+            char_embed.add_field(name='🏠 Asal', value=self.asal.value, inline=True)
+            char_embed.add_field(name='📖 Bio', value=self.bio.value, inline=False)
+            char_embed.set_footer(text=f"Dipegang oleh {interaction.user.name}")
+            await channel.send(embed=char_embed)
+
+class CharView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+    @discord.ui.button(label='Buat Karakter', style=discord.ButtonStyle.primary, emoji='📝')
+    async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(CharModal())
+
+@bot.command(name='char')
+async def char_cmd(ctx, subcommand: str = None, member: discord.Member = None):
+    """Profil Karakter RP. Gunakan !char set untuk bikin, !char @user untuk liat."""
+    if subcommand and subcommand.lower() == 'set':
+        await ctx.send('Klik tombol di bawah buat isi form karakter lu.', view=CharView())
+        return
+    target = member or ctx.author
+    chars = load_chars()
+    data = chars.get(str(target.id))
+    if not data:
+        return await ctx.send(f'❌ **{target.display_name}** belum bikin karakter. Ketik `!char set` untuk bikin.')
+    embed = discord.Embed(title=f"📜 Kartu Karakter: {data['nama']}", color=discord.Color.blurple())
+    embed.set_thumbnail(url=target.display_avatar.url)
+    embed.add_field(name='👤 Nama IC', value=data['nama'], inline=True)
+    embed.add_field(name='🎂 Umur', value=data['umur'], inline=True)
+    embed.add_field(name='🏠 Asal', value=data['asal'], inline=True)
+    embed.add_field(name='📖 Bio', value=data['bio'], inline=False)
+    embed.set_footer(text=f"Dipegang oleh {target.name}")
+    await ctx.send(embed=embed)
+
+@bot.command(name='setupchar')
+async def setupchar_cmd(ctx):
+    """Bikin channel khusus karakter RP."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    name = '🧑‍🤝‍🧑┃karakter-rp'
+    channel = discord.utils.find(lambda c: 'karakter-rp' in c.name.lower(), ctx.guild.text_channels)
+    if not channel:
+        try:
+            category = discord.utils.get(ctx.guild.categories, name='Roleplay')
+            if not category:
+                category = await ctx.guild.create_category('Roleplay')
+            channel = await ctx.guild.create_text_channel(name, category=category)
+            await ctx.send(f'✅ Channel {channel.mention} berhasil dibuat! Silakan gunakan `!char set` di sana.')
+        except Exception as e:
+            await ctx.send(f'❌ Gagal buat channel: {e}')
+    else:
+        await ctx.send(f'ℹ️ Channel {channel.mention} udah ada.')
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
