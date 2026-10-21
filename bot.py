@@ -2382,12 +2382,12 @@ async def testai_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 @bot.command(name='dekorasi')
 async def dekorasi_cmd(ctx, style: int = 1):
-    """Rapihin nama channel & kategori biar bersih."""
+    """Bersihin nama channel & kategori dari teks aneh."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
     
-    msg = await ctx.send('🧹 **Membersihkan nama channel...** Tunggu sebentar ya.')
+    msg = await ctx.send('🧹 **Sapu bersih!** Lagi ngerapihin nama channel & kategori...')
     
-    # Nama Kategori Baru (Pendek, Bersih, Gak Ada Warna)
+    # 1. Sapu bersih Kategori
     cat_map = {
         'PUBLIC ROOM': '📁 〢 PUBLIC ROOM',
         'CJNG RULES': '📁 〢 CJNG RULES',
@@ -2402,7 +2402,6 @@ async def dekorasi_cmd(ctx, style: int = 1):
         'REQ AREA': '📁 〢 REQ AREA'
     }
     
-    # Rename Kategori
     for cat in ctx.guild.categories:
         for key, new_name in cat_map.items():
             if key in cat.name.upper():
@@ -2412,43 +2411,45 @@ async def dekorasi_cmd(ctx, style: int = 1):
                 except: pass
                 break
             
-    # Mapping Channel (Bersih tanpa sisa - || -)
+    # 2. Sapu bersih Channel
     ch_map = {
-        'publik': '💬・publik-chat',
-        'chat • bot': '🤖・chat-bot',
-        'share': '🎬・share-content',
-        'ask-room': '💋・ask-room',
-        'take-role-name-ic': '📜・take-role-ic',
         'daftar-karakter': '📜・daftar-karakter',
+        'take-role-name-ic': '📜・take-role-ic',
         'take • role': '👤・take-role',
         'welcome': '👋・welcome',
         'bot-run': '🔥・bot-run',
-        'report • anggota': '🩸・report-anggota',
+        'announcement': '📢・announcement',
+        'logo': '☠️・logo-family',
+        'list-anggota': '📋・list-anggota',
+        'clue': '🏡・clue-tempat',
+        'behav': '📚・behav-warga',
+        'rules-dark': '📕・rules-dark',
+        'publik': '💬・publik-chat',
+        'chat • bot': '🤖・chat-bot',
+        'report': '🩸・report-anggota',
         'logs-warning': '🩸・logs-warning',
         'ticket': '🎫・ticket',
-        'announcement': '📢・announcement',
-        'official-link': '🔗・official-link',
-        'informasi': '💊・informasi-dark',
-        'beli': '🛒・beli-barang',
-        'rules-dark': '📕・rules-dark',
+        'ai-': '🤖・ai-asisten',
         'req-company': '💼・req-company',
         'req-approach': '👥・req-approach',
         'req-in-out': '🔐・req-in-out',
-        'ai-': '🤖・ai-asisten'
+        'informasi': '💊・informasi-dark',
+        'beli': '🛒・beli-barang'
     }
     
-    # Rename Channel
     for ch in ctx.guild.text_channels:
         ch_name_lower = ch.name.lower()
+        # Cek apakah nama channel mengandung keyword di atas
         for key, new_name in ch_map.items():
             if key in ch_name_lower:
                 try:
+                    # Edit nama jadi yang baru
                     await ch.edit(name=new_name)
                     await asyncio.sleep(1.5)
                 except: pass
                 break
                 
-    await msg.edit(content='✅ **Beres Bang!** Semua nama kategori dan channel udah dirapikan.' + chr(10) + 'Sekarang pendek, bersih, dan gak bakal kepotong di HP.')
+    await msg.edit(content='✅ **Beres Total Bang!** Semua kotak warna dan sisa teks `- || -` udah dihapus.' + chr(10) + 'Nama kategori dan channel sekarang udah super rapi.')
 
 # ══════════════════════════════════════════════════════════════
 
