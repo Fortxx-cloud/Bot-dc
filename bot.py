@@ -2204,4 +2204,16 @@ async def on_raw_reaction_remove(payload):
             except: pass
 # ══════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════
+# 🔄 PERSISTENT VIEWS (BIAR TOMBOL GAK MATI PAS RESTART)
+# ══════════════════════════════════════════════════════════════
+try:
+    bot.add_view(TicketView())
+    bot.add_view(TicketCloseView())
+    bot.add_view(CharView())
+    print('[SYSTEM] Persistent views berhasil dimuat!')
+except Exception as e:
+    print(f'[SYSTEM] Gagal muat persistent views: {e}')
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
