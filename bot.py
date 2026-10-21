@@ -2452,4 +2452,85 @@ async def dekorasi_cmd(ctx, style: int = 1):
 
 # ══════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════
+# 🖼️ EMBED BUILDER (PESAN KUSTOM VIA FORM)
+# ══════════════════════════════════════════════════════════════
+
+class EmbedModal(discord.ui.Modal, title='Buat Pesan Embed'):
+    judul = discord.ui.TextInput(
+        label='Judul Pesan',
+        placeholder='Contoh: PENGUMUMAN PENTING',
+        required=True,
+        max_length=256
+    )
+    deskripsi = discord.ui.TextInput(
+        label='Isi Pesan / Deskripsi',
+        style=discord.TextStyle.paragraph,
+        placeholder='Tulis detail pengumuman di sini...',
+        required=True
+    )
+    warna = discord.ui.TextInput(
+        label='Warna (Hex Code)',
+        placeholder='Contoh: #FF0000 (Merah), #00FF00 (Hijau)',
+        required=False,
+        max_length=7
+    )
+    gambar = discord.ui.TextInput(
+        label='URL Gambar / Banner (Opsional)',
+        placeholder='https://contoh.com/gambar.jpg',
+        required=False
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        color = discord.Color.blurple()
+        if self.warna.value:
+            try:
+                hex_color = self.warna.value.strip().replace('#', '')
+                color = discord.Color(int(hex_color, 16))
+            except Exception:
+                pass
+                
+        embed = discord.Embed(
+            title=self.judul.value,
+            description=self.deskripsi.value,
+            color=color
+        )
+        
+        if self.gambar.value:
+            embed.set_image(url=self.gambar.value)
+            
+        embed.set_footer(text=f'Dibuat oleh {interaction.user.display_name}', icon_url=interaction.user.display_avatar.url)
+        embed.timestamp = discord.utils.utcnow()
+        
+        await interaction.response.send_message('✅ Pesan berhasil dibuat!', ephemeral=True)
+        await interaction.channel.send(embed=embed)
+
+class EmbedBuilderView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label='Buat Pesan Baru', style=discord.ButtonStyle.primary, emoji='📝', custom_id='btn_buat_pesan')
+    async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(EmbedModal())
+
+@bot.command(name='buatpesan')
+async def buatpesan_cmd(ctx):
+    """Buka form pembuatan pesan embed (Mod only)."""
+    if not is_mod(ctx):
+        return await ctx.send('❌ Mod only.')
+    
+    embed = discord.Embed(
+        title='🖼️ Embed Builder',
+        description='Klik tombol di bawah ini untuk mulai membuat pesan kustom yang cantik.',
+        color=discord.Color.blurple()
+    )
+    await ctx.send(embed=embed, view=EmbedBuilderView())
+
+# Daftarin view biar gak mati pas bot restart
+try:
+    bot.add_view(EmbedBuilderView())
+except Exception:
+    pass
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
