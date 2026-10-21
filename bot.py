@@ -1930,7 +1930,19 @@ class CharModal(discord.ui.Modal, title='Buat Karakter RP'):
             'bio': self.bio.value
         }
         save_chars(chars)
-        embed = discord.Embed(title='✅ Karakter Berhasil Dibuat', description='Data karakter lu udah disimpan. Ketik `!char` untuk melihatnya.', color=discord.Color.green())
+        
+        # Fitur Ganti Nickname Otomatis
+        nick_status = ""
+        try:
+            new_nick = self.nama_ic.value[:32]
+            await interaction.user.edit(nick=new_nick)
+            nick_status = f"\n📝 Nickname server lu berhasil diubah jadi **{new_nick}**."
+        except discord.Forbidden:
+            nick_status = "\n⚠️ Bot gak punya izin `Manage Nicknames` buat ganti nickname lu."
+        except Exception as e:
+            nick_status = f"\n⚠️ Gagal ganti nickname: {e}"
+
+        embed = discord.Embed(title='✅ Karakter Berhasil Dibuat', description=f'Data karakter lu udah disimpan. Ketik `!char` untuk melihatnya.{nick_status}', color=discord.Color.green())
         await interaction.response.send_message(embed=embed, ephemeral=True)
         channel = discord.utils.find(lambda c: 'karakter-rp' in c.name.lower(), interaction.guild.text_channels)
         if channel:
@@ -1972,21 +1984,36 @@ async def char_cmd(ctx, subcommand: str = None, member: discord.Member = None):
 
 @bot.command(name='setupchar')
 async def setupchar_cmd(ctx):
-    """Bikin channel khusus karakter RP."""
+    """Kirim panel pembuatan karakter RP di channel ini."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    try:
+        await ctx.message.delete()
+    except Exception:
+        pass
+        
     name = '🧑‍🤝‍🧑┃karakter-rp'
     channel = discord.utils.find(lambda c: 'karakter-rp' in c.name.lower(), ctx.guild.text_channels)
+    
     if not channel:
         try:
             category = discord.utils.get(ctx.guild.categories, name='Roleplay')
             if not category:
                 category = await ctx.guild.create_category('Roleplay')
             channel = await ctx.guild.create_text_channel(name, category=category)
-            await ctx.send(f'✅ Channel {channel.mention} berhasil dibuat! Silakan gunakan `!char set` di sana.')
         except Exception as e:
-            await ctx.send(f'❌ Gagal buat channel: {e}')
-    else:
-        await ctx.send(f'ℹ️ Channel {channel.mention} udah ada.')
+            return await ctx.send(f'❌ Gagal buat channel: {e}', delete_after=5)
+    
+    embed = discord.Embed(
+        title="📜 Pembuatan Karakter RP",
+        description="Silakan klik tombol **Buat Karakter** di bawah ini untuk mengisi form profil karakter Anda." + nl + nl + "*(Pastikan Anda mengisi data dengan benar karena Nickname server akan otomatis berubah sesuai Nama IC).*",
+        color=discord.Color.blurple()
+    )
+    
+    await channel.send(embed=embed, view=CharView())
+    await ctx.send(f"✅ Panel karakter berhasil dikirim ke {channel.mention}!", delete_after=5)
+
+
 # ══════════════════════════════════════════════════════════════
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
