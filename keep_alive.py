@@ -3,10 +3,8 @@ import threading
 import os
 import time
 
-# Variabel global buat nyimpen data bot
 bot_instance = None
 start_time = time.time()
-
 INVITE_LINK = "https://discord.gg/fYMu3msZ"
 
 class DashboardHandler(BaseHTTPRequestHandler):
@@ -21,14 +19,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 total_members += guild.member_count
                 icon_url = guild.icon.url if guild.icon else "https://cdn.discordapp.com/embed/avatars/0.png"
                 servers_html += f"""
-                <div class="server-row">
+                <a href="{INVITE_LINK}" target="_blank" class="server-card">
                     <img src="{icon_url}" class="srv-icon" alt="icon">
                     <div class="srv-info">
                         <span class="srv-name">{guild.name}</span>
-                        <span class="srv-members">{guild.member_count:,} PERSONNEL</span>
+                        <span class="srv-members">{guild.member_count:,} OPERATIVES</span>
                     </div>
-                    <span class="srv-status">ACTIVE</span>
-                </div>
+                    <span class="srv-btn">JOIN &rarr;</span>
+                </a>
                 """
             ping = round(bot_instance.latency * 1000)
         else:
@@ -46,331 +44,68 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>CÁRTEL MAINFRAME | Classified</title>
-            <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+            <title>FORTXX SYSTEM | Dashboard</title>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
             <style>
-                :root {{
-                    --bg-deep: #020202;
-                    --bg-panel: rgba(12, 12, 14, 0.75);
-                    --border: rgba(255, 26, 26, 0.15);
-                    --text-main: #e0e0e0;
-                    --text-muted: #777777;
-                    --accent-red: #ff1a1a;
-                    --accent-dark: #8a0000;
-                    --accent-gold: #d4af37;
-                    --accent-green: #00ff88;
-                }}
+                :root {{ --bg: #09090b; --card: #121214; --border: #27272a; --text: #e4e4e7; --muted: #a1a1aa; --red: #ef4444; --gold: #eab308; --green: #22c55e; }}
                 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-                body {{
-                    background-color: var(--bg-deep);
-                    background-image: 
-                        radial-gradient(circle at 15% 50%, rgba(138, 0, 0, 0.08) 0%, transparent 40%),
-                        radial-gradient(circle at 85% 30%, rgba(255, 26, 26, 0.05) 0%, transparent 40%);
-                    color: var(--text-main);
-                    font-family: 'Inter', sans-serif;
-                    min-height: 100vh;
-                    display: flex;
-                    flex-direction: column;
-                    overflow-x: hidden;
-                }}
-                
-                /* Scanline effect */
-                body::after {{
-                    content: "";
-                    position: fixed;
-                    top: 0; left: 0; width: 100%; height: 100%;
-                    background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.1) 50%);
-                    background-size: 100% 4px;
-                    pointer-events: none;
-                    z-index: 100;
-                    opacity: 0.3;
-                }}
-
-                .nav {{
-                    padding: 15px 40px;
-                    border-bottom: 1px solid rgba(255, 26, 26, 0.1);
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    background: rgba(0, 0, 0, 0.4);
-                    backdrop-filter: blur(8px);
-                    position: sticky;
-                    top: 0;
-                    z-index: 50;
-                }}
-                .brand-lockup {{
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    font-family: 'Cinzel', serif;
-                    font-weight: 900;
-                    letter-spacing: 3px;
-                    font-size: 1.1rem;
-                }}
-                .brand-mark {{
-                    color: var(--accent-red);
-                    font-size: 1.4rem;
-                    text-shadow: 0 0 10px var(--accent-red);
-                }}
-                .sys-status {{
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 0.7rem;
-                    color: var(--accent-green);
-                    padding: 4px 12px;
-                    border: 1px solid rgba(0, 255, 136, 0.3);
-                    border-radius: 2px;
-                    background: rgba(0, 255, 136, 0.05);
-                }}
-                .blink {{
-                    width: 6px; height: 6px;
-                    background: var(--accent-green);
-                    border-radius: 50%;
-                    box-shadow: 0 0 8px var(--accent-green);
-                    animation: blink 1s infinite alternate;
-                }}
-                @keyframes blink {{ from {{ opacity: 0.3; }} to {{ opacity: 1; }} }}
-
-                .hero {{
-                    padding: 80px 20px 40px;
-                    text-align: center;
-                    position: relative;
-                }}
-                .hero-label {{
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 0.75rem;
-                    color: var(--accent-red);
-                    letter-spacing: 4px;
-                    margin-bottom: 20px;
-                    text-transform: uppercase;
-                }}
-                .hero h1 {{
-                    font-family: 'Cinzel', serif;
-                    font-size: clamp(2.5rem, 5vw, 4.5rem);
-                    font-weight: 900;
-                    line-height: 1.1;
-                    background: linear-gradient(180deg, #ffffff 0%, #a0a0a0 100%);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                    margin-bottom: 15px;
-                    text-shadow: 0 0 30px rgba(255, 26, 26, 0.2);
-                }}
-                .hero p {{
-                    color: var(--text-muted);
-                    font-style: italic;
-                    letter-spacing: 1px;
-                    margin-bottom: 30px;
-                    font-size: 0.95rem;
-                }}
-                .cta-btn {{
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 10px;
-                    background: rgba(255, 26, 26, 0.1);
-                    color: #ffcccc;
-                    border: 1px solid var(--accent-red);
-                    padding: 12px 30px;
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 0.85rem;
-                    font-weight: 700;
-                    text-decoration: none;
-                    letter-spacing: 2px;
-                    transition: all 0.3s;
-                    box-shadow: 0 0 20px rgba(255, 26, 26, 0.15);
-                }}
-                .cta-btn:hover {{
-                    background: var(--accent-red);
-                    color: #000;
-                    box-shadow: 0 0 30px rgba(255, 26, 26, 0.5);
-                }}
-
-                .grid-container {{
-                    max-width: 1100px;
-                    margin: 0 auto;
-                    padding: 20px;
-                    width: 100%;
-                    display: grid;
-                    grid-template-columns: repeat(4, 1fr);
-                    gap: 15px;
-                    flex: 1;
-                }}
-                @media (max-width: 768px) {{
-                    .grid-container {{ grid-template-columns: repeat(2, 1fr); }}
-                    .col-span-4 {{ grid-column: span 2 !important; }}
-                }}
-
-                /* Glassmorphism Cards */
-                .card {{
-                    background: var(--bg-panel);
-                    border: 1px solid var(--border);
-                    border-radius: 4px;
-                    padding: 24px;
-                    backdrop-filter: blur(12px);
-                    position: relative;
-                    overflow: hidden;
-                    transition: border-color 0.3s;
-                }}
-                .card:hover {{
-                    border-color: rgba(255, 26, 26, 0.4);
-                }}
-                .card::before {{
-                    content: '';
-                    position: absolute;
-                    top: 0; left: 0; width: 100%; height: 1px;
-                    background: linear-gradient(90deg, transparent, rgba(255, 26, 26, 0.5), transparent);
-                }}
-                
-                .stat-val {{
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 2.5rem;
-                    font-weight: 700;
-                    color: var(--accent-gold);
-                    line-height: 1;
-                    margin-bottom: 8px;
-                }}
-                .stat-lbl {{
-                    font-size: 0.65rem;
-                    color: var(--text-muted);
-                    letter-spacing: 2px;
-                    text-transform: uppercase;
-                }}
-
-                .col-span-4 {{
-                    grid-column: span 4;
-                }}
-
-                .networks-title {{
-                    font-family: 'Cinzel', serif;
-                    font-size: 1.1rem;
-                    color: var(--text-main);
-                    margin-bottom: 15px;
-                    padding-bottom: 10px;
-                    border-bottom: 1px solid rgba(255,255,255,0.05);
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                }}
-                .networks-title span {{ color: var(--accent-red); }}
-
-                .srv-grid {{
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                    gap: 12px;
-                }}
-                .server-row {{
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                    background: rgba(0,0,0,0.3);
-                    border: 1px solid rgba(255,255,255,0.03);
-                    padding: 12px;
-                    border-radius: 4px;
-                }}
-                .srv-icon {{
-                    width: 40px; height: 40px;
-                    border-radius: 4px;
-                    border: 1px solid rgba(255,255,255,0.1);
-                }}
-                .srv-info {{
-                    display: flex;
-                    flex-direction: column;
-                    flex: 1;
-                }}
-                .srv-name {{
-                    font-weight: 600;
-                    font-size: 0.9rem;
-                }}
-                .srv-members {{
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 0.65rem;
-                    color: var(--text-muted);
-                    margin-top: 2px;
-                }}
-                .srv-status {{
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 0.6rem;
-                    color: var(--accent-green);
-                    border: 1px solid rgba(0,255,136,0.2);
-                    padding: 2px 6px;
-                    border-radius: 2px;
-                }}
-
-                .loading {{
-                    font-family: 'JetBrains Mono', monospace;
-                    color: var(--accent-red);
-                    text-align: center;
-                    padding: 20px;
-                    animation: blink 1.5s infinite;
-                }}
-
-                .footer {{
-                    text-align: center;
-                    padding: 25px;
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 0.65rem;
-                    color: #444;
-                    border-top: 1px solid rgba(255,255,255,0.05);
-                    background: #000;
-                    letter-spacing: 1px;
-                }}
+                body {{ background-color: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }}
+                .nav {{ padding: 15px 30px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(9, 9, 11, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 10; }}
+                .brand {{ font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1rem; color: var(--text); display: flex; align-items: center; gap: 8px; }}
+                .brand span {{ color: var(--red); }}
+                .status {{ display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--green); padding: 4px 10px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 4px; }}
+                .dot {{ width: 6px; height: 6px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); }}
+                .hero {{ padding: 50px 20px; text-align: center; }}
+                .hero h1 {{ font-family: 'JetBrains Mono', monospace; font-size: 2.5rem; font-weight: 800; color: #fff; letter-spacing: -1px; margin-bottom: 10px; }}
+                .hero h1 span {{ color: var(--red); }}
+                .owner {{ display: inline-flex; align-items: center; gap: 8px; background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); padding: 6px 16px; border-radius: 99px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--gold); margin-bottom: 15px; }}
+                .owner b {{ color: #fff; }}
+                .hero p {{ color: var(--muted); font-family: 'Cinzel', serif; font-style: italic; font-size: 1rem; }}
+                .container {{ max-width: 900px; margin: 0 auto; padding: 0 20px 50px; width: 100%; flex: 1; }}
+                .stats {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 30px; }}
+                @media (min-width: 600px) {{ .stats {{ grid-template-columns: repeat(4, 1fr); }} }}
+                .stat-box {{ background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: center; }}
+                .stat-val {{ font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 700; color: var(--gold); margin-bottom: 4px; }}
+                .stat-lbl {{ font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }}
+                .section-title {{ font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: var(--text); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; }}
+                .section-title span {{ color: var(--red); }}
+                .server-list {{ display: flex; flex-direction: column; gap: 10px; }}
+                .server-card {{ display: flex; align-items: center; gap: 15px; background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-decoration: none; color: var(--text); transition: all 0.2s; cursor: pointer; }}
+                .server-card:hover {{ border-color: var(--red); background: rgba(239, 68, 68, 0.05); transform: translateY(-2px); }}
+                .srv-icon {{ width: 45px; height: 45px; border-radius: 50%; border: 1px solid var(--border); }}
+                .srv-info {{ display: flex; flex-direction: column; flex: 1; }}
+                .srv-name {{ font-weight: 600; font-size: 1rem; }}
+                .srv-members {{ font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--muted); margin-top: 2px; }}
+                .srv-btn {{ font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; color: var(--red); padding: 6px 12px; border: 1px solid var(--red); border-radius: 4px; }}
+                .server-card:hover .srv-btn {{ background: var(--red); color: #fff; }}
+                .loading {{ font-family: 'JetBrains Mono', monospace; color: var(--red); text-align: center; padding: 20px; }}
+                .footer {{ text-align: center; padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #555; border-top: 1px solid var(--border); }}
             </style>
         </head>
         <body>
             <nav class="nav">
-                <div class="brand-lockup">
-                    <span class="brand-mark">🩸</span> CÁRTEL MAINFRAME
-                </div>
-                <div class="sys-status">
-                    <div class="blink"></div> SECURE LINK
-                </div>
+                <div class="brand"><span>&#129656;</span> FORTXX SYSTEM</div>
+                <div class="status"><div class="dot"></div> ONLINE</div>
             </nav>
-
             <div class="hero">
-                <div class="hero-label">// SYSTEM OVERRIDE // AUTHORIZED PERSONNEL ONLY //</div>
-                
-                <h1 class="glitch" data-text="FORTXX">FORTXX</h1>
-                
-                <div class="owner-badge">
-                    <span class="crown">👑</span> EL JEFE: <span class="owner-name">@zomahaci</span>
-                </div>
-                
-                <p class="tagline">"La Familia es todo."</p>
-                
-                <a href="{INVITE_LINK}" target="_blank" class="cta-btn">REQUEST ENTRY TO SYNDICATE →</a>
+                <h1>FORTXX<span>.</span>BOT</h1>
+                <div class="owner">&#128081; EL JEFE: <b>@zomahaci</b></div>
+                <p>"La Familia es todo."</p>
             </div>
-
-            <div class="grid-container">
-                <!-- Stats Row -->
-                <div class="card">
-                    <div class="stat-val">{total_servers}</div>
-                    <div class="stat-lbl">Networks</div>
+            <div class="container">
+                <div class="stats">
+                    <div class="stat-box"><div class="stat-val">{total_servers}</div><div class="stat-lbl">Networks</div></div>
+                    <div class="stat-box"><div class="stat-val">{total_members:,}</div><div class="stat-lbl">Operatives</div></div>
+                    <div class="stat-box"><div class="stat-val">{ping}ms</div><div class="stat-lbl">Latency</div></div>
+                    <div class="stat-box"><div class="stat-val">{uptime_str}</div><div class="stat-lbl">Uptime</div></div>
                 </div>
-                <div class="card">
-                    <div class="stat-val">{total_members:,}</div>
-                    <div class="stat-lbl">Operatives</div>
-                </div>
-                <div class="card">
-                    <div class="stat-val">{ping}ms</div>
-                    <div class="stat-lbl">Uplink Latency</div>
-                </div>
-                <div class="card">
-                    <div class="stat-val">{uptime_str}</div>
-                    <div class="stat-lbl">System Uptime</div>
-                </div>
-
-                <!-- Networks List -->
-                <div class="card col-span-4">
-                    <div class="networks-title"><span>🌐</span> CONNECTED NETWORKS</div>
-                    <div class="srv-grid">
-                        {servers_html}
-                    </div>
+                <div class="section-title"><span>&#127760;</span> Connected Networks</div>
+                <div class="server-list">
+                    {servers_html}
                 </div>
             </div>
-
             <div class="footer">
-                CÁRTEL DE JALISCO NUEVA GENERACIÓN © 2026 // INFRASTRUCTURE DIVISION
+                FORTXX SYSTEM &copy; 2026 | POWERED BY @zomahaci
             </div>
         </body>
         </html>
@@ -387,7 +122,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
 def _run_server():
     port = int(os.environ.get("PORT", 11963))
     server = HTTPServer(('0.0.0.0', port), DashboardHandler)
-    print(f"[keep_alive] Classified Command Center jalan di 0.0.0.0:{port}")
+    print(f"[keep_alive] Server jalan di 0.0.0.0:{port}")
     server.serve_forever()
 
 def keep_alive(bot):
