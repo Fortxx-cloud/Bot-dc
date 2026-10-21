@@ -267,11 +267,11 @@ async def warn(ctx, member: discord.Member, *, reason="Tidak ada alasan"):
         nama_ic = member.display_name
         tag_mention = f"<@&{_get_warn_tag_id()}>" if _get_warn_tag_id() else "(gak ada)"
         warn_msg = (
-            f"## 🛑  __Warn anggota__" + nl +
-            f"!warn {member.mention}" + nl +
-            f"Nama ic : {nama_ic}" + nl +
-            f"Alasannya : {reason}" + nl + nl +
-            f"**NOTE : **" + nl + nl +
+            "## 🛑  __Warn anggota__" + chr(10) +
+            f"!warn {member.mention}" + chr(10) +
+            f"Nama ic : {nama_ic}" + chr(10) +
+            f"Alasannya : {reason}" + chr(10) + chr(10) +
+            "**NOTE : **" + chr(10) + chr(10) +
             f"Tag : {tag_mention}"
         )
         await ctx.send(warn_msg)
