@@ -2272,4 +2272,50 @@ async def rp_cmd(ctx, *, aksi: str):
     await ctx.send(jawaban[:2000])
 # ══════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════
+# 🤖 AI CHANNEL (AUTO REPLY TANPA COMMAND)
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='setupai')
+async def setupai_cmd(ctx):
+    """Bikin channel khusus AI asisten."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    category = discord.utils.get(ctx.guild.categories, name='SETTINGS')
+    if not category:
+        category = await ctx.guild.create_category('SETTINGS')
+        
+    channel_name = '🤖┃ai-asisten'
+    ch = discord.utils.find(lambda c: 'ai-asisten' in c.name.lower(), ctx.guild.text_channels)
+    
+    if not ch:
+        ch = await ctx.guild.create_text_channel(channel_name, category=category)
+        await ctx.send(f'✅ Channel {ch.mention} berhasil dibuat!')
+    else:
+        await ch.edit(category=category)
+        await ctx.send(f'✅ Channel {ch.mention} siap digunakan!')
+        
+    embed = discord.Embed(
+        title='🤖 AI Asisten Cártel de Jalisco',
+        description='Halo! Aku adalah asisten AI server ini. Kamu bisa tanya apa aja di sini tanpa perlu command.' + chr(10) + chr(10) + 'Contoh: Tanya cara ambil role atau jelasin aturan RP dong.',
+        color=discord.Color.green()
+    )
+    await ch.send(embed=embed)
+
+@bot.listen('on_message')
+async def ai_channel_listener(message):
+    if message.author.bot:
+        return
+        
+    # Cek apakah pesan dikirim di channel ai-asisten dan bukan command
+    if 'ai-asisten' in message.channel.name.lower() and not message.content.startswith('!'):
+        async with message.channel.typing():
+            system_prompt = 'Kamu adalah asisten AI ramah untuk server Roleplay Cártel de Jalisco. Tugasmu membantu member menjawab pertanyaan seputar aturan RP, cara bikin karakter, take role, dan hal umum lainnya. Jawab dengan bahasa Indonesia yang santai tapi sopan.'
+            jawaban = await tanya_aion(message.content, system_prompt=system_prompt)
+            
+            if len(jawaban) > 2000:
+                jawaban = jawaban[:1997] + '...'
+                
+            await message.reply(jawaban, mention_author=False)
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
