@@ -328,10 +328,17 @@ class DashboardHandler(BaseHTTPRequestHandler):
             </nav>
 
             <div class="hero">
-                <div class="hero-label">// CLASSIFIED INTEL //</div>
-                <h1>Cártel de Jalisco</h1>
-                <p>"El que se va, nunca vuelve."</p>
-                <a href="{INVITE_LINK}" target="_blank" class="cta-btn">INITIATE ENLISTMENT →</a>
+                <div class="hero-label">// SYSTEM OVERRIDE // AUTHORIZED PERSONNEL ONLY //</div>
+                
+                <h1 class="glitch" data-text="FORTXX">FORTXX</h1>
+                
+                <div class="owner-badge">
+                    <span class="crown">👑</span> EL JEFE: <span class="owner-name">@zomahaci</span>
+                </div>
+                
+                <p class="tagline">"La Familia es todo."</p>
+                
+                <a href="{INVITE_LINK}" target="_blank" class="cta-btn">REQUEST ENTRY TO SYNDICATE →</a>
             </div>
 
             <div class="grid-container">
