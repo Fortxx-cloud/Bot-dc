@@ -2130,4 +2130,72 @@ async def goodbye_event_cartel(member):
         await ch.send(embed=embed)
 # ══════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════
+# ✅ VERIFICATION GATEKEEPER (REACTION ROLE)
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='setupverify')
+async def setupverify_cmd(ctx):
+    """Setup sistem verifikasi & lock channel otomatis."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    try:
+        # 1. Bikin Role Verified
+        role = discord.utils.get(ctx.guild.roles, name='✅ Verified')
+        if not role:
+            role = await ctx.guild.create_role(name='✅ Verified', color=discord.Color.green(), reason='Setup verifikasi')
+            
+        # 2. Kirim pesan reaksi
+        embed = discord.Embed(
+            title='✅ VERIFIKASI SERVER',
+            description='Klik reaksi **✅** di bawah ini untuk membuka akses ke seluruh channel server.' + chr(10) + chr(10) + '*Note: Jika reaksi dihapus, akses akan dicabut otomatis.*',
+            color=discord.Color.green()
+        )
+        msg = await ctx.send(embed=embed)
+        await msg.add_reaction('✅')
+        
+        # 3. Simpan ID ke config
+        cfg = _cfg_load()
+        cfg['verify_message_id'] = msg.id
+        cfg['verify_role_id'] = role.id
+        _cfg_save(cfg)
+        
+        # 4. Lock semua channel kecuali channel ini
+        await ctx.send('⏳ Sedang mengunci channel lain...')
+        for ch in ctx.guild.channels:
+            try:
+                if ch.id != ctx.channel.id:
+                    await ch.set_permissions(ctx.guild.default_role, read_messages=False)
+                    await ch.set_permissions(role, read_messages=True)
+            except: pass
+        
+        await ctx.send('✅ **Selesai!** Server berhasil dikunci. Member baru sekarang harus klik ✅ untuk masuk.' + chr(10) + '⚠️ **PENTING:** Pindahkan Role `✅ Verified` ke atas role member lain agar sistem berjalan sempurna.')
+    except Exception as e:
+        await ctx.send(f'❌ Error: {e}')
+
+@bot.event
+async def on_raw_reaction_add(payload):
+    if payload.user_id == bot.user.id: return
+    cfg = _cfg_load()
+    if cfg.get('verify_message_id') == payload.message_id and str(payload.emoji) == '✅':
+        guild = bot.get_guild(payload.guild_id)
+        if not guild: return
+        role = guild.get_role(int(cfg.get('verify_role_id', 0)))
+        member = guild.get_member(payload.user_id)
+        if role and member:
+            try: await member.add_roles(role)
+            except: pass
+
+@bot.event
+async def on_raw_reaction_remove(payload):
+    cfg = _cfg_load()
+    if cfg.get('verify_message_id') == payload.message_id and str(payload.emoji) == '✅':
+        guild = bot.get_guild(payload.guild_id)
+        if not guild: return
+        role = guild.get_role(int(cfg.get('verify_role_id', 0)))
+        member = guild.get_member(payload.user_id)
+        if role and member:
+            try: await member.remove_roles(role)
+            except: pass
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
