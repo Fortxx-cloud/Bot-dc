@@ -2346,19 +2346,35 @@ async def setupai_cmd(ctx):
 
 @bot.listen('on_message')
 async def ai_channel_listener(message):
-    if message.author.bot:
-        return
-        
-    # Cek apakah pesan dikirim di channel ai-asisten dan bukan command
-    if 'ai-asisten' in message.channel.name.lower() and not message.content.startswith('!'):
+    if message.author.bot: return
+    if not message.guild: return
+    
+    # Cek apakah ini channel AI (cek nama channel aja biar lebih aman)
+    if not message.channel.name.startswith('🤖┃ai-'): return
+    if message.content.startswith('!'): return
+    
+    print(f"[AI-CHANNEL] Menerima pesan dari {message.author.name}: {message.content}")
+    
+    try:
         async with message.channel.typing():
-            system_prompt = 'Kamu adalah asisten AI ramah untuk server Roleplay Cártel de Jalisco. Tugasmu membantu member menjawab pertanyaan seputar aturan RP, cara bikin karakter, take role, dan hal umum lainnya. Jawab dengan bahasa Indonesia yang santai tapi sopan.'
+            system_prompt = 'Kamu adalah asisten AI pribadi ramah untuk server Roleplay Cártel de Jalisco. Bantu member dengan pertanyaan seputar aturan RP, cara bikin karakter, take role, ide cerita, dan hal umum lainnya. Jawab santai, sopan, dan singkat.'
             jawaban = await tanya_aion(message.content, system_prompt=system_prompt)
             
             if len(jawaban) > 2000:
                 jawaban = jawaban[:1997] + '...'
                 
             await message.reply(jawaban, mention_author=False)
-# ══════════════════════════════════════════════════════════════
+            print(f"[AI-CHANNEL] Berhasil membalas pesan.")
+    except Exception as e:
+        print(f"[AI-CHANNEL] ERROR: {e}")
+        await message.reply(f"❌ **Sistem AI Error:** `{e}`")
+
+@bot.command(name='testai')
+async def testai_cmd(ctx):
+    """Cek apakah API Key Aion berfungsi."""
+    if not is_mod(ctx): return
+    await ctx.typing()
+    respon = await tanya_aion("Halo, ini pesan tes. Balas dengan 'Sistem AI Online!'")
+    await ctx.send(f"**Hasil Tes AI:**{nl}{respon}")
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
