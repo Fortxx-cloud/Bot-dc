@@ -1752,7 +1752,7 @@ async def send_log(guild, title, description, color=discord.Color.blurple()):
     await bot_log(guild, title, description, color)
 # ═════════════════════════════════════════
 
-keep_alive()  # mulai HTTP server untuk Render
+keep_alive(bot)  # mulai HTTP server untuk Render
 
 import base64
 
