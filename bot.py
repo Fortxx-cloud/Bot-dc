@@ -880,8 +880,15 @@ def _build_categories():
             "timeout", "untimeout", "banlist", "unban",
             "snipe", "editsnipe"
         ),
-        "🎫 Ticket & RP": (
-            "ticket", "char", "setupchar", "setupwelcome"
+        "🎫 Ticket & Karakter": (
+            "ticket", "char", "setupchar"
+        ),
+        "🤖 Sistem AI": (
+            "setupai", "testai", "ai", "rp"
+        ),
+        "⚙️ Server Setup": (
+            "setupverify", "setupwelcome", "dekorasi", "buatpesan",
+            "setbotlog", "setwarnlog", "setwarntag", "loginfo"
         ),
         "🎭 Role & Channel": (
             "role", "addrole", "removerole", "createrole", "deleterole",
@@ -889,9 +896,6 @@ def _build_categories():
             "roleinfo", "listroles", "roleedit", "roleperm",
             "createchannel", "deletechannel", "renamechannel",
             "createcategory", "topic", "listchannels", "channelinfo"
-        ),
-        "🔥 Logs": (
-            "setbotlog", "setwarnlog", "setwarntag", "loginfo"
         ),
         "👑 Owner": (
             "botrun", "botremove", "botlist", "setmodrole"
@@ -2531,6 +2535,32 @@ try:
     bot.add_view(EmbedBuilderView())
 except Exception:
     pass
+# ══════════════════════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════
+# 🟥 TEKS BERWARNA MERAH (ANSI CODE BLOCK)
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='merah')
+async def merah_cmd(ctx, *, text: str):
+    """Kirim teks berwarna merah menyala."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    # Kode ANSI: \u001b[0;31m itu artinya warna merah, \u001b[0m itu reset
+    red_text = f'```ansi' + chr(10) + f'\u001b[0;31m{text}\u001b[0m' + chr(10) + '```'
+    
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+        
+    await ctx.send(red_text)
+
+@bot.command(name='merahs')
+async def merahs_cmd(ctx, *, text: str):
+    """Kirim teks merah tanpa menghapus pesan command."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    red_text = f'```ansi' + chr(10) + f'\u001b[0;31m{text}\u001b[0m' + chr(10) + '```'
+    await ctx.send(red_text)
 # ══════════════════════════════════════════════════════════════
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
