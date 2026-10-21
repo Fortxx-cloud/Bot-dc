@@ -2377,4 +2377,79 @@ async def testai_cmd(ctx):
     respon = await tanya_aion("Halo, ini pesan tes. Balas dengan 'Sistem AI Online!'")
     await ctx.send(f"**Hasil Tes AI:**{nl}{respon}")
 
+# ══════════════════════════════════════════════════════════════
+# 🎨 AUTO DECORATOR (STYLE 1: ELITE CARTEL)
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='dekorasi')
+async def dekorasi_cmd(ctx, style: int = 1):
+    """Ubah nama channel & kategori jadi auto-keren."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    if style != 1: return await ctx.send('❌ Baru tersedia Style 1 (Elite Cartel).')
+    
+    msg = await ctx.send('🎨 **Memulai dekorasi server...** Mohon tunggu, jangan spam command ini (kena rate limit).' + chr(10) + 'Proses ini butuh waktu sekitar 30-60 detik.')
+    
+    # Mapping Kategori
+    cat_map = {
+        'PUBLIC ROOM': '⛧ ══════ 🟦 𝗣𝗨𝗕𝗟𝗜𝗖 𝗥𝗢𝗢𝗠 🟦 ══════ ⛧',
+        'CJNG RULES': '⛧ ══════ 🟪 𝗖𝗝𝗡𝗚 𝗥𝗨𝗟𝗘𝗦 🟪 ══════ ⛧',
+        'REPORT ROOM': '⛧ ══════ 🟥 𝗥𝗘𝗣𝗢𝗥𝗧 𝗥𝗢𝗢𝗠 🟥 ══════ ⛧',
+        'BLACK MARKET': '⛧ ══════ 🟩 𝗕𝗟𝗔𝗖𝗞 𝗠𝗔𝗥𝗞𝗘𝗧 🟩 ══════ ⛧',
+        'TAKE ROLE': '⛧ ══════ 🟨 𝗧𝗔𝗞𝗘 𝗥𝗢𝗟𝗘 🟨 ══════ ⛧',
+        'SETTINGS': '⛧ ══════ ⚙️ 𝗦𝗘𝗧𝗧𝗜𝗡𝗚𝗦 ⚙️ ══════ ⛧',
+        'PATNER': '⛧ ══════ 🤝 𝗣𝗔𝗥𝗧𝗡𝗘𝗥 ══════ ⛧',
+        'OFFICIAL LINK': '⛧ ══════ 🔗 𝗢𝗙𝗙𝗜𝗖𝗜𝗔𝗟 𝗟𝗜𝗡𝗞 ══════ ⛧',
+        'ANNOUNCEMENT': '⛧ ══════ 📢 𝗔𝗡𝗡𝗢𝗨𝗡𝗖𝗘𝗠𝗘𝗡𝗧 ══════ ⛧',
+        'BOT RUN': '⛧ ══════ 🤖 𝗕𝗢𝗧 𝗥𝗨𝗡 ══════ ⛧',
+        'REQ AREA': '⛧ ══════ 📝 𝗥𝗘𝗤 𝗔𝗥𝗘𝗔 ══════ ⛧'
+    }
+    
+    # Rename Kategori
+    for cat in ctx.guild.categories:
+        if cat.name.upper() in cat_map:
+            try:
+                await cat.edit(name=cat_map[cat.name.upper()])
+                await asyncio.sleep(1.5)
+            except: pass
+            
+    # Mapping Channel (Berdasarkan keyword)
+    ch_map = {
+        'publik': '💬 〢 𝘱𝘶𝘣𝘭𝘪𝘬-𝘤𝘩𝘢𝘵',
+        'chat • bot': '🤖 〢 𝘤𝘩𝘢𝘵-𝘣𝘰𝘵',
+        'share': '🎬 〢 𝘴𝘩𝘢𝘳𝘦-𝘤𝘰𝘯𝘵𝘦𝘯𝘵',
+        'ask-room': '💋 〢 𝘢𝘴𝘬-𝘳𝘰𝘰𝘮',
+        'take-role-name-ic': '📜 〢 𝘵𝘢𝘬𝘦-𝘳𝘰𝘭𝘦-𝘯𝘢𝘮𝘦-𝘪𝘤',
+        'daftar-karakter': '📜 〢 𝘥𝘢𝘧𝘵𝘢𝘳-𝘬𝘢𝘳𝘢𝘬𝘵𝘦𝘳',
+        'take • role': '👤 〢 𝘵𝘢𝘬𝘦-𝘳𝘰𝘭𝘦',
+        'welcome': '👋 〢 𝘸𝘦𝘭𝘤𝘰𝘮𝘦',
+        'bot-run': '🔥 〢 𝘣𝘰𝘵-𝘳𝘶𝘯',
+        'report • anggota': '🩸 〢 𝘳𝘦𝘱𝘰𝘳𝘵-𝘢𝘯𝘨𝘨𝘰𝘵𝘢',
+        'logs-warning': '🩸 〢 𝘭𝘰𝘨𝘴-𝘸𝘢𝘳𝘯𝘪𝘯𝘨',
+        'ticket': '🎫 〢 𝘵𝘪𝘤𝘬𝘦𝘵',
+        'announcement': '📢 〢 𝘢𝘯𝘯𝘰𝘶𝘯𝘤𝘦𝘮𝘦𝘯𝘵',
+        'official-link': '🔗 〢 𝘰𝘧𝘧𝘪𝘤𝘪𝘢𝘭-𝘭𝘪𝘯𝘬',
+        'informasi': '💊 〢 𝘪𝘯𝘧𝘰𝘳𝘮𝘢𝘴𝘪-𝘥𝘢𝘳𝘬',
+        'beli': '🛒 〢 𝘣𝘦𝘭𝘪-𝘣𝘢𝘳𝘢𝘯𝘨',
+        'rules-dark': '📕 〢 𝘳𝘶𝘭𝘦𝘴-𝘥𝘢𝘳𝘬'
+    }
+    
+    # Rename Channel
+    for ch in ctx.guild.text_channels:
+        ch_name_lower = ch.name.lower()
+        for key, new_name in ch_map.items():
+            if key in ch_name_lower:
+                try:
+                    await ch.edit(name=new_name)
+                    await asyncio.sleep(1.5)
+                except: pass
+                break
+                
+    # Ubah warna role WARGA CJNG (Teks nama role jadi warna merah gelap)
+    role = discord.utils.get(ctx.guild.roles, name='WARGA CJNG')
+    if role:
+        try: await role.edit(color=discord.Color.dark_red())
+        except: pass
+        
+    await msg.edit(content='✅ **Dekorasi Selesai!** Server lu sekarang udah punya tampilan *Elite Cartel*.' + chr(10) + 'Silakan cek channel dan kategori lu.' + chr(10) + chr(10) + '*(Note: Discord tidak mendukung teks warna-warni di nama channel, jadi kita pakai emoji warna sebagai gantinya).*')
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
