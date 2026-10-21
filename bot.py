@@ -238,6 +238,12 @@ class WarnModal(discord.ui.Modal, title='Form Warning Anggota'):
         placeholder='Contoh: Spam chat OOC',
         required=True
     )
+    note = discord.ui.TextInput(
+        label='Note Tambahan',
+        style=discord.TextStyle.short,
+        placeholder='Contoh: Warn pertama / Opsional',
+        required=False
+    )
 
     def __init__(self, member: discord.Member):
         super().__init__()
@@ -248,12 +254,14 @@ class WarnModal(discord.ui.Modal, title='Form Warning Anggota'):
         member = self.member
         nama_ic = self.nama_ic.value
         reason = self.alasan.value
+        note_val = self.note.value or '-'
 
         warns = load_warns()
         gid, uid = str(interaction.guild.id), str(member.id)
         warns.setdefault(gid, {}).setdefault(uid, []).append({
             "reason": reason,
             "nama_ic": nama_ic,
+            "note": note_val,
             "by": str(interaction.user),
             "time": str(discord.utils.utcnow())
         })
@@ -297,6 +305,7 @@ class WarnModal(discord.ui.Modal, title='Form Warning Anggota'):
         embed.add_field(name="📊 Total Warn", value=f"**{total} / {MAX_WARN}**", inline=True)
         embed.add_field(name="👮 Oleh", value=interaction.user.mention, inline=True)
         embed.add_field(name="📝 Alasan", value=f"> {reason}", inline=False)
+        embed.add_field(name="📝 Note", value=f"> {note_val}", inline=False)
         
         footer_text = f"Target ID: {member.id}"
         if tag_mention:
