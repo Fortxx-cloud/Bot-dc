@@ -2063,4 +2063,62 @@ async def setupchar_cmd(ctx):
     except Exception as e:
         await ctx.send(f"❌ **Error Detail:** `{e}`")
 
+# ══════════════════════════════════════════════════════════════
+# 👋 WELCOME MESSAGE (CÁRTEL DE JALISCO)
+# ══════════════════════════════════════════════════════════════
+@bot.listen('on_member_join')
+async def welcome_event_cartel(member):
+    ch = discord.utils.find(lambda c: 'welcome' in c.name.lower(), member.guild.text_channels)
+    if ch:
+        take_role_ch = discord.utils.find(lambda c: 'take-role-name-ic' in c.name.lower(), member.guild.text_channels)
+        take_role_mention = take_role_ch.mention if take_role_ch else '`#📜┃take-role-name-ic`'
+        
+        welcome_text = (
+            'Kamu baru saja menginjakkan kaki di wilayah **Cártel de Jalisco Nueva Generación.**' + chr(10) + chr(10) +
+            '⚔️ **PROTOKOL KARTEL:**' + chr(10) +
+            '1️⃣ Hormati **El Jefe** & **La Jefa** tanpa terkecuali.' + chr(10) +
+            '2️⃣ Jaga rahasia *plaza*. Jangan pernah khianati keluarga.' + chr(10) +
+            f'3️⃣ Ambil identitasmu di {take_role_mention}.' + chr(10) +
+            '4️⃣ **Wajib pakai nama IC (In Character) di dalam server.**' + chr(10) + chr(10) +
+            '☕ Meja sudah disiapkan. Kopi sudah dituang.' + chr(10) +
+            'Mulai sekarang, darahmu adalah darah kami.' + chr(10) +
+            '**Bienvenido a la familia.**'
+        )
+        
+        embed = discord.Embed(
+            title=f'🩸 BIENVENIDO, {member.name.upper()}!',
+            description=welcome_text,
+            color=discord.Color.red()
+        )
+        embed.set_thumbnail(url=member.display_avatar.url)
+        
+        await ch.send(content=member.mention, embed=embed)
+# ══════════════════════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════
+# 🩸 GOODBYE MESSAGE (CÁRTEL DE JALISCO)
+# ══════════════════════════════════════════════════════════════
+@bot.listen('on_member_remove')
+async def goodbye_event_cartel(member):
+    ch = discord.utils.find(lambda c: 'welcome' in c.name.lower(), member.guild.text_channels)
+    if ch:
+        goodbye_text = (
+            'Satu keluarga telah pergi dari *plaza*.' + chr(10) + chr(10) +
+            'Apakah dia tersadar dari mimpi, atau justru kabur membawa rasa takut?' + chr(10) +
+            'Kursi di meja ini kini kosong. Kita akan mengingat kesetiaanmu...' + chr(10) +
+            '...atau mengutuk pengkhianatanmu.' + chr(10) + chr(10) +
+            '**El que se va, nunca vuelve.**' + chr(10) +
+            '*Que Dios te acompañe.*'
+        )
+        
+        embed = discord.Embed(
+            title=f'🩸 ADIÓS, {member.name.upper()}!',
+            description=goodbye_text,
+            color=discord.Color.dark_red()
+        )
+        embed.set_thumbnail(url=member.display_avatar.url)
+        
+        await ch.send(embed=embed)
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
