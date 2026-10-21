@@ -266,15 +266,15 @@ async def warn(ctx, member: discord.Member, *, reason="Tidak ada alasan"):
         role_kasih = target_role.mention if target_role else "(gak ada)"
         nama_ic = member.display_name
         tag_mention = f"<@&{_get_warn_tag_id()}>" if _get_warn_tag_id() else "(gak ada)"
-        warn_msg = (
-            "## 🛑  __Warn anggota__" + chr(10) +
-            f"!warn {member.mention}" + chr(10) +
-            f"Nama ic : {nama_ic}" + chr(10) +
-            f"Alasannya : {reason}" + chr(10) + chr(10) +
-            "**NOTE : **" + chr(10) + chr(10) +
-            f"Tag : {tag_mention}"
+        embed = discord.Embed(
+            title="🛑  Warn anggota",
+            description=f"!warn {member.mention}",
+            color=discord.Color.orange()
         )
-        await ctx.send(warn_msg)
+        embed.add_field(name="Nama ic", value=nama_ic, inline=False)
+        embed.add_field(name="Alasannya", value=reason, inline=False)
+        embed.add_field(name="NOTE", value=f"Tag : {tag_mention}", inline=False)
+        await ctx.send(embed=embed)
 
 @bot.command()
 async def warns(ctx, member: discord.Member):
