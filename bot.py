@@ -2200,7 +2200,7 @@ async def on_raw_reaction_add(payload):
                         break
                 
                 if not has_ch:
-                    category = discord.utils.find(lambda c: c.name.upper() == 'SETTINGS', guild.categories)
+                    category = discord.utils.find(lambda c: c.name.upper() == 'PUBLIC ROOM', guild.categories)
                     if not category:
                         category = await guild.create_category('SETTINGS')
                         
