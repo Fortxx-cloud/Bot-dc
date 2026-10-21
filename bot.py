@@ -2221,7 +2221,7 @@ except Exception as e:
 # ══════════════════════════════════════════════════════════════
 import aiohttp
 
-AION_API_KEY = os.getenv('AION_API_KEY')
+AION_API_KEY = base64.b64decode("YWx2Ml9kd19PMldlblN2UEtlOGMtLW1tREtfZjE4di16WVNwLXhIMU1wUG1WLWRr").decode()
 AION_BASE_URL = 'https://api.aionlabs.ai/v1'
 
 async def tanya_aion(prompt: str, system_prompt: str = None, model: str = 'aion-labs/aion-2.0'):
