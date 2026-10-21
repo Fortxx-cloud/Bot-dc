@@ -1985,33 +1985,31 @@ async def char_cmd(ctx, subcommand: str = None, member: discord.Member = None):
 @bot.command(name='setupchar')
 async def setupchar_cmd(ctx):
     """Kirim panel pembuatan karakter RP di channel ini."""
-    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    if not is_mod(ctx): 
+        return await ctx.send('❌ Mod only.')
     
     try:
-        await ctx.message.delete()
-    except Exception:
-        pass
+        name = '🧑‍🤝‍🧑┃karakter-rp'
+        channel = discord.utils.find(lambda c: 'karakter-rp' in c.name.lower(), ctx.guild.text_channels)
         
-    name = '🧑‍🤝‍🧑┃karakter-rp'
-    channel = discord.utils.find(lambda c: 'karakter-rp' in c.name.lower(), ctx.guild.text_channels)
-    
-    if not channel:
-        try:
+        if not channel:
             category = discord.utils.get(ctx.guild.categories, name='Roleplay')
             if not category:
                 category = await ctx.guild.create_category('Roleplay')
             channel = await ctx.guild.create_text_channel(name, category=category)
-        except Exception as e:
-            return await ctx.send(f'❌ Gagal buat channel: {e}', delete_after=5)
-    
-    embed = discord.Embed(
-        title="📜 Pembuatan Karakter RP",
-        description="Silakan klik tombol **Buat Karakter** di bawah ini untuk mengisi form profil karakter Anda." + nl + nl + "*(Pastikan Anda mengisi data dengan benar karena Nickname server akan otomatis berubah sesuai Nama IC).*",
-        color=discord.Color.blurple()
-    )
-    
-    await channel.send(embed=embed, view=CharView())
-    await ctx.send(f"✅ Panel karakter berhasil dikirim ke {channel.mention}!", delete_after=5)
+            
+        embed = discord.Embed(
+            title="📜 Pembuatan Karakter RP",
+            description="Silakan klik tombol **Buat Karakter** di bawah ini untuk mengisi form profil karakter Anda." + nl + nl + "*(Pastikan Anda mengisi data dengan benar karena Nickname server akan otomatis berubah sesuai Nama IC).*",
+            color=discord.Color.blurple()
+        )
+        
+        await channel.send(embed=embed, view=CharView())
+        await ctx.send(f"✅ Panel karakter berhasil dikirim ke {channel.mention}!")
+        
+    except Exception as e:
+        # Menampilkan error asli ke Discord biar gampang dilacak
+        await ctx.send(f"❌ **Error Detail:** `{e}`" + nl + "Pastikan bot punya izin **Manage Channels** dan **Send Messages**.")
 
 
 # ══════════════════════════════════════════════════════════════
