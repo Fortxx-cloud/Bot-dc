@@ -1,3 +1,4 @@
+import unicodedata
 nl = chr(10)
 import discord
 from discord.ext import commands
@@ -13,6 +14,11 @@ intents.members = True
 intents.message_content = True
 intents.presences = True
 intents.moderation = True
+
+
+def normalize_text(t):
+    # Ngubah huruf miring/aneh (𝘣𝘰𝘵) jadi huruf biasa (bot)
+    return unicodedata.normalize('NFKD', t).encode('ascii', 'ignore').decode('ascii').lower()
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
@@ -1307,11 +1313,10 @@ def _get_bot_log_name():
 def _find_bot_log_channel(guild):
     if not guild:
         return None
-    # Cari pakai keyword (biar gak error walau nama channel udah di-dekorasi)
-    for c in guild.text_channels:
-        n = c.name.lower()
+    for ch in guild.text_channels:
+        n = normalize_text(ch.name)
         if "bot-run" in n or "botrun" in n or "bot_run" in n or "bot log" in n:
-            return c
+            return ch
     return None
 
 async def bot_log(guild, title, description, color=discord.Color.blurple()):
@@ -2573,7 +2578,7 @@ async def testlog_cmd(ctx):
     # Tes logs-warning
     warn_ch = None
     for ch in ctx.guild.text_channels:
-        n = ch.name.lower()
+        n = normalize_text(ch.name)
         if "logs-warning" in n or "warn-log" in n or "warn" in n:
             warn_ch = ch
             break
