@@ -1988,7 +1988,7 @@ class CharModal(discord.ui.Modal, title='Form Karakter RP'):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
         
-        channel = discord.utils.find(lambda c: 'take-role-name-ic' in c.name.lower(), interaction.guild.text_channels)
+        channel = discord.utils.find(lambda c: 'daftar-karakter' in c.name.lower(), interaction.guild.text_channels)
         if channel:
             char_embed = discord.Embed(title=f"📜 Kartu Karakter: {self.nama_ic.value}", color=discord.Color.blurple())
             char_embed.set_thumbnail(url=interaction.user.display_avatar.url)
@@ -2057,6 +2057,12 @@ async def setupchar_cmd(ctx):
         if not channel:
             channel = await ctx.guild.create_text_channel(channel_name, category=category, position=0)
             await ctx.send(f"✅ Channel {channel.mention} berhasil dibuat di kategori TAKE ROLE!")
+            
+        # Bikin channel daftar-karakter kalau belum ada
+        char_list_ch = discord.utils.find(lambda c: 'daftar-karakter' in c.name.lower(), ctx.guild.text_channels)
+        if not char_list_ch:
+            char_list_ch = await ctx.guild.create_text_channel('📜┃daftar-karakter', category=category, position=1)
+            await ctx.send(f"✅ Channel {char_list_ch.mention} berhasil dibuat untuk menampung kartu karakter!")
         else:
             await channel.edit(category=category, position=0)
             await ctx.send(f"✅ Channel {channel.mention} berhasil dipindahkan ke paling atas kategori TAKE ROLE!")
