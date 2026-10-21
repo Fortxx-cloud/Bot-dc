@@ -21,17 +21,18 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 total_members += guild.member_count
                 icon_url = guild.icon.url if guild.icon else "https://cdn.discordapp.com/embed/avatars/0.png"
                 servers_html += f"""
-                <div class="server-card">
-                    <img src="{icon_url}" class="server-icon" alt="icon">
-                    <div class="server-info">
-                        <h3>{guild.name}</h3>
-                        <p>{guild.member_count:,} Operatives</p>
+                <div class="server-row">
+                    <img src="{icon_url}" class="srv-icon" alt="icon">
+                    <div class="srv-info">
+                        <span class="srv-name">{guild.name}</span>
+                        <span class="srv-members">{guild.member_count:,} PERSONNEL</span>
                     </div>
+                    <span class="srv-status">ACTIVE</span>
                 </div>
                 """
             ping = round(bot_instance.latency * 1000)
         else:
-            servers_html = "<div class='loading'>Menghubungkan ke satelit Cártel...</div>"
+            servers_html = "<div class='loading'>ESTABLISHING SECURE UPLINK...</div>"
             ping = 0
             
         uptime_sec = int(time.time() - start_time)
@@ -45,247 +46,324 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Cártel de Jalisco | Mainframe</title>
+            <title>CÁRTEL MAINFRAME | Classified</title>
             <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
             <style>
                 :root {{
-                    --bg: #050505;
-                    --card: #111111;
-                    --border: #2a0000;
-                    --text: #e0e0e0;
-                    --red: #ff1a1a;
-                    --dark-red: #8a0000;
-                    --gold: #d4af37;
-                    --green: #00ff00;
+                    --bg-deep: #020202;
+                    --bg-panel: rgba(12, 12, 14, 0.75);
+                    --border: rgba(255, 26, 26, 0.15);
+                    --text-main: #e0e0e0;
+                    --text-muted: #777777;
+                    --accent-red: #ff1a1a;
+                    --accent-dark: #8a0000;
+                    --accent-gold: #d4af37;
+                    --accent-green: #00ff88;
                 }}
                 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
                 body {{
-                    background-color: var(--bg);
-                    background-image: radial-gradient(circle at 50% 0%, #1a0000 0%, #050505 60%);
-                    color: var(--text);
+                    background-color: var(--bg-deep);
+                    background-image: 
+                        radial-gradient(circle at 15% 50%, rgba(138, 0, 0, 0.08) 0%, transparent 40%),
+                        radial-gradient(circle at 85% 30%, rgba(255, 26, 26, 0.05) 0%, transparent 40%);
+                    color: var(--text-main);
                     font-family: 'Inter', sans-serif;
                     min-height: 100vh;
                     display: flex;
                     flex-direction: column;
+                    overflow-x: hidden;
                 }}
-                .top-bar {{
-                    border-bottom: 1px solid var(--border);
-                    padding: 20px 40px;
+                
+                /* Scanline effect */
+                body::after {{
+                    content: "";
+                    position: fixed;
+                    top: 0; left: 0; width: 100%; height: 100%;
+                    background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.1) 50%);
+                    background-size: 100% 4px;
+                    pointer-events: none;
+                    z-index: 100;
+                    opacity: 0.3;
+                }}
+
+                .nav {{
+                    padding: 15px 40px;
+                    border-bottom: 1px solid rgba(255, 26, 26, 0.1);
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    background: rgba(5, 5, 5, 0.9);
-                    backdrop-filter: blur(10px);
+                    background: rgba(0, 0, 0, 0.4);
+                    backdrop-filter: blur(8px);
+                    position: sticky;
+                    top: 0;
+                    z-index: 50;
                 }}
-                .brand {{
-                    font-family: 'Cinzel', serif;
-                    font-size: 1.5rem;
-                    font-weight: 900;
-                    letter-spacing: 2px;
+                .brand-lockup {{
                     display: flex;
                     align-items: center;
-                    gap: 10px;
+                    gap: 12px;
+                    font-family: 'Cinzel', serif;
+                    font-weight: 900;
+                    letter-spacing: 3px;
+                    font-size: 1.1rem;
                 }}
-                .brand span {{ color: var(--red); font-size: 1.8rem; }}
-                .status-badge {{
-                    border: 1px solid var(--green);
-                    color: var(--green);
-                    padding: 6px 16px;
-                    border-radius: 4px;
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 0.8rem;
-                    font-weight: bold;
+                .brand-mark {{
+                    color: var(--accent-red);
+                    font-size: 1.4rem;
+                    text-shadow: 0 0 10px var(--accent-red);
+                }}
+                .sys-status {{
                     display: flex;
                     align-items: center;
                     gap: 8px;
-                    box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 0.7rem;
+                    color: var(--accent-green);
+                    padding: 4px 12px;
+                    border: 1px solid rgba(0, 255, 136, 0.3);
+                    border-radius: 2px;
+                    background: rgba(0, 255, 136, 0.05);
                 }}
-                .dot {{
-                    width: 8px; height: 8px;
-                    background: var(--green);
+                .blink {{
+                    width: 6px; height: 6px;
+                    background: var(--accent-green);
                     border-radius: 50%;
-                    animation: pulse 1.5s infinite;
+                    box-shadow: 0 0 8px var(--accent-green);
+                    animation: blink 1s infinite alternate;
                 }}
-                @keyframes pulse {{
-                    0% {{ opacity: 1; box-shadow: 0 0 10px var(--green); }}
-                    50% {{ opacity: 0.4; }}
-                    100% {{ opacity: 1; box-shadow: 0 0 10px var(--green); }}
-                }}
+                @keyframes blink {{ from {{ opacity: 0.3; }} to {{ opacity: 1; }} }}
+
                 .hero {{
+                    padding: 80px 20px 40px;
                     text-align: center;
-                    padding: 60px 20px;
-                    max-width: 800px;
-                    margin: 0 auto;
+                    position: relative;
+                }}
+                .hero-label {{
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 0.75rem;
+                    color: var(--accent-red);
+                    letter-spacing: 4px;
+                    margin-bottom: 20px;
+                    text-transform: uppercase;
                 }}
                 .hero h1 {{
                     font-family: 'Cinzel', serif;
-                    font-size: 3rem;
-                    color: var(--red);
-                    text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
-                    margin-bottom: 10px;
+                    font-size: clamp(2.5rem, 5vw, 4.5rem);
+                    font-weight: 900;
+                    line-height: 1.1;
+                    background: linear-gradient(180deg, #ffffff 0%, #a0a0a0 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    margin-bottom: 15px;
+                    text-shadow: 0 0 30px rgba(255, 26, 26, 0.2);
                 }}
                 .hero p {{
-                    color: #a0a0a0;
-                    font-size: 1.1rem;
-                    margin-bottom: 40px;
+                    color: var(--text-muted);
                     font-style: italic;
+                    letter-spacing: 1px;
+                    margin-bottom: 30px;
+                    font-size: 0.95rem;
                 }}
-                .join-btn {{
-                    display: inline-block;
-                    background: linear-gradient(45deg, var(--dark-red), var(--red));
-                    color: white;
+                .cta-btn {{
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 10px;
+                    background: rgba(255, 26, 26, 0.1);
+                    color: #ffcccc;
+                    border: 1px solid var(--accent-red);
+                    padding: 12px 30px;
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 0.85rem;
+                    font-weight: 700;
                     text-decoration: none;
-                    padding: 15px 40px;
-                    border-radius: 4px;
-                    font-weight: 600;
                     letter-spacing: 2px;
                     transition: all 0.3s;
-                    border: 1px solid #ff6666;
+                    box-shadow: 0 0 20px rgba(255, 26, 26, 0.15);
                 }}
-                .join-btn:hover {{
-                    transform: scale(1.05);
-                    box-shadow: 0 0 25px rgba(255, 0, 0, 0.6);
+                .cta-btn:hover {{
+                    background: var(--accent-red);
+                    color: #000;
+                    box-shadow: 0 0 30px rgba(255, 26, 26, 0.5);
                 }}
-                .container {{
-                    max-width: 1000px;
+
+                .grid-container {{
+                    max-width: 1100px;
                     margin: 0 auto;
-                    padding: 0 20px 60px;
+                    padding: 20px;
                     width: 100%;
-                    flex: 1;
-                }}
-                .stats-grid {{
                     display: grid;
                     grid-template-columns: repeat(4, 1fr);
                     gap: 15px;
-                    margin-bottom: 40px;
+                    flex: 1;
                 }}
                 @media (max-width: 768px) {{
-                    .stats-grid {{ grid-template-columns: repeat(2, 1fr); }}
-                    .hero h1 {{ font-size: 2rem; }}
+                    .grid-container {{ grid-template-columns: repeat(2, 1fr); }}
+                    .col-span-4 {{ grid-column: span 2 !important; }}
                 }}
-                .stat-box {{
-                    background: var(--card);
-                    border-left: 3px solid var(--red);
-                    padding: 20px;
-                    text-align: center;
-                    border-top: 1px solid var(--border);
-                    border-right: 1px solid var(--border);
-                    border-bottom: 1px solid var(--border);
+
+                /* Glassmorphism Cards */
+                .card {{
+                    background: var(--bg-panel);
+                    border: 1px solid var(--border);
+                    border-radius: 4px;
+                    padding: 24px;
+                    backdrop-filter: blur(12px);
+                    position: relative;
+                    overflow: hidden;
+                    transition: border-color 0.3s;
                 }}
+                .card:hover {{
+                    border-color: rgba(255, 26, 26, 0.4);
+                }}
+                .card::before {{
+                    content: '';
+                    position: absolute;
+                    top: 0; left: 0; width: 100%; height: 1px;
+                    background: linear-gradient(90deg, transparent, rgba(255, 26, 26, 0.5), transparent);
+                }}
+                
                 .stat-val {{
                     font-family: 'JetBrains Mono', monospace;
-                    font-size: 1.8rem;
-                    color: var(--gold);
-                    margin-bottom: 5px;
+                    font-size: 2.5rem;
+                    font-weight: 700;
+                    color: var(--accent-gold);
+                    line-height: 1;
+                    margin-bottom: 8px;
                 }}
                 .stat-lbl {{
-                    font-size: 0.75rem;
-                    color: #888;
+                    font-size: 0.65rem;
+                    color: var(--text-muted);
+                    letter-spacing: 2px;
                     text-transform: uppercase;
-                    letter-spacing: 1px;
                 }}
-                .section-title {{
+
+                .col-span-4 {{
+                    grid-column: span 4;
+                }}
+
+                .networks-title {{
                     font-family: 'Cinzel', serif;
-                    font-size: 1.2rem;
-                    color: var(--text);
-                    border-bottom: 1px solid var(--border);
+                    font-size: 1.1rem;
+                    color: var(--text-main);
+                    margin-bottom: 15px;
                     padding-bottom: 10px;
-                    margin-bottom: 20px;
+                    border-bottom: 1px solid rgba(255,255,255,0.05);
                     display: flex;
                     align-items: center;
                     gap: 10px;
                 }}
-                .server-list {{
+                .networks-title span {{ color: var(--accent-red); }}
+
+                .srv-grid {{
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                    gap: 15px;
+                    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                    gap: 12px;
                 }}
-                .server-card {{
-                    background: var(--card);
-                    border: 1px solid #222;
-                    padding: 15px;
+                .server-row {{
                     display: flex;
                     align-items: center;
                     gap: 15px;
-                    transition: 0.2s;
+                    background: rgba(0,0,0,0.3);
+                    border: 1px solid rgba(255,255,255,0.03);
+                    padding: 12px;
+                    border-radius: 4px;
                 }}
-                .server-card:hover {{
-                    border-color: var(--red);
-                    background: #1a0505;
+                .srv-icon {{
+                    width: 40px; height: 40px;
+                    border-radius: 4px;
+                    border: 1px solid rgba(255,255,255,0.1);
                 }}
-                .server-icon {{
-                    width: 45px;
-                    height: 45px;
-                    border-radius: 50%;
-                    background: #000;
+                .srv-info {{
+                    display: flex;
+                    flex-direction: column;
+                    flex: 1;
                 }}
-                .server-info h3 {{
-                    font-size: 1rem;
-                    color: var(--text);
-                    margin-bottom: 3px;
+                .srv-name {{
+                    font-weight: 600;
+                    font-size: 0.9rem;
                 }}
-                .server-info p {{
-                    font-size: 0.8rem;
-                    color: var(--red);
+                .srv-members {{
                     font-family: 'JetBrains Mono', monospace;
+                    font-size: 0.65rem;
+                    color: var(--text-muted);
+                    margin-top: 2px;
                 }}
-                .footer {{
+                .srv-status {{
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 0.6rem;
+                    color: var(--accent-green);
+                    border: 1px solid rgba(0,255,136,0.2);
+                    padding: 2px 6px;
+                    border-radius: 2px;
+                }}
+
+                .loading {{
+                    font-family: 'JetBrains Mono', monospace;
+                    color: var(--accent-red);
                     text-align: center;
                     padding: 20px;
-                    border-top: 1px solid var(--border);
+                    animation: blink 1.5s infinite;
+                }}
+
+                .footer {{
+                    text-align: center;
+                    padding: 25px;
                     font-family: 'JetBrains Mono', monospace;
-                    font-size: 0.8rem;
-                    color: #666;
+                    font-size: 0.65rem;
+                    color: #444;
+                    border-top: 1px solid rgba(255,255,255,0.05);
                     background: #000;
+                    letter-spacing: 1px;
                 }}
             </style>
         </head>
         <body>
-            <div class="top-bar">
-                <div class="brand">
-                    <span>🩸</span> CÁRTEL MAINFRAME
+            <nav class="nav">
+                <div class="brand-lockup">
+                    <span class="brand-mark">🩸</span> CÁRTEL MAINFRAME
                 </div>
-                <div class="status-badge">
-                    <div class="dot"></div> SECURE CONNECTION
+                <div class="sys-status">
+                    <div class="blink"></div> SECURE LINK
                 </div>
-            </div>
+            </nav>
 
             <div class="hero">
+                <div class="hero-label">// CLASSIFIED INTEL //</div>
                 <h1>Cártel de Jalisco</h1>
                 <p>"El que se va, nunca vuelve."</p>
-                <a href="{INVITE_LINK}" target="_blank" class="join-btn">JOIN THE FAMILIA</a>
+                <a href="{INVITE_LINK}" target="_blank" class="cta-btn">INITIATE ENLISTMENT →</a>
             </div>
 
-            <div class="container">
-                <div class="stats-grid">
-                    <div class="stat-box">
-                        <div class="stat-val">{total_servers}</div>
-                        <div class="stat-lbl">Networks</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-val">{total_members:,}</div>
-                        <div class="stat-lbl">Operatives</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-val">{ping}ms</div>
-                        <div class="stat-lbl">Latency</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-val">{uptime_str}</div>
-                        <div class="stat-lbl">Uptime</div>
-                    </div>
+            <div class="grid-container">
+                <!-- Stats Row -->
+                <div class="card">
+                    <div class="stat-val">{total_servers}</div>
+                    <div class="stat-lbl">Networks</div>
+                </div>
+                <div class="card">
+                    <div class="stat-val">{total_members:,}</div>
+                    <div class="stat-lbl">Operatives</div>
+                </div>
+                <div class="card">
+                    <div class="stat-val">{ping}ms</div>
+                    <div class="stat-lbl">Uplink Latency</div>
+                </div>
+                <div class="card">
+                    <div class="stat-val">{uptime_str}</div>
+                    <div class="stat-lbl">System Uptime</div>
                 </div>
 
-                <div class="section-title">
-                    <span>🌐</span> CONNECTED NETWORKS
-                </div>
-                <div class="server-list">
-                    {servers_html}
+                <!-- Networks List -->
+                <div class="card col-span-4">
+                    <div class="networks-title"><span>🌐</span> CONNECTED NETWORKS</div>
+                    <div class="srv-grid">
+                        {servers_html}
+                    </div>
                 </div>
             </div>
 
             <div class="footer">
-                Cártel de Jalisco Nueva Generación © 2026 | Bot Infrastructure System
+                CÁRTEL DE JALISCO NUEVA GENERACIÓN © 2026 // INFRASTRUCTURE DIVISION
             </div>
         </body>
         </html>
@@ -302,7 +380,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
 def _run_server():
     port = int(os.environ.get("PORT", 11963))
     server = HTTPServer(('0.0.0.0', port), DashboardHandler)
-    print(f"[keep_alive] Mainframe jalan di 0.0.0.0:{port}")
+    print(f"[keep_alive] Classified Command Center jalan di 0.0.0.0:{port}")
     server.serve_forever()
 
 def keep_alive(bot):
