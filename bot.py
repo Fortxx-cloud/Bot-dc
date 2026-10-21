@@ -2216,4 +2216,59 @@ except Exception as e:
     print(f'[SYSTEM] Gagal muat persistent views: {e}')
 # ══════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════
+# 🤖 AI DENGAN AION LABS (ROLEPLAY & CHAT)
+# ══════════════════════════════════════════════════════════════
+import aiohttp
+
+AION_API_KEY = os.getenv('AION_API_KEY')
+AION_BASE_URL = 'https://api.aionlabs.ai/v1'
+
+async def tanya_aion(prompt: str, system_prompt: str = None, model: str = 'aion-labs/aion-2.0'):
+    if not AION_API_KEY:
+        return '❌ API Key Aion Labs belum diset di Environment Variables (AION_API_KEY).'
+    
+    headers = {
+        'Authorization': f'Bearer {AION_API_KEY}',
+        'Content-Type': 'application/json'
+    }
+    
+    messages = []
+    if system_prompt:
+        messages.append({'role': 'system', 'content': system_prompt})
+    messages.append({'role': 'user', 'content': prompt})
+    
+    payload = {
+        'model': model,
+        'messages': messages,
+        'max_tokens': 500
+    }
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f'{AION_BASE_URL}/chat/completions', headers=headers, json=payload) as resp:
+                if resp.status != 200:
+                    return f'❌ Error API Aion: HTTP {resp.status}'
+                data = await resp.json()
+                return data['choices'][0]['message']['content']
+    except Exception as e:
+        return f'❌ Gagal konek ke Aion: {e}'
+
+@bot.command(name='ai')
+async def ai_cmd(ctx, *, prompt: str):
+    """Tanya AI apa aja. Contoh: !ai Apa itu Roleplay?"""
+    await ctx.typing()
+    jawaban = await tanya_aion(prompt)
+    # Batasi 2000 karakter biar gak error
+    await ctx.send(jawaban[:2000])
+
+@bot.command(name='rp')
+async def rp_cmd(ctx, *, aksi: str):
+    """Roleplay sama AI. Contoh: !rp *menodongkan pistol* Siapa bos lu?"""
+    await ctx.typing()
+    system_rp = 'Kamu adalah karakter gangster dari kartel Meksiko. Jawab dengan bahasa Indonesia gaul dan sedikit kasar, tapi tetap dalam karakter.'
+    jawaban = await tanya_aion(aksi, system_prompt=system_rp, model='aion-labs/aion-rp-llama-3.1-8b')
+    await ctx.send(jawaban[:2000])
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
