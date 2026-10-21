@@ -2277,22 +2277,24 @@ async def rp_cmd(ctx, *, aksi: str):
 # ══════════════════════════════════════════════════════════════
 @bot.command(name='setupai')
 async def setupai_cmd(ctx):
-    """Bikin channel khusus AI asisten."""
+    """Bikin channel khusus AI asisten di kategori PUBLIC ROOM."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
     
-    category = discord.utils.get(ctx.guild.categories, name='SETTINGS')
+    # Cari kategori PUBLIC ROOM
+    category = discord.utils.find(lambda c: c.name.upper() == 'PUBLIC ROOM', ctx.guild.categories)
+    
     if not category:
-        category = await ctx.guild.create_category('SETTINGS')
+        return await ctx.send('❌ Kategori **PUBLIC ROOM** gak ketemu Bang. Pastikan namanya persis "PUBLIC ROOM".')
         
     channel_name = '🤖┃ai-asisten'
     ch = discord.utils.find(lambda c: 'ai-asisten' in c.name.lower(), ctx.guild.text_channels)
     
     if not ch:
         ch = await ctx.guild.create_text_channel(channel_name, category=category)
-        await ctx.send(f'✅ Channel {ch.mention} berhasil dibuat!')
+        await ctx.send(f'✅ Channel {ch.mention} berhasil dibuat di PUBLIC ROOM!')
     else:
         await ch.edit(category=category)
-        await ctx.send(f'✅ Channel {ch.mention} siap digunakan!')
+        await ctx.send(f'✅ Channel {ch.mention} berhasil dipindah ke PUBLIC ROOM!')
         
     embed = discord.Embed(
         title='🤖 AI Asisten Cártel de Jalisco',
