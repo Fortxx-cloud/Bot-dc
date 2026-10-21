@@ -1724,7 +1724,19 @@ class TicketSelect(discord.ui.Select):
             tag2 = role2.mention if role2 else '@OWNER X CO OWNER'
             desc_text = f'Halo {user.mention}, tunggu sebentar ya. Staff akan segera merespons.{nl}{nl}Jika masalah sudah selesai, silakan klik tombol di bawah.'
             embed = discord.Embed(title=f'🎫 Ticket: {ticket_type.upper()}', description=desc_text, color=discord.Color.green())
-            await ticket_ch.send(content=f'{user.mention} | {tag1} {tag2}', embed=embed, view=TicketCloseView())
+            if ticket_type == "laporan":
+                format_laporan = (
+                    "## 🛑  __laporkan Anggota__" + nl + nl +
+                    "**Nama ic :** " + nl +
+                    "**Alasannya :** " + nl +
+                    "**Bukti ( berupa foto ) :** " + nl + nl +
+                    "**NOTE :** " + nl +
+                    "Silakan isi form di atas dengan jujur."
+                )
+                await ticket_ch.send(content=f"{user.mention} | {tag1} {tag2}", embed=embed)
+                await ticket_ch.send(format_laporan, view=TicketCloseView())
+            else:
+                await ticket_ch.send(content=f"{user.mention} | {tag1} {tag2}", embed=embed, view=TicketCloseView())
             await interaction.edit_original_response(content=f'✅ Ticket kamu sudah dibuat: {ticket_ch.mention}')
             if 'bot_log' in globals():
                 log_desc = f'**User:** {user.mention}{nl}**Tipe:** {ticket_type}{nl}**Channel:** {ticket_ch.mention}'
