@@ -39,8 +39,13 @@ def save_owners():
 
 
 @bot.check
-async def owner_only(ctx):
-    return ctx.author.id in OWNER_IDS
+async def global_check(ctx):
+    # Command publik yang bisa dipakai semua orang
+    public_cmds = ("help", "ping", "uptime", "avatar", "userinfo", "serverinfo", "test", "afk", "remind")
+    if ctx.command.name in public_cmds:
+        return True
+    # Command lain (moderasi/owner) tetap dicek
+    return ctx.author.id in OWNER_IDS or is_mod(ctx)
 
 # ══════════════════════════════════════════════════
 # 🔧 CONFIG
