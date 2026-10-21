@@ -265,17 +265,14 @@ async def warn(ctx, member: discord.Member, *, reason="Tidak ada alasan"):
         tag_role = f"<@&{WARN_TAG_ROLE_ID}>" if WARN_TAG_ROLE_ID else ""
         role_kasih = target_role.mention if target_role else "(gak ada)"
         nama_ic = member.display_name
+        tag_mention = f"<@&{_get_warn_tag_id()}>" if _get_warn_tag_id() else "(gak ada)"
         warn_msg = (
-            f"🛑 **__Warn anggota__**\n"
-            f"👤 **Target:** {member.mention}\n"
-            f"📛 **Nama IC:** {nama_ic}\n"
-            f"📝 **Alasan:** {reason}\n"
-            f"🏷️ **Role dikasih:** {role_kasih}\n"
-            f"📊 **Warn ke:** {total}/{MAX_WARN}\n"
-            f"👮 **Oleh:** {ctx.author.mention}\n"
-            f"\n"
-            f"**NOTE:**\n"
-            f"🔔 **Tag:** {tag_role}"
+            f"## 🛑  __Warn anggota__" + nl +
+            f"!warn {member.mention}" + nl +
+            f"Nama ic : {nama_ic}" + nl +
+            f"Alasannya : {reason}" + nl + nl +
+            f"**NOTE : **" + nl + nl +
+            f"Tag : {tag_mention}"
         )
         await ctx.send(warn_msg)
 
