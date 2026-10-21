@@ -1728,7 +1728,12 @@ class TicketView(discord.ui.View):
                 description=f"Halo {user.mention}, tunggu sebentar ya. Staff akan segera merespons.\n\nJika masalah sudah selesai, silakan klik tombol di bawah.",
                 color=discord.Color.green()
             )
-            await ticket_ch.send(content=f"{user.mention} | @here", embed=embed, view=TicketCloseView())
+            role1 = discord.utils.get(guild.roles, name="⚠️HANDLE CJNG")
+            role2 = discord.utils.get(guild.roles, name="OWNER X CO OWNER")
+            tag1 = role1.mention if role1 else "@⚠️HANDLE CJNG"
+            tag2 = role2.mention if role2 else "@OWNER X CO OWNER"
+            
+            await ticket_ch.send(content=f"{user.mention} | {tag1} {tag2}", embed=embed, view=TicketCloseView())
             await interaction.edit_original_response(content=f"✅ Ticket kamu sudah dibuat: {ticket_ch.mention}")
             
             await bot_log(guild, "🎫 TICKET BARU", f"**User:** {user.mention}\n**Channel:** {ticket_ch.mention}", discord.Color.green())
