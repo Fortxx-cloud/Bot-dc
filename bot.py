@@ -1,3 +1,4 @@
+nl = chr(10)
 import discord
 from discord.ext import commands
 import json
