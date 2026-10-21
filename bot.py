@@ -1958,7 +1958,7 @@ class CharModal(discord.ui.Modal, title='Buat Karakter RP'):
 class CharView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-    @discord.ui.button(label='Buat Karakter', style=discord.ButtonStyle.primary, emoji='📝')
+    @discord.ui.button(label='Buat Karakter', style=discord.ButtonStyle.primary, emoji='📝', custom_id='btn_create_char')
     async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(CharModal())
 
@@ -2008,10 +2008,6 @@ async def setupchar_cmd(ctx):
         await ctx.send(f"✅ Panel karakter berhasil dikirim ke {channel.mention}!")
         
     except Exception as e:
-        # Menampilkan error asli ke Discord biar gampang dilacak
-        await ctx.send(f"❌ **Error Detail:** `{e}`" + nl + "Pastikan bot punya izin **Manage Channels** dan **Send Messages**.")
-
-
-# ══════════════════════════════════════════════════════════════
+        await ctx.send(f"❌ **Error Detail:** `{e}`")
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
