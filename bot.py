@@ -1915,73 +1915,116 @@ async def editsnipe_cmd(ctx):
     await ctx.send(embed=embed)
     editsnipe_cache.pop(ctx.channel.id, None)
 
-class CharModal(discord.ui.Modal, title='Buat Karakter RP'):
-    nama_ic = discord.ui.TextInput(label='Nama IC', placeholder='Contoh: Zoma Haci', required=True)
-    umur = discord.ui.TextInput(label='Umur', placeholder='Contoh: 25 Tahun', required=True)
-    asal = discord.ui.TextInput(label='Asal / Fakultas', placeholder='Contoh: Warga Asli', required=True)
-    bio = discord.ui.TextInput(label='Bio Singkat', style=discord.TextStyle.paragraph, placeholder='Ceritakan latar belakang karakter lu...', required=True)
+class CharModal(discord.ui.Modal, title='Form Karakter RP'):
+    nama_ic = discord.ui.TextInput(
+        label='Nama IC', 
+        placeholder='Contoh: Zoma Haci', 
+        required=True, 
+        max_length=32
+    )
+    umur = discord.ui.TextInput(
+        label='Umur', 
+        placeholder='Contoh: 25', 
+        required=True, 
+        max_length=3
+    )
+    bio = discord.ui.TextInput(
+        label='Bio Singkat (Opsional)', 
+        style=discord.TextStyle.paragraph, 
+        placeholder='Ceritakan latar belakang karakter...', 
+        required=False
+    )
+
+    def __init__(self, origin_name: str, origin_role: discord.Role = None):
+        super().__init__()
+        self.origin_name = origin_name
+        self.origin_role = origin_role
 
     async def on_submit(self, interaction: discord.Interaction):
         chars = load_chars()
         uid = str(interaction.user.id)
+        bio_val = self.bio.value or "-"
+        
         chars[uid] = {
             'nama': self.nama_ic.value,
             'umur': self.umur.value,
-            'asal': self.asal.value,
-            'bio': self.bio.value
+            'asal': self.origin_name,
+            'bio': bio_val
         }
         save_chars(chars)
         
-        # Fitur Ganti Nickname Otomatis
         nick_status = ""
+        if self.origin_role:
+            try:
+                await interaction.user.add_roles(self.origin_role)
+                nick_status += f"\\n📍 Role **{self.origin_name}** berhasil ditambahkan."
+            except Exception:
+                nick_status += f"\\n⚠️ Gagal memberikan role {self.origin_name} (cek izin bot)."
+        else:
+            nick_status += f"\\n⚠️ Role {self.origin_name} belum ada dan gagal dibuat bot."
+
         try:
             new_nick = self.nama_ic.value[:32]
             await interaction.user.edit(nick=new_nick)
-            nick_status = f"\n📝 Nickname server lu berhasil diubah jadi **{new_nick}**."
+            nick_status += f"\\n📝 Nickname berubah jadi **{new_nick}**."
         except discord.Forbidden:
-            nick_status = "\n⚠️ Bot gak punya izin `Manage Nicknames` buat ganti nickname lu."
+            nick_status += "\\n⚠️ Bot gak punya izin ganti nickname."
         except Exception as e:
-            nick_status = f"\n⚠️ Gagal ganti nickname: {e}"
+            nick_status += f"\\n⚠️ Gagal ganti nickname: {e}"
 
-        embed = discord.Embed(title='✅ Karakter Berhasil Dibuat', description=f'Data karakter lu udah disimpan. Ketik `!char` untuk melihatnya.{nick_status}', color=discord.Color.green())
+        embed = discord.Embed(
+            title='✅ Karakter Berhasil Dibuat', 
+            description=f'Data karakter lu udah disimpan. Ketik `!char` untuk melihatnya.{nick_status}', 
+            color=discord.Color.green()
+        )
         await interaction.response.send_message(embed=embed, ephemeral=True)
+        
         channel = discord.utils.find(lambda c: 'karakter-rp' in c.name.lower(), interaction.guild.text_channels)
         if channel:
             char_embed = discord.Embed(title=f"📜 Kartu Karakter: {self.nama_ic.value}", color=discord.Color.blurple())
             char_embed.set_thumbnail(url=interaction.user.display_avatar.url)
             char_embed.add_field(name='👤 Nama IC', value=self.nama_ic.value, inline=True)
             char_embed.add_field(name='🎂 Umur', value=self.umur.value, inline=True)
-            char_embed.add_field(name='🏠 Asal', value=self.asal.value, inline=True)
-            char_embed.add_field(name='📖 Bio', value=self.bio.value, inline=False)
+            char_embed.add_field(name='📍 Asal', value=self.origin_name, inline=True)
+            char_embed.add_field(name='📖 Bio', value=bio_val, inline=False)
             char_embed.set_footer(text=f"Dipegang oleh {interaction.user.name}")
             await channel.send(embed=char_embed)
+
+class CharOriginSelect(discord.ui.Select):
+    def __init__(self):
+        regions = [
+            "Aceh", "Medan", "Padang", "Pekanbaru", "Palembang",
+            "Lampung", "Batam", "Jakarta", "Bandung", "Semarang",
+            "Yogyakarta", "Solo", "Surabaya", "Malang", "Banten",
+            "Bali", "Lombok", "Pontianak", "Banjarmasin", "Samarinda",
+            "Manado", "Makassar", "Palu", "Ambon", "Jayapura"
+        ]
+        options = [discord.SelectOption(label=r, value=r, emoji="📍") for r in regions]
+        super().__init__(placeholder="Pilih Asal Daerah...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        origin_name = self.values[0]
+        role = discord.utils.get(interaction.guild.roles, name=origin_name)
+        if not role:
+            try:
+                role = await interaction.guild.create_role(name=origin_name, reason="Auto-create role asal daerah RP")
+            except Exception:
+                pass 
+        await interaction.response.send_modal(CharModal(origin_name, role))
+        self.view.stop()
+
+class CharOriginView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=60)
+        self.add_item(CharOriginSelect())
 
 class CharView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-    @discord.ui.button(label='Buat Karakter', style=discord.ButtonStyle.primary, emoji='📝', custom_id='btn_create_char')
-    async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(CharModal())
 
-@bot.command(name='char')
-async def char_cmd(ctx, subcommand: str = None, member: discord.Member = None):
-    """Profil Karakter RP. Gunakan !char set untuk bikin, !char @user untuk liat."""
-    if subcommand and subcommand.lower() == 'set':
-        await ctx.send('Klik tombol di bawah buat isi form karakter lu.', view=CharView())
-        return
-    target = member or ctx.author
-    chars = load_chars()
-    data = chars.get(str(target.id))
-    if not data:
-        return await ctx.send(f'❌ **{target.display_name}** belum bikin karakter. Ketik `!char set` untuk bikin.')
-    embed = discord.Embed(title=f"📜 Kartu Karakter: {data['nama']}", color=discord.Color.blurple())
-    embed.set_thumbnail(url=target.display_avatar.url)
-    embed.add_field(name='👤 Nama IC', value=data['nama'], inline=True)
-    embed.add_field(name='🎂 Umur', value=data['umur'], inline=True)
-    embed.add_field(name='🏠 Asal', value=data['asal'], inline=True)
-    embed.add_field(name='📖 Bio', value=data['bio'], inline=False)
-    embed.set_footer(text=f"Dipegang oleh {target.name}")
-    await ctx.send(embed=embed)
+    @discord.ui.button(label='Buat Karakter', style=discord.ButtonStyle.primary, emoji='📝', custom_id='btn_create_char_v3')
+    async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Silakan pilih **Asal Daerah** kamu terlebih dahulu:", view=CharOriginView(), ephemeral=True)
 
 @bot.command(name='setupchar')
 async def setupchar_cmd(ctx):
