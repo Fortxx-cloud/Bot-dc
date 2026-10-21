@@ -1307,13 +1307,10 @@ def _get_bot_log_name():
 def _find_bot_log_channel(guild):
     if not guild:
         return None
-    name = _get_bot_log_name()
-    ch = discord.utils.get(guild.text_channels, name=name)
-    if ch:
-        return ch
+    # Cari pakai keyword (biar gak error walau nama channel udah di-dekorasi)
     for c in guild.text_channels:
         n = c.name.lower()
-        if "bot-run" in n or "botrun" in n or "bot_run" in n:
+        if "bot-run" in n or "botrun" in n or "bot_run" in n or "bot log" in n:
             return c
     return None
 
@@ -2562,5 +2559,34 @@ async def merahs_cmd(ctx, *, text: str):
     red_text = f'```ansi' + chr(10) + f'\u001b[0;31m{text}\u001b[0m' + chr(10) + '```'
     await ctx.send(red_text)
 # ══════════════════════════════════════════════════════════════
+
+
+@bot.command(name='testlog')
+async def testlog_cmd(ctx):
+    """Tes kirim log ke channel bot-run & logs-warning."""
+    if not is_mod(ctx): return
+    await ctx.send("⏳ Mengirim log percobaan...")
+    
+    # Tes bot-run
+    await bot_log(ctx.guild, "🧪 TES LOG BOT", "Kalau lu liat ini di channel bot-run, berarti log bot berfungsi!", discord.Color.green())
+    
+    # Tes logs-warning
+    warn_ch = None
+    for ch in ctx.guild.text_channels:
+        n = ch.name.lower()
+        if "logs-warning" in n or "warn-log" in n or "warn" in n:
+            warn_ch = ch
+            break
+            
+    if warn_ch:
+        try:
+            embed = discord.Embed(title="🧪 TES LOG WARNING", description="Kalau lu liat ini di channel logs-warning, berarti log warning berfungsi!", color=discord.Color.orange())
+            await warn_ch.send(embed=embed)
+        except Exception as e:
+            await ctx.send(f"❌ Gagal kirim ke {warn_ch.mention}: {e}")
+    else:
+        await ctx.send("❌ Channel logs-warning gak ketemu.")
+        
+    await ctx.send("✅ Selesai! Cek channel masing-masing.")
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
