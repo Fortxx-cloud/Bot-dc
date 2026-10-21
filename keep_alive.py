@@ -150,7 +150,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     border-radius: 10px; display: flex; align-items: flex-start; gap: 15px;
                     transition: all 0.3s;
                 }}
-                .feature-card:hover {{ border-color: var(--red); box-shadow: var(--glow); }}
+                .feature-card {{ cursor: pointer; text-decoration: none; color: var(--text); position: relative; }}
+                .feature-card:hover {{ border-color: var(--red); box-shadow: var(--glow); background: rgba(255,26,26,0.05); }}
+                .f-arrow {{ position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: var(--red); opacity: 0; transition: all 0.3s; }}
+                .feature-card:hover .f-arrow {{ opacity: 1; right: 15px; }}
                 .f-icon {{ font-size: 1.8rem; background: rgba(255,26,26,0.1); padding: 10px; border-radius: 8px; }}
                 .f-info h4 {{ font-size: 1rem; margin-bottom: 5px; }}
                 .f-info p {{ font-size: 0.8rem; color: var(--muted); line-height: 1.4; }}
@@ -198,12 +201,36 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 </div>
                 <div class="section-title"><span>&#128736;</span> System Modules & Features</div>
                 <div class="features-grid">
-                    <div class="feature-card"><div class="f-icon">&#128737;</div><div class="f-info"><h4>Moderation</h4><p>Auto-warn pop-up, Cartel Hitlist, Kick & Ban system.</p></div></div>
-                    <div class="feature-card"><div class="f-icon">&#127915;</div><div class="f-info"><h4>Ticket System</h4><p>Dropdown support tickets with private channels & transcript.</p></div></div>
-                    <div class="feature-card"><div class="f-icon">&#128220;</div><div class="f-info"><h4>Roleplay Character</h4><p>ID card generator, Auto-Nickname, and Auto-Role Origin.</p></div></div>
-                    <div class="feature-card"><div class="f-icon">&#129302;</div><div class="f-info"><h4>AI Assistant</h4><p>Powered by Aion Labs. Private AI channels for members.</p></div></div>
-                    <div class="feature-card"><div class="f-icon">&#127912;</div><div class="f-info"><h4>Auto-Decorator</h4><p>One-click channel renaming, Embed builder & Verify system.</p></div></div>
-                    <div class="feature-card"><div class="f-icon">&#128202;</div><div class="f-info"><h4>Server Logs</h4><p>Comprehensive audit logs for bans, kicks, warns, and edits.</p></div></div>
+                    <a href="{INVITE_LINK}" target="_blank" class="feature-card">
+                        <div class="f-icon">&#128737;</div>
+                        <div class="f-info"><h4>Moderation</h4><p>Auto-warn pop-up, Cartel Hitlist, Kick & Ban system.</p></div>
+                        <span class="f-arrow">&rarr;</span>
+                    </a>
+                    <a href="{INVITE_LINK}" target="_blank" class="feature-card">
+                        <div class="f-icon">&#127915;</div>
+                        <div class="f-info"><h4>Ticket System</h4><p>Dropdown support tickets with private channels & transcript.</p></div>
+                        <span class="f-arrow">&rarr;</span>
+                    </a>
+                    <a href="{INVITE_LINK}" target="_blank" class="feature-card">
+                        <div class="f-icon">&#128220;</div>
+                        <div class="f-info"><h4>Roleplay Character</h4><p>ID card generator, Auto-Nickname, and Auto-Role Origin.</p></div>
+                        <span class="f-arrow">&rarr;</span>
+                    </a>
+                    <a href="{INVITE_LINK}" target="_blank" class="feature-card">
+                        <div class="f-icon">&#129302;</div>
+                        <div class="f-info"><h4>AI Assistant</h4><p>Powered by Aion Labs. Private AI channels for members.</p></div>
+                        <span class="f-arrow">&rarr;</span>
+                    </a>
+                    <a href="{INVITE_LINK}" target="_blank" class="feature-card">
+                        <div class="f-icon">&#127912;</div>
+                        <div class="f-info"><h4>Auto-Decorator</h4><p>One-click channel renaming, Embed builder & Verify system.</p></div>
+                        <span class="f-arrow">&rarr;</span>
+                    </a>
+                    <a href="{INVITE_LINK}" target="_blank" class="feature-card">
+                        <div class="f-icon">&#128202;</div>
+                        <div class="f-info"><h4>Server Logs</h4><p>Comprehensive audit logs for bans, kicks, warns, and edits.</p></div>
+                        <span class="f-arrow">&rarr;</span>
+                    </a>
                 </div>
                 <div class="section-title"><span>&#127760;</span> Connected Networks</div>
                 <div class="server-list">
