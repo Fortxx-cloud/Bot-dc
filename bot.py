@@ -1669,94 +1669,93 @@ import base64
 class TicketCloseView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-        
-    @discord.ui.button(label="Tutup Ticket", style=discord.ButtonStyle.danger, emoji="🔒", custom_id="close_ticket_btn")
+    @discord.ui.button(label='Tutup Ticket', style=discord.ButtonStyle.danger, emoji='🔒', custom_id='close_ticket_btn')
     async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("🔒 Ticket akan ditutup dan dihapus dalam 5 detik...", ephemeral=False)
+        await interaction.response.send_message('🔒 Ticket akan ditutup dan dihapus dalam 5 detik...', ephemeral=False)
         await asyncio.sleep(5)
         await interaction.channel.delete()
 
-class TicketView(discord.ui.View):
+class TicketSelect(discord.ui.Select):
     def __init__(self):
-        super().__init__(timeout=None)
-        
-    @discord.ui.button(label="Buat Ticket", style=discord.ButtonStyle.primary, emoji="🎫", custom_id="create_ticket_btn")
-    async def create_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        options = [
+            discord.SelectOption(label='Bertanya / Bantuan Umum', description='Tanya jawab seputar server atau hal umum.', emoji='❓', value='tanya'),
+            discord.SelectOption(label='Laporan / Report', description='Laporkan pelanggaran aturan atau masalah.', emoji='🚨', value='laporan'),
+            discord.SelectOption(label='Bantuan RP', description='Bantuan terkait roleplay, karakter, atau alur cerita.', emoji='🎭', value='rp'),
+            discord.SelectOption(label='Lainnya', description='Untuk hal-hal yang belum tercantum di atas.', emoji='📝', value='lainnya')
+        ]
+        super().__init__(placeholder='Pilih jenis tiket...', min_values=1, max_values=1, options=options, custom_id='ticket_select_menu')
+
+    async def callback(self, interaction: discord.Interaction):
         guild = interaction.guild
         user = interaction.user
-        
-        # Cek apakah user sudah punya ticket terbuka
-        category = discord.utils.get(guild.categories, name="Tickets")
+        ticket_type = self.values[0]
+        nl = chr(10)
+        category = discord.utils.get(guild.categories, name='Tickets')
         if category:
             for ch in category.text_channels:
-                if ch.name.startswith(f"ticket-{user.name.lower()}"):
-                    return await interaction.response.send_message(f"❌ Kamu sudah punya ticket terbuka di {ch.mention}!", ephemeral=True)
-        
-        await interaction.response.send_message("⏳ Sedang membuat channel ticket...", ephemeral=True)
-        
-        # Buat kategori kalau belum ada
+                if ch.topic and f'({user.id})' in ch.topic:
+                    return await interaction.response.send_message(f'❌ Kamu sudah punya ticket terbuka di {ch.mention}!', ephemeral=True)
+        await interaction.response.send_message(f'⏳ Sedang membuat channel tiket **{ticket_type}**...', ephemeral=True)
         if not category:
             try:
-                category = await guild.create_category("Tickets", reason="Setup sistem ticket")
+                category = await guild.create_category('Tickets', reason='Setup sistem ticket')
             except Exception:
                 pass
-        
-        # Atur permission
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(read_messages=False),
             user: discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True, embed_links=True),
             guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
         }
-        
-        # Tambahkan role Staff/Moderator
-        staff_roles = ["Staff", "Moderator", "Admin", "Owner", "Mod"]
+        staff_roles = ['Staff', 'Moderator', 'Admin', 'Owner', 'Mod', '⚠️HANDLE CJNG', 'OWNER X CO OWNER']
         for role_name in staff_roles:
             role = discord.utils.get(guild.roles, name=role_name)
             if role:
                 overwrites[role] = discord.PermissionOverwrite(read_messages=True, send_messages=True)
-        
         try:
             ticket_ch = await guild.create_text_channel(
-                name=f"ticket-{user.name}",
+                name=f'ticket-{ticket_type}-{user.name}'.lower(),
                 category=category,
                 overwrites=overwrites,
-                topic=f"Ticket milik {user.name} | Ketuk 🔒 Tutup Ticket untuk menghapus."
+                topic=f'Ticket milik {user.name} ({user.id}) | Tipe: {ticket_type} | Ketuk 🔒 Tutup Ticket untuk menghapus.'
             )
-            
-            embed = discord.Embed(
-                title="🎫 Ticket Dibuat",
-                description=f"Halo {user.mention}, tunggu sebentar ya. Staff akan segera merespons.\n\nJika masalah sudah selesai, silakan klik tombol di bawah.",
-                color=discord.Color.green()
-            )
-            role1 = discord.utils.get(guild.roles, name="⚠️HANDLE CJNG")
-            role2 = discord.utils.get(guild.roles, name="OWNER X CO OWNER")
-            tag1 = role1.mention if role1 else "@⚠️HANDLE CJNG"
-            tag2 = role2.mention if role2 else "@OWNER X CO OWNER"
-            
-            await ticket_ch.send(content=f"{user.mention} | {tag1} {tag2}", embed=embed, view=TicketCloseView())
-            await interaction.edit_original_response(content=f"✅ Ticket kamu sudah dibuat: {ticket_ch.mention}")
-            
-            await bot_log(guild, "🎫 TICKET BARU", f"**User:** {user.mention}\n**Channel:** {ticket_ch.mention}", discord.Color.green())
-            
+            role1 = discord.utils.get(guild.roles, name='⚠️HANDLE CJNG')
+            role2 = discord.utils.get(guild.roles, name='OWNER X CO OWNER')
+            tag1 = role1.mention if role1 else '@⚠️HANDLE CJNG'
+            tag2 = role2.mention if role2 else '@OWNER X CO OWNER'
+            desc_text = f'Halo {user.mention}, tunggu sebentar ya. Staff akan segera merespons.{nl}{nl}Jika masalah sudah selesai, silakan klik tombol di bawah.'
+            embed = discord.Embed(title=f'🎫 Ticket: {ticket_type.upper()}', description=desc_text, color=discord.Color.green())
+            await ticket_ch.send(content=f'{user.mention} | {tag1} {tag2}', embed=embed, view=TicketCloseView())
+            await interaction.edit_original_response(content=f'✅ Ticket kamu sudah dibuat: {ticket_ch.mention}')
+            if 'bot_log' in globals():
+                log_desc = f'**User:** {user.mention}{nl}**Tipe:** {ticket_type}{nl}**Channel:** {ticket_ch.mention}'
+                await bot_log(guild, '🎫 TICKET BARU', log_desc, discord.Color.green())
         except Exception as e:
-            await interaction.edit_original_response(content=f"❌ Gagal membuat ticket: {e}")
+            await interaction.edit_original_response(content=f'❌ Gagal membuat ticket: {e}')
 
-@bot.command(name="ticket")
+class TicketView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(TicketSelect())
+
+@bot.command(name='ticket')
 async def ticket_cmd(ctx, action: str = None):
     """Setup panel ticket (khusus Admin/Moderator)."""
     if not is_mod(ctx):
-        return await ctx.send("❌ Hanya staff/admin yang bisa menggunakan command ini.")
-        
-    if action == "setup":
+        return await ctx.send('❌ Hanya staff/admin yang bisa menggunakan command ini.')
+    if action == 'setup':
         embed = discord.Embed(
-            title="🎫 Pusat Bantuan (Support Ticket)",
-            description="Butuh bantuan dari Staff atau ingin melaporkan sesuatu?\nKlik tombol **Buat Ticket** di bawah ini.\n\nChannel private akan otomatis dibuat hanya untuk kamu dan Staff.",
+            title='🎫 Pusat Bantuan (Support Ticket)',
+            description='Butuh bantuan dari Staff atau ingin melaporkan sesuatu?' + chr(10) + 'Silakan pilih jenis tiket pada menu di bawah ini.' + chr(10) + chr(10) + 'Channel private akan otomatis dibuat hanya untuk kamu dan Staff.',
             color=discord.Color.blurple()
         )
-        embed.set_footer(text="Jangan spam tombol ini.")
+        embed.set_footer(text='Pilih jenis tiket dari menu dropdown.')
+        try:
+            await ctx.message.delete()
+        except Exception:
+            pass
         await ctx.send(embed=embed, view=TicketView())
     else:
-        await ctx.send("❌ Format salah. Gunakan `!ticket setup` di channel yang kamu inginkan.")
+        await ctx.send('❌ Format salah. Gunakan `!ticket setup` di channel yang kamu inginkan.')
 # ══════════════════════════════════════════════════════════════
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
