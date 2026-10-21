@@ -2140,13 +2140,13 @@ async def setupverify_cmd(ctx):
     
     try:
         # 1. Bikin Role Verified
-        role = discord.utils.get(ctx.guild.roles, name='✅ Verified')
+        role = discord.utils.get(ctx.guild.roles, name='Member CJNG')
         if not role:
-            role = await ctx.guild.create_role(name='✅ Verified', color=discord.Color.green(), reason='Setup verifikasi')
+            role = await ctx.guild.create_role(name='Member CJNG', color=discord.Color.dark_red(), reason='Setup verifikasi CJNG')
             
         # 2. Kirim pesan reaksi
         embed = discord.Embed(
-            title='✅ VERIFIKASI SERVER',
+            title='🩸 VERIFIKASI CÁRTEL DE JALISCO',
             description='Klik reaksi **✅** di bawah ini untuk membuka akses ke seluruh channel server.' + chr(10) + chr(10) + '*Note: Jika reaksi dihapus, akses akan dicabut otomatis.*',
             color=discord.Color.green()
         )
@@ -2168,7 +2168,7 @@ async def setupverify_cmd(ctx):
                     await ch.set_permissions(role, read_messages=True)
             except: pass
         
-        await ctx.send('✅ **Selesai!** Server berhasil dikunci. Member baru sekarang harus klik ✅ untuk masuk.' + chr(10) + '⚠️ **PENTING:** Pindahkan Role `✅ Verified` ke atas role member lain agar sistem berjalan sempurna.')
+        await ctx.send('✅ **Selesai!** Server berhasil dikunci. Member baru sekarang harus klik ✅ untuk masuk.' + chr(10) + '⚠️ **PENTING:** Pindahkan Role `Member CJNG` ke atas role member lain agar sistem berjalan sempurna.')
     except Exception as e:
         await ctx.send(f'❌ Error: {e}')
 
