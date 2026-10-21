@@ -49,7 +49,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
             <style>
                 :root {{
                     --bg: #050505;
-                    --panel: rgba(18, 18, 20, 0.6);
+                    --panel: rgba(18, 18, 20, 0.8);
                     --border: rgba(255, 255, 255, 0.08);
                     --text: #ffffff;
                     --muted: #a1a1aa;
@@ -144,19 +144,22 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     border-left: 3px solid var(--red); padding-left: 10px;
                 }}
                 .features-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 40px; }}
+                
+                /* Fitur Card - Bisa di-klik */
                 .feature-card {{
                     background: var(--panel); backdrop-filter: blur(10px);
                     border: 1px solid var(--border); padding: 20px;
                     border-radius: 10px; display: flex; align-items: flex-start; gap: 15px;
-                    transition: all 0.3s;
+                    transition: all 0.3s; cursor: pointer; position: relative;
+                    text-decoration: none; color: var(--text);
                 }}
-                .feature-card {{ cursor: pointer; text-decoration: none; color: var(--text); position: relative; }}
-                .feature-card:hover {{ border-color: var(--red); box-shadow: var(--glow); background: rgba(255,26,26,0.05); }}
-                .f-arrow {{ position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: var(--red); opacity: 0; transition: all 0.3s; }}
-                .feature-card:hover .f-arrow {{ opacity: 1; right: 15px; }}
+                .feature-card:hover {{ border-color: var(--red); box-shadow: var(--glow); background: rgba(255,26,26,0.05); transform: translateY(-3px); }}
                 .f-icon {{ font-size: 1.8rem; background: rgba(255,26,26,0.1); padding: 10px; border-radius: 8px; }}
                 .f-info h4 {{ font-size: 1rem; margin-bottom: 5px; }}
                 .f-info p {{ font-size: 0.8rem; color: var(--muted); line-height: 1.4; }}
+                .f-arrow {{ position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: var(--red); opacity: 0.5; transition: all 0.3s; }}
+                .feature-card:hover .f-arrow {{ opacity: 1; right: 15px; }}
+
                 .server-list {{ display: flex; flex-direction: column; gap: 12px; }}
                 .server-card {{
                     display: flex; align-items: center; gap: 15px;
@@ -176,6 +179,31 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 .server-card:hover .srv-btn {{ background: var(--red); color: #fff; }}
                 .loading {{ font-family: 'JetBrains Mono', monospace; color: var(--red); text-align: center; padding: 20px; animation: pulse 1.5s infinite; }}
                 .footer {{ text-align: center; padding: 25px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #444; border-top: 1px solid var(--border); }}
+
+                /* MODAL / POP-UP CSS */
+                .modal {{
+                    display: none; position: fixed; z-index: 100;
+                    left: 0; top: 0; width: 100%; height: 100%;
+                    background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+                    align-items: center; justify-content: center;
+                }}
+                .modal-content {{
+                    background: #111; border: 1px solid var(--red);
+                    padding: 30px; border-radius: 12px; max-width: 500px; width: 90%;
+                    box-shadow: 0 0 40px rgba(255,26,26,0.2); position: relative;
+                    animation: modalFade 0.3s ease;
+                }}
+                @keyframes modalFade {{ from {{ opacity: 0; transform: scale(0.9); }} to {{ opacity: 1; transform: scale(1); }} }}
+                .close-btn {{
+                    position: absolute; top: 15px; right: 20px;
+                    font-size: 1.5rem; color: var(--muted); cursor: pointer;
+                }}
+                .close-btn:hover {{ color: var(--red); }}
+                .modal-title {{ font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; color: var(--red); margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }}
+                .cmd-list {{ list-style: none; }}
+                .cmd-list li {{ margin-bottom: 12px; font-size: 0.9rem; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; border-left: 2px solid var(--gold); }}
+                .cmd-name {{ font-family: 'JetBrains Mono', monospace; color: var(--gold); font-weight: bold; margin-right: 10px; }}
+                .cmd-desc {{ color: var(--muted); }}
             </style>
         </head>
         <body>
@@ -199,39 +227,42 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     <div class="stat-box"><div class="stat-val">{ping}ms</div><div class="stat-lbl">Latency</div></div>
                     <div class="stat-box"><div class="stat-val">{uptime_str}</div><div class="stat-lbl">Uptime</div></div>
                 </div>
+
                 <div class="section-title"><span>&#128736;</span> System Modules & Features</div>
                 <div class="features-grid">
-                    <a href="{INVITE_LINK}" target="_blank" class="feature-card">
+                    <!-- Klik ini bakal buka pop-up -->
+                    <div class="feature-card" onclick="openModal('mod')">
                         <div class="f-icon">&#128737;</div>
                         <div class="f-info"><h4>Moderation</h4><p>Auto-warn pop-up, Cartel Hitlist, Kick & Ban system.</p></div>
-                        <span class="f-arrow">&rarr;</span>
-                    </a>
-                    <a href="{INVITE_LINK}" target="_blank" class="feature-card">
+                        <span class="f-arrow">&#128269;</span>
+                    </div>
+                    <div class="feature-card" onclick="openModal('ticket')">
                         <div class="f-icon">&#127915;</div>
                         <div class="f-info"><h4>Ticket System</h4><p>Dropdown support tickets with private channels & transcript.</p></div>
-                        <span class="f-arrow">&rarr;</span>
-                    </a>
-                    <a href="{INVITE_LINK}" target="_blank" class="feature-card">
+                        <span class="f-arrow">&#128269;</span>
+                    </div>
+                    <div class="feature-card" onclick="openModal('rp')">
                         <div class="f-icon">&#128220;</div>
                         <div class="f-info"><h4>Roleplay Character</h4><p>ID card generator, Auto-Nickname, and Auto-Role Origin.</p></div>
-                        <span class="f-arrow">&rarr;</span>
-                    </a>
-                    <a href="{INVITE_LINK}" target="_blank" class="feature-card">
+                        <span class="f-arrow">&#128269;</span>
+                    </div>
+                    <div class="feature-card" onclick="openModal('ai')">
                         <div class="f-icon">&#129302;</div>
                         <div class="f-info"><h4>AI Assistant</h4><p>Powered by Aion Labs. Private AI channels for members.</p></div>
-                        <span class="f-arrow">&rarr;</span>
-                    </a>
-                    <a href="{INVITE_LINK}" target="_blank" class="feature-card">
+                        <span class="f-arrow">&#128269;</span>
+                    </div>
+                    <div class="feature-card" onclick="openModal('setup')">
                         <div class="f-icon">&#127912;</div>
                         <div class="f-info"><h4>Auto-Decorator</h4><p>One-click channel renaming, Embed builder & Verify system.</p></div>
-                        <span class="f-arrow">&rarr;</span>
-                    </a>
-                    <a href="{INVITE_LINK}" target="_blank" class="feature-card">
+                        <span class="f-arrow">&#128269;</span>
+                    </div>
+                    <div class="feature-card" onclick="openModal('logs')">
                         <div class="f-icon">&#128202;</div>
                         <div class="f-info"><h4>Server Logs</h4><p>Comprehensive audit logs for bans, kicks, warns, and edits.</p></div>
-                        <span class="f-arrow">&rarr;</span>
-                    </a>
+                        <span class="f-arrow">&#128269;</span>
+                    </div>
                 </div>
+
                 <div class="section-title"><span>&#127760;</span> Connected Networks</div>
                 <div class="server-list">
                     {servers_html}
@@ -240,6 +271,18 @@ class DashboardHandler(BaseHTTPRequestHandler):
             <div class="footer">
                 FORTXX SYSTEM &copy; 2026 | POWERED BY @zomahaci
             </div>
+
+            <!-- POP-UP (MODAL) -->
+            <div id="cmdModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal()">&times;</span>
+                    <h3 class="modal-title" id="modalTitle">Title</h3>
+                    <ul class="cmd-list" id="modalList">
+                        <!-- List command bakal masuk sini -->
+                    </ul>
+                </div>
+            </div>
+
             <script>
                 function updateClock() {{
                     const now = new Date();
@@ -247,6 +290,91 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 }}
                 setInterval(updateClock, 1000);
                 updateClock();
+
+                // Data Command
+                const featureData = {{
+                    'mod': {{
+                        title: '🛡 Moderation System',
+                        cmds: [
+                            {{ name: '!warn @user', desc: 'Kasih warning (Form Pop-up + Role)' }},
+                            {{ name: '!warns @user', desc: 'Liat history warning' }},
+                            {{ name: '!clearwarns @user', desc: 'Hapus semua warning' }},
+                            {{ name: '!kick / !ban', desc: 'Usir / Ban member dari server' }},
+                            {{ name: '!timeout @user', desc: 'Mute sementara' }},
+                            {{ name: '!snipe / !editsnipe', desc: 'Liat chat yang dihapus/diedit' }}
+                        ]
+                    }},
+                    'ticket': {{
+                        title: '🎫 Ticket System',
+                        cmds: [
+                            {{ name: '!ticket setup', desc: 'Bikin panel bantuan (Dropdown)' }},
+                            {{ name: '!setupwarnlist', desc: 'Bikin Live Dashboard Cartel Hitlist' }}
+                        ]
+                    }},
+                    'rp': {{
+                        title: '📜 Roleplay Character',
+                        cmds: [
+                            {{ name: '!setupchar', desc: 'Bikin panel pendaftaran karakter' }},
+                            {{ name: '!char set', desc: 'Bikin ID Card (Auto-Nickname)' }},
+                            {{ name: '!char @user', desc: 'Liat profil karakter orang lain' }}
+                        ]
+                    }},
+                    'ai': {{
+                        title: '🤖 AI Assistant',
+                        cmds: [
+                            {{ name: '!setupai', desc: 'Bikin channel AI pribadi' }},
+                            {{ name: '!ai [teks]', desc: 'Tanya AI (Global)' }},
+                            {{ name: '!rp [aksi]', desc: 'Roleplay bareng AI' }},
+                            {{ name: '!testai', desc: 'Cek koneksi API AI' }}
+                        ]
+                    }},
+                    'setup': {{
+                        title: '🎨 Auto-Decorator & Setup',
+                        cmds: [
+                            {{ name: '!dekorasi', desc: 'Rapihin nama channel & kategori otomatis' }},
+                            {{ name: '!buatpesan', desc: 'Bikin pengumuman Embed cantik (Form)' }},
+                            {{ name: '!setupverify', desc: 'Sistem gerbang verifikasi member baru' }},
+                            {{ name: '!setupwelcome', desc: 'Setup pesan Welcome & Goodbye' }}
+                        ]
+                    }},
+                    'logs': {{
+                        title: '📊 Server Logs',
+                        cmds: [
+                            {{ name: '!setbotlog', desc: 'Set channel buat pantau aktivitas bot' }},
+                            {{ name: '!setwarnlog', desc: 'Set channel khusus log warning' }},
+                            {{ name: '!testlog', desc: 'Ngetes apakah channel log berfungsi' }}
+                        ]
+                    }}
+                }};
+
+                function openModal(key) {{
+                    const data = featureData[key];
+                    if (!data) return;
+                    
+                    document.getElementById('modalTitle').innerText = data.title;
+                    const list = document.getElementById('modalList');
+                    list.innerHTML = '';
+                    
+                    data.cmds.forEach(cmd => {{
+                        const li = document.createElement('li');
+                        li.innerHTML = `<span class="cmd-name">${{cmd.name}}</span><br><span class="cmd-desc">${{cmd.desc}}</span>`;
+                        list.appendChild(li);
+                    }});
+                    
+                    document.getElementById('cmdModal').style.display = 'flex';
+                }}
+
+                function closeModal() {{
+                    document.getElementById('cmdModal').style.display = 'none';
+                }}
+
+                // Tutup modal kalau klik di luar area kotak
+                window.onclick = function(event) {{
+                    const modal = document.getElementById('cmdModal');
+                    if (event.target == modal) {{
+                        closeModal();
+                    }}
+                }}
             </script>
         </body>
         </html>
