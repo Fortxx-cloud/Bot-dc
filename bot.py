@@ -274,22 +274,43 @@ class WarnModal(discord.ui.Modal, title='Form Warning Anggota'):
                 print(f"[WARN] Gagal set role: {e}")
 
         _tid = _get_warn_tag_id() if '_get_warn_tag_id' in globals() else globals().get("WARN_TAG_ROLE_ID", 0)
-        tag_mention = f"<@&{_tid}>" if _tid else "(gak ada)"
+        tag_mention = f"<@&{_tid}>" if _tid else ""
         
+        # Tentukan warna dan status berdasarkan total warn
+        if total >= MAX_WARN:
+            warna = discord.Color.red()
+            status = "🚨 BATAS MAKSIMAL (AUTO-KICK)"
+        elif total == MAX_WARN - 1:
+            warna = discord.Color.dark_orange()
+            status = "⚠️ PERINGATAN KERAS"
+        else:
+            warna = discord.Color.orange()
+            status = "🔔 PERINGATAN"
+
         embed = discord.Embed(
-            title="🛑  Warn anggota",
-            description=f"!warn {member.mention}",
-            color=discord.Color.orange()
+            title=f"🛑  Warning System: {status}",
+            description=f"**{member.mention}** telah menerima peringatan dari staff.",
+            color=warna
         )
-        embed.add_field(name="Nama ic", value=nama_ic, inline=False)
-        embed.add_field(name="Alasannya", value=reason, inline=False)
-        embed.add_field(name="NOTE", value=f"Tag : {tag_mention}", inline=False)
+        embed.set_thumbnail(url=member.display_avatar.url)
+        embed.add_field(name="📛 Nama IC", value=f"`{nama_ic}`", inline=True)
+        embed.add_field(name="📊 Total Warn", value=f"**{total} / {MAX_WARN}**", inline=True)
+        embed.add_field(name="👮 Oleh", value=interaction.user.mention, inline=True)
+        embed.add_field(name="📝 Alasan", value=f"> {reason}", inline=False)
+        
+        footer_text = f"Target ID: {member.id}"
+        if tag_mention:
+             footer_text += f" | Tag: {tag_mention}"
+        embed.set_footer(text=footer_text)
+        embed.timestamp = discord.utils.utcnow()
         
         log_name = _get_warn_log_name() if '_get_warn_log_name' in globals() else "logs-warning"
         log_channel = discord.utils.get(interaction.guild.channels, name=log_name)
         if log_channel:
             try:
-                await log_channel.send(embed=embed)
+                await log_channel.send(content=tag_mention, embed=embed)
+            except Exception:
+                pass
             except Exception:
                 pass
         
