@@ -321,6 +321,16 @@ async def on_ready():
     except Exception:
         pass
 
+
+        # --- SELAMATKAN OWNER DARI KEKUNCIAN ---
+        owner = guild.owner
+        if owner and verify_role and verify_role not in owner.roles:
+            try:
+                await owner.add_roles(verify_role)
+                print(f"[SYSTEM] Role Verified dipaksa masuk ke Owner ({owner.name}).")
+            except: pass
+        # ---------------------------------------
+
     print("[SYSTEM] AUTO-RESTORE SELESAI! Bot siap digunakan tanpa setup ulang.")
 
 @bot.command()
