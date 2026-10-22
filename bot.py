@@ -1052,6 +1052,7 @@ async def setuphelp_cmd(ctx):
 
 # Daftarkan view biar tombolnya tetep jalan walau bot restart
 try:
+    bot.add_view(OwnerView())
     bot.add_view(HelpMainView())
 except Exception:
     pass
@@ -4030,5 +4031,31 @@ def add_watermark(embed):
     embed.set_footer(text="FORTXX SYSTEM • Premium Experience", icon_url=bot.user.display_avatar.url)
     embed.timestamp = discord.utils.utcnow()
     return embed
+
+# ══════════════════════════════════════════════════════════════
+# 👑 OWNER INFO COMMAND
+# ══════════════════════════════════════════════════════════════
+class OwnerView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        # Ganti link di bawah ini sama link DC pribadi lu
+        self.add_item(discord.ui.Button(label='Join My Personal DC', style=discord.ButtonStyle.link, url='https://discord.gg/fYMu3msZ', emoji='👑'))
+
+@bot.command(name='owner')
+async def owner_cmd(ctx):
+    """Nampilin info profil owner (zomahaci)."""
+    
+    embed = discord.Embed(
+        title='👑 OWNER INFO',
+        description='Halo! Aku adalah bot resmi yang dibuat dan dikembangkan oleh **@zomahaci**.' + chr(10) + chr(10) + 'Kalau kamu mau ngobrol, order mod, atau mampir ke komunitas asliku, silakan klik tombol di bawah ini ya!',
+        color=discord.Color.gold()
+    )
+    embed.set_thumbnail(url=bot.user.display_avatar.url)
+    embed.add_field(name='🌐 Web Dashboard', value='[bot-fortxx.wispbyte.app](https://bot-fortxx.wispbyte.app)', inline=False)
+    embed.add_field(name='🛒 Layanan', value='Shared Mod GTA & Partnership', inline=False)
+    embed.set_footer(text='FORTXX System • Made with ❤️ by zomahaci')
+    
+    await ctx.send(embed=embed, view=OwnerView())
+# ══════════════════════════════════════════════════════════════
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
