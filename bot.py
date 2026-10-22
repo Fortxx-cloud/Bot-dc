@@ -3801,4 +3801,121 @@ async def invitemod_cmd(ctx):
     await ch.send(embed=embed)
     await ctx.send(f"✅ Log invite dites ke {ch.mention}!", delete_after=5)
 
+# ══════════════════════════════════════════════════════════════
+# 🎫 TICKET SYSTEM FORTXX MOD STORE
+# ══════════════════════════════════════════════════════════════
+
+class ModTicketCloseView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        
+    @discord.ui.button(label='Tutup Ticket', style=discord.ButtonStyle.danger, emoji='🔒', custom_id='close_mod_ticket_btn')
+    async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message('🔒 Ticket akan ditutup dan dihapus dalam 5 detik...', ephemeral=False)
+        await asyncio.sleep(5)
+        await interaction.channel.delete()
+
+class ModTicketSelect(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label='Beli Mod / Order', description='Pesan modpack GTA mobile atau PC di sini.', emoji='🛒', value='beli_mod'),
+            discord.SelectOption(label='Bantuan Mod', description='Mod lu error atau bingung cara install? Tanya di sini.', emoji='🛠️', value='bantuan_mod'),
+            discord.SelectOption(label='Lapor Scam / Masalah', description='Laporkan seller nakal atau masalah transaksi.', emoji='🚨', value='lapor_scam'),
+            discord.SelectOption(label='Kerjasama / Partnership', description='Ajukan kerjasama antar server atau komunitas.', emoji='🤝', value='partner')
+        ]
+        super().__init__(placeholder='Pilih jenis tiket...', min_values=1, max_values=1, options=options, custom_id='mod_ticket_select_menu')
+
+    async def callback(self, interaction: discord.Interaction):
+        guild = interaction.guild
+        user = interaction.user
+        ticket_type = self.values[0]
+        
+        # Cek apakah user udah punya ticket terbuka
+        category = discord.utils.get(guild.categories, name='FORTXX TICKETS')
+        if category:
+            for ch in category.text_channels:
+                if ch.topic and f'({user.id})' in ch.topic:
+                    return await interaction.response.send_message(f'❌ Kamu udah punya ticket terbuka di {ch.mention}!', ephemeral=True)
+        
+        await interaction.response.send_message('⏳ Sedang membuat channel tiket...', ephemeral=True)
+        
+        if not category:
+            try:
+                category = await guild.create_category('FORTXX TICKETS', reason='Setup sistem ticket Mod')
+            except: pass
+        
+        # Izin channel
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            user: discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True, embed_links=True),
+            guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
+        }
+        
+        # Staff roles
+        staff_roles = ['👑 Owner', '🛡️ Admin', '⚔️ Moderator', '🔰 Staff', '💵 Seller', 'Admin', 'Moderator', 'Staff']
+        for role_name in staff_roles:
+            role = discord.utils.get(guild.roles, name=role_name)
+            if role:
+                overwrites[role] = discord.PermissionOverwrite(read_messages=True, send_messages=True)
+        
+        try:
+            ticket_ch = await guild.create_text_channel(
+                name=f'ticket-{ticket_type}-{user.name}'.lower(),
+                category=category,
+                overwrites=overwrites,
+                topic=f'Ticket milik {user.name} ({user.id}) | Tipe: {ticket_type}'
+            )
+            
+            # Cari role staff buat di-tag
+            staff_ping = ''
+            for r_name in ['💵 Seller', '🛡️ Admin', '⚔️ Moderator']:
+                r = discord.utils.get(guild.roles, name=r_name)
+                if r: staff_ping += f'{r.mention} '
+            
+            desc_text = f'Halo {user.mention}, tunggu sebentar ya. Staff/Seller akan segera merespons.' + chr(10) + chr(10) + 'Jika masalah sudah selesai, silakan klik tombol di bawah.'
+            
+            embed = discord.Embed(
+                title=f'🎫 Ticket: {ticket_type.replace("_", " ").title()}',
+                description=desc_text,
+                color=discord.Color.green()
+            )
+            
+            await ticket_ch.send(content=f'{user.mention} {staff_ping}', embed=embed, view=ModTicketCloseView())
+            await interaction.edit_original_response(content=f'✅ Ticket kamu sudah dibuat: {ticket_ch.mention}')
+            
+        except Exception as e:
+            await interaction.edit_original_response(content=f'❌ Gagal membuat ticket: {e}')
+
+class ModTicketView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(ModTicketSelect())
+
+@bot.command(name='createticketmod')
+async def createticketmod_cmd(ctx):
+    """Bikin panel Ticket khusus server Shared Mod."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    embed = discord.Embed(
+        title='🎫 FORTXX SUPPORT & STORE',
+        description='Butuh beli mod, bantuan error, atau mau lapor scam?' + chr(10) + 'Silakan pilih jenis tiket pada menu dropdown di bawah ini.',
+        color=discord.Color.blurple()
+    )
+    embed.set_footer(text='Jangan spam tombol ini.')
+    
+    # Hapus pesan command lu biar channel bersih
+    try:
+        await ctx.message.delete()
+    except: pass
+        
+    await ctx.send(embed=embed, view=ModTicketView())
+
+# Daftarin persistent view
+try:
+    bot.add_view(ModTicketView())
+    bot.add_view(ModTicketCloseView())
+except Exception:
+    pass
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
