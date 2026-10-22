@@ -387,31 +387,76 @@ async def clearwarns(ctx, member: discord.Member):
 @bot.event
 async def on_ready():
     print(f"✅ Bot {bot.user} udah online!")
+    print("[SYSTEM] Memulai Auto-Restore...")
     
-    # Teks status (dibikin pendek biar gak kepotong di HP)
-    # Lu bisa ganti "FORTXX Server" jadi nama DC pribadi lu
-    status_text = "🌐 bot-fortxx.wispbyte.app | FORTXX Store"
-    
+    # Set Status
     try:
-        # Pakai ActivityType.playing biar muncul tulisan "Playing ..."
-        activity = discord.Activity(
-            type=discord.ActivityType.playing, 
-            name=status_text
-        )
-        await bot.change_presence(activity=activity)
-        try:
-            await bot.tree.sync()
-            print('[SYSTEM] Slash Commands otomatis disinkronisasi!')
-        except Exception as e:
-            print(f'[SYSTEM] Gagal auto-sync slash: {e}')
-        try:
-            await bot.tree.sync()
-            print('[SYSTEM] Slash Commands berhasil disinkronisasi!')
-        except Exception as e:
-            print(f'[SYSTEM] Gagal sync slash: {e}')
-        print(f"[STATUS] Berhasil disetel ke: Playing {status_text}")
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name="🌐 bot-fortxx.wispbyte.app | FORTXX Store"))
+    except: pass
+
+    # 1. AUTO-SYNC SLASH COMMAND
+    try:
+        await bot.tree.sync()
+        print("[SYSTEM] Slash Commands berhasil disinkronisasi!")
     except Exception as e:
-        print(f"[STATUS] Gagal set status: {e}")
+        print(f"[SYSTEM] Gagal sync slash: {e}")
+
+    # 2. AUTO-RESTORE CONFIG PER SERVER
+    cfg = _cfg_load()
+    restored_count = 0
+    
+    for guild in bot.guilds:
+        # Nyari Channel Log & Verify
+        channel_mapping = {
+            'warn_log_channel': ['logs-warning', 'warn-logs'],
+            'bot_log_channel': ['bot-run', 'bot-logs'],
+            'banned_log_ch': ['banned-logs'],
+            'invite_log_ch': ['invite-logs'],
+            'spam_log_ch': ['spam-bot'],
+            'verify_channel': ['verify'],
+            'welcome_channel': ['welcome']
+        }
+        
+        for cfg_key, keywords in channel_mapping.items():
+            for ch in guild.text_channels:
+                if any(kw in ch.name.lower() for kw in keywords):
+                    cfg[cfg_key] = ch.id
+                    restored_count += 1
+                    break
+                    
+    _cfg_save(cfg)
+    if restored_count > 0:
+        print(f"[SYSTEM] Auto-Restore: Berhasil memulihkan {restored_count} channel config.")
+
+    # 3. AUTO-LOAD PERSISTENT VIEWS (BIAR TOMBOL GAK MATI)
+    views_to_load = [
+        "ModTicketView", "ModTicketCloseView",
+        "TicketView", "TicketCloseView",
+        "TicketV2View", "TicketV2CloseView",
+        "CharView", "HelpMainView",
+        "EmbedBuilderView", "AICreateView",
+        "AICloseView", "OwnerView"
+    ]
+
+    for v_name in views_to_load:
+        try:
+            if v_name in globals():
+                cls = globals()[v_name]
+                bot.add_view(cls())
+                print(f"[SYSTEM] Loaded View: {v_name}")
+        except Exception as e:
+            print(f"[SYSTEM] Gagal load view {v_name}: {e}")
+            
+    # Khusus CommunityRoleView yang butuh parameter
+    try:
+        if "CommunityRoleView" in globals():
+            bot.add_view(CommunityRoleView([]))
+            print("[SYSTEM] Loaded View: CommunityRoleView")
+    except Exception:
+        pass
+
+    print("[SYSTEM] AUTO-RESTORE SELESAI! Bot siap digunakan tanpa setup ulang.")
+
 @bot.command()
 async def test(ctx):
     """Command test untuk cek bot masih hidup."""
