@@ -3585,4 +3585,74 @@ async def fixperms_cmd(ctx):
     except Exception as e:
         await msg.edit(content=f'❌ Gagal membenahi izin: {e}')
 
+# ══════════════════════════════════════════════════════════════
+# 🔒 GATEKEEPER: LOCK SERVER SAMPAI VERIFIKASI
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='lockserver')
+async def lockserver_cmd(ctx):
+    """Sembunyiin semua channel sampai member ambil role Verified."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Mengunci server (Gatekeeper)...** Mohon tunggu, ini butuh waktu 1-2 menit.')
+    
+    # 1. Pastiin Role Verified ada
+    verified_role = discord.utils.get(ctx.guild.roles, name='✅ Verified')
+    if not verified_role:
+        verified_role = await ctx.guild.create_role(name='✅ Verified', color=discord.Color.green(), reason='Gatekeeper System')
+        
+    # 2. Pastiin role Staff
+    staff_roles = ['👑 Owner', '🛡️ Admin', '⚔️ Moderator', '🔰 Staff', 'Admin', 'Moderator', 'Staff']
+    staff_objects = [discord.utils.get(ctx.guild.roles, name=name) for name in staff_roles]
+    staff_objects = [r for r in staff_objects if r is not None]
+    
+    locked_count = 0
+    
+    try:
+        for category in ctx.guild.categories:
+            # Sembunyiin kategori dari @everyone
+            cat_ow = category.overwrites_for(ctx.guild.default_role)
+            cat_ow.read_messages = False
+            await category.set_permissions(ctx.guild.default_role, overwrite=cat_ow)
+            # Buka akses buat Verified & Staff
+            cat_ow_ver = category.overwrites_for(verified_role)
+            cat_ow_ver.read_messages = True
+            await category.set_permissions(verified_role, overwrite=cat_ow_ver)
+            
+            for ch in category.channels:
+                # Kalo channel verify, tetep kasih akses ke @everyone buat liat
+                if 'verify' in ch.name.lower():
+                    await ch.set_permissions(ctx.guild.default_role, read_messages=True, send_messages=False)
+                    await ch.set_permissions(verified_role, read_messages=True, send_messages=True)
+                    continue
+                    
+                # Sembunyiin channel dari @everyone
+                ow = ch.overwrites_for(ctx.guild.default_role)
+                ow.read_messages = False
+                await ch.set_permissions(ctx.guild.default_role, overwrite=ow)
+                
+                # Buka akses buat Verified
+                ow_ver = ch.overwrites_for(verified_role)
+                ow_ver.read_messages = True
+                await ch.set_permissions(verified_role, overwrite=ow_ver)
+                
+                # Buka akses buat Staff
+                for sr in staff_objects:
+                    ow_staff = ch.overwrites_for(sr)
+                    ow_staff.read_messages = True
+                    await ch.set_permissions(sr, overwrite=ow_staff)
+                    
+                locked_count += 1
+                await asyncio.sleep(1.5) # Jeda anti rate limit
+                
+        embed = discord.Embed(
+            title='🔒 Server Berhasil Dikunci!',
+            description=f'Semua **{locked_count}** channel sekarang **disembunyikan** dari member baru.' + nl + nl + 'Member baru cuma bisa liat channel **#verify**. Begitu mereka klik ✅, role **Verified** masuk dan semua channel langsung kebuka otomatis.',
+            color=discord.Color.red()
+        )
+        await msg.edit(content='', embed=embed)
+        
+    except Exception as e:
+        await msg.edit(content=f'❌ Gagal mengunci server: {e}')
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
