@@ -355,6 +355,41 @@ async def on_ready():
             print(f"[SYSTEM] Gagal bikin channel darurat di {guild.name}: {e}")
         # -------------------------------------
 
+
+        # --- AUTO RESTORE VERIFIKASI CARTEL ---
+        role_cartel = discord.utils.get(guild.roles, name='WARGA CJNG')
+        if role_cartel:
+            verify_ch = discord.utils.find(lambda c: 'take-role' in c.name.lower() or 'verify' in c.name.lower(), guild.text_channels)
+            if verify_ch:
+                found_msg = None
+                try:
+                    async for msg in verify_ch.history(limit=30):
+                        if msg.author == bot.user and msg.embeds:
+                            for e in msg.embeds:
+                                if e.title and "VERIFIKASI" in e.title.upper():
+                                    found_msg = msg
+                                    break
+                        if found_msg: break
+                except: pass
+                
+                if found_msg:
+                    cfg[gid]['verify_cartel_msg_id'] = found_msg.id
+                    cfg[gid]['verify_cartel_role_id'] = role_cartel.id
+                    try: await found_msg.add_reaction('✅')
+                    except: pass
+                else:
+                    desc = 'Klik reaksi **✅** di bawah ini untuk membuka akses ke seluruh channel server.'
+                    embed = discord.Embed(title='🩸 VERIFIKASI CÁRTEL DE JALISCO', description=desc, color=discord.Color.dark_red())
+                    new_msg = await verify_ch.send(embed=embed)
+                    await new_msg.add_reaction('✅')
+                    cfg[gid]['verify_cartel_msg_id'] = new_msg.id
+                    cfg[gid]['verify_cartel_role_id'] = role_cartel.id
+                
+                # Paksa kunci ulang server
+                await _lock_server_for_cartel(guild, role_cartel)
+                print(f"[SYSTEM] Verifikasi Cartel dipulihkan di {guild.name}.")
+        # ---------------------------------------
+
     print("[SYSTEM] AUTO-RESTORE SELESAI! Bot siap digunakan tanpa setup ulang.")
 
 @bot.command()
@@ -4197,97 +4232,7 @@ async def on_member_ban(guild, user):
 
 
 
-@bot.command(name='setupverify')
-async def setupverify_cmd(ctx):
-    """Setup sistem verifikasi & lock channel otomatis."""
-    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
-    
-    try:
-        role = discord.utils.get(ctx.guild.roles, name='✅ Verified')
-        if not role:
-            role = await ctx.guild.create_role(name='✅ Verified', color=discord.Color.green(), reason='Setup verifikasi')
-            
-        desc = 'Klik reaksi **✅** di bawah ini untuk membuka akses ke seluruh channel server.' + chr(10) + chr(10) + '*Note: Jika reaksi dihapus, akses akan dicabut otomatis.*'
-        
-        embed = discord.Embed(
-            title='✅ VERIFIKASI SERVER',
-            description=desc,
-            color=discord.Color.green()
-        )
-        msg = await ctx.send(embed=embed)
-        await msg.add_reaction('✅')
-        
-        # Simpan ID ke config per-server
-        cfg = _cfg_load()
-        gid = str(ctx.guild.id)
-        if gid not in cfg: cfg[gid] = {}
-        cfg[gid]['verify_message_id'] = msg.id
-        cfg[gid]['verify_role_id'] = role.id
-        _cfg_save(cfg)
-        
-        # Lock channel lain
-        await ctx.send('⏳ Sedang mengunci channel lain...')
-        for ch in ctx.guild.channels:
-            try:
-                if ch.id != ctx.channel.id:
-                    await ch.set_permissions(ctx.guild.default_role, read_messages=False)
-                    await ch.set_permissions(role, read_messages=True)
-            except: pass
-            
-        await ctx.send('✅ **Selesai!** Server berhasil dikunci. Member baru sekarang harus klik ✅ untuk masuk.')
-    except Exception as e:
-        await ctx.send(f'❌ Error: {e}')
 
-
-# ══════ REACTION ROLE (VERIFY) PER-SERVER ══════
-@bot.event
-async def on_raw_reaction_add(payload):
-    if payload.user_id == bot.user.id: return
-    if str(payload.emoji) != '✅': return
-    
-    guild = bot.get_guild(payload.guild_id)
-    if not guild: return
-    
-    cfg = _cfg_load()
-    gid = str(guild.id)
-    
-    if cfg.get(gid, {}).get('verify_message_id') == payload.message_id:
-        role_id = cfg[gid].get('verify_role_id')
-        role = guild.get_role(role_id) if role_id else None
-        member = guild.get_member(payload.user_id)
-        
-        if role and member:
-            try: 
-                await member.add_roles(role)
-                print(f"[VERIFY] {member.name} berhasil diverifikasi.")
-            except Exception as e:
-                print(f"[VERIFY] Gagal kasih role: {e}")
-
-@bot.event
-async def on_raw_reaction_remove(payload):
-    if str(payload.emoji) != '✅': return
-    
-    guild = bot.get_guild(payload.guild_id)
-    if not guild: return
-    
-    cfg = _cfg_load()
-    gid = str(guild.id)
-    
-    if cfg.get(gid, {}).get('verify_message_id') == payload.message_id:
-        role_id = cfg[gid].get('verify_role_id')
-        role = guild.get_role(role_id) if role_id else None
-        member = guild.get_member(payload.user_id)
-        
-        if role and member:
-            try: await member.remove_roles(role)
-            except: pass
-# ═══════════════════════════════════════════════
-
-
-
-# ══════════════════════════════════════════════════════════════
-# 🚨 EMERGENCY FIX (PINDU DARURAT LU)
-# ══════════════════════════════════════════════════════════════
 
 
 @bot.command(name='fixme')
@@ -4324,6 +4269,108 @@ async def fixme_cmd(ctx):
             
     except Exception as e:
         await ctx.send("❌ Error: " + str(e))
+
+
+
+# ══════════════════════════════════════════════════════════════
+# 🛑 CARTEL VERIFICATION SYSTEM (WARGA CJNG)
+# ══════════════════════════════════════════════════════════════
+
+async def _lock_server_for_cartel(guild, role):
+    """Fungsi bantuan buat ngunci channel."""
+    verify_ch = discord.utils.find(lambda c: 'take-role' in c.name.lower() or 'verify' in c.name.lower(), guild.text_channels)
+    if not verify_ch: return
+    
+    for ch in guild.channels:
+        if ch.id != verify_ch.id:
+            try:
+                await ch.set_permissions(guild.default_role, read_messages=False)
+                await ch.set_permissions(role, read_messages=True, send_messages=True)
+            except: pass
+
+@bot.command(name='setupverifycartel')
+async def setupverifycartel_cmd(ctx):
+    """Setup verifikasi pakai role WARGA CJNG."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Menyiapkan Verifikasi Warga CJNG...**')
+    
+    try:
+        # Cari Role WARGA CJNG
+        role = discord.utils.get(ctx.guild.roles, name='WARGA CJNG')
+        if not role:
+            return await msg.edit(content='❌ Role **WARGA CJNG** gak ketemu! Bikin dulu di Server Settings > Roles.')
+
+        # Cari Channel take-role / verify
+        verify_ch = discord.utils.find(lambda c: 'take-role' in c.name.lower() or 'verify' in c.name.lower(), ctx.guild.text_channels)
+        if not verify_ch:
+            return await msg.edit(content='❌ Channel **#take-role** atau **#verify** gak ketemu!')
+
+        # Kirim Pesan Verifikasi
+        desc = 'Klik reaksi **✅** di bawah ini untuk membuka akses ke seluruh channel server.' + chr(10) + chr(10) + '*Note: Jika reaksi dihapus, akses akan dicabut otomatis.*'
+        embed = discord.Embed(title='🩸 VERIFIKASI CÁRTEL DE JALISCO', description=desc, color=discord.Color.dark_red())
+        v_msg = await verify_ch.send(embed=embed)
+        await v_msg.add_reaction('✅')
+
+        # Simpan ID ke Config (Per-Server)
+        cfg = _cfg_load()
+        gid = str(ctx.guild.id)
+        if gid not in cfg: cfg[gid] = {}
+        cfg[gid]['verify_cartel_msg_id'] = v_msg.id
+        cfg[gid]['verify_cartel_role_id'] = role.id
+        _cfg_save(cfg)
+
+        # Kunci Server
+        await _lock_server_for_cartel(ctx.guild, role)
+        
+        await msg.edit(content=f'✅ **Verifikasi Cártel Aktif!**' + chr(10) + f'Channel {verify_ch.mention} udah disiapin. Server dikunci, member baru harus klik ✅ buat masuk.')
+
+    except Exception as e:
+        await msg.edit(content=f'❌ Error: {e}')
+
+# --- LISTENER REACTION (CARTEL) ---
+@bot.event
+async def on_raw_reaction_add(payload):
+    if payload.user_id == bot.user.id: return
+    if str(payload.emoji) != '✅': return
+    
+    guild = bot.get_guild(payload.guild_id)
+    if not guild: return
+    
+    cfg = _cfg_load()
+    gid = str(guild.id)
+    
+    if cfg.get(gid, {}).get('verify_cartel_msg_id') == payload.message_id:
+        role_id = cfg[gid].get('verify_cartel_role_id')
+        role = guild.get_role(role_id) if role_id else None
+        member = guild.get_member(payload.user_id)
+        
+        if role and member:
+            try: 
+                await member.add_roles(role)
+                print(f"[VERIFY] {member.name} resmi jadi Warga CJNG.")
+            except Exception as e:
+                print(f"[VERIFY] Gagal kasih role: {e}")
+
+@bot.event
+async def on_raw_reaction_remove(payload):
+    if str(payload.emoji) != '✅': return
+    
+    guild = bot.get_guild(payload.guild_id)
+    if not guild: return
+    
+    cfg = _cfg_load()
+    gid = str(guild.id)
+    
+    if cfg.get(gid, {}).get('verify_cartel_msg_id') == payload.message_id:
+        role_id = cfg[gid].get('verify_cartel_role_id')
+        role = guild.get_role(role_id) if role_id else None
+        member = guild.get_member(payload.user_id)
+        
+        if role and member:
+            try: await member.remove_roles(role)
+            except: pass
+# ══════════════════════════════════════════════════════════════
 
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
