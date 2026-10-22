@@ -3041,4 +3041,114 @@ async def buildcommunity3_cmd(ctx):
         await msg.edit(content=f'❌ Gagal membuat channel: {e}')
 # ══════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════
+# 👑 AUTO ROLE BUILDER
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='buildroles')
+async def buildroles_cmd(ctx):
+    """Bikin semua role penting buat server komunitas otomatis."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Membangun semua Role...** Mohon tunggu sebentar.')
+    
+    # List Role: (Nama, Warna, Hoist(Tampil terpisah), Mentionable)
+    roles_to_create = [
+        # --- ROLE STAFF ---
+        ('👑 Owner', discord.Color.gold(), True, False),
+        ('🛡️ Admin', discord.Color.red(), True, False),
+        ('⚔️ Moderator', discord.Color.orange(), True, False),
+        ('🔰 Staff', discord.Color.blue(), True, False),
+        ('✅ Verified', discord.Color.green(), False, False),
+        ('🤖 Bots', discord.Color.dark_grey(), True, False),
+        
+        # --- ROLE MINAT ---
+        ('🎮 Gamer', discord.Color.default(), False, True),
+        ('🎵 Musik', discord.Color.default(), False, True),
+        ('🎨 Artist', discord.Color.default(), False, True),
+        ('🐶 Pet Lover', discord.Color.default(), False, True),
+        ('🍔 Foodie', discord.Color.default(), False, True),
+        
+        # --- ROLE PING / NOTIFIKASI ---
+        ('📢 Event Ping', discord.Color.default(), False, True),
+        ('🎁 Giveaway Ping', discord.Color.default(), False, True),
+        ('📣 Announcement Ping', discord.Color.default(), False, True)
+    ]
+    
+    created = 0
+    skipped = 0
+    
+    try:
+        for name, color, hoist, mentionable in roles_to_create:
+            existing = discord.utils.get(ctx.guild.roles, name=name)
+            if existing:
+                skipped += 1
+                continue
+                
+            await ctx.guild.create_role(
+                name=name,
+                color=color,
+                hoist=hoist,
+                mentionable=mentionable,
+                reason='Auto Server Setup'
+            )
+            created += 1
+            await asyncio.sleep(1.5) # Jeda anti rate-limit
+            
+        embed = discord.Embed(
+            title='✅ Role Builder Selesai!',
+            description=f'Berhasil membuat **{created}** role baru.' + nl + f'({skipped} role dilewati karena udah ada).' + nl + nl + 'Silakan cek Server Settings > Roles.',
+            color=discord.Color.green()
+        )
+        embed.add_field(name='👑 Staff', value='Owner, Admin, Mod, Staff, Verified, Bots', inline=False)
+        embed.add_field(name='🎭 Minat', value='Gamer, Musik, Artist, Pet, Foodie', inline=False)
+        embed.add_field(name='🔔 Ping', value='Event, Giveaway, Announcement', inline=False)
+        embed.set_footer(text='Jangan lupa atur posisi role Bot di paling atas!')
+        
+        await msg.edit(content='', embed=embed)
+        
+    except Exception as e:
+        await msg.edit(content=f'❌ Gagal membuat role: {e}')
+# ══════════════════════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════
+# 🛡️ AUTO PERMISSION SETUP
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='setup_permissions')
+async def setup_permissions_cmd(ctx):
+    """Set izin (permission) otomatis ke role yang udah dibuat."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Mengatur izin role...** Mohon tunggu sebentar.')
+    
+    # Mapping Role -> Permission
+    role_perms = {
+        '👑 Owner': discord.Permissions(administrator=True),
+        '🛡️ Admin': discord.Permissions(administrator=True),
+        '⚔️ Moderator': discord.Permissions(kick_members=True, moderate_members=True, manage_messages=True, view_audit_log=True, manage_nicknames=True),
+        '🔰 Staff': discord.Permissions(manage_messages=True, view_audit_log=True),
+        '🤖 Bots': discord.Permissions(manage_roles=True, manage_channels=True, manage_messages=True, kick_members=True),
+        '✅ Verified': discord.Permissions(send_messages=True, read_messages=True, attach_files=True, embed_links=True)
+    }
+    
+    updated = 0
+    
+    try:
+        for role_name, perms in role_perms.items():
+            role = discord.utils.get(ctx.guild.roles, name=role_name)
+            if role:
+                await role.edit(permissions=perms, reason='Auto Setup Permissions')
+                updated += 1
+                await asyncio.sleep(1.5) # Jeda anti rate-limit
+                
+        embed = discord.Embed(
+            title='✅ Permission Berhasil Diatur!',
+            description=f'Berhasil mengatur izin untuk **{updated}** role.' + nl + nl + '**Catatan Penting:**' + nl + 'Pastikan Role Bot (FORTXX) posisinya ada di **PALING ATAS** di Server Settings > Roles, agar bot bisa mengatur role-role di bawahnya.',
+            color=discord.Color.green()
+        )
+        await msg.edit(content='', embed=embed)
+        
+    except Exception as e:
+        await msg.edit(content=f'❌ Gagal mengatur izin: {e}')
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
