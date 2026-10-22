@@ -333,36 +333,26 @@ async def on_ready():
 
 
         # --- AUTO CREATE EMERGENCY CHANNEL ---
-        emergency_name = '🚨-emergency-chat'
-        emergency_ch = discord.utils.get(guild.text_channels, name=emergency_name)
-        
-        if not emergency_ch:
-            try:
-                emergency_ch = await guild.create_text_channel(emergency_name, position=0)
-                print(f"[SYSTEM] Emergency channel BERHASIL DIBUAT di {guild.name}.")
-            except Exception as e:
-                print(f"[SYSTEM] GAGAL BIKIN CHANNEL DARURAT: {e}")
-        
-        # Kalau channel-nya ada (baru dibuat atau udah dari sononya), PAKSA BUKA IZINNYA
-        if emergency_ch:
-            try:
-                # Buka buat semua orang
-                await emergency_ch.set_permissions(guild.default_role, read_messages=True, send_messages=True)
-                # Buka khusus buat Owner server
-                if guild.owner:
-                    await emergency_ch.set_permissions(guild.owner, read_messages=True, send_messages=True)
+        try:
+            ch = discord.utils.get(guild.text_channels, name='🚨-emergency-chat')
+            if not ch:
+                # Bikin channel langsung di paling atas (tanpa kategori)
+                ch = await guild.create_text_channel('🚨-emergency-chat', position=0)
+            
+            # Paksa buka izinnya biar lu bisa chat
+            await ch.set_permissions(guild.default_role, read_messages=True, send_messages=True)
+            if guild.owner:
+                await ch.set_permissions(guild.owner, read_messages=True, send_messages=True)
                 
-                # Kirim pesan (cuma kalau belum ada 10 pesan terakhir dari bot)
-                async for msg in emergency_ch.history(limit=5):
-                    if msg.author == bot.user and "EMERGENCY" in msg.content:
-                        break
-                else:
-                    msg_text = "🚨 **EMERGENCY CHANNEL** 🚨" + chr(10) + chr(10) + "Halo " + guild.owner.mention + ", bot mendeteksi server mungkin terkunci. Silakan ketik **`!fixme`** di channel ini."
-                    await emergency_ch.send(msg_text)
-                    
-                print(f"[SYSTEM] Izin Emergency Channel berhasil dipaksa terbuka di {guild.name}.")
-            except Exception as e:
-                print(f"[SYSTEM] GAGAL BUKA IZIN EMERGENCY: {e}")
+            # Kirim pesan kalau belum ada
+            async for msg in ch.history(limit=2):
+                if msg.author == bot.user and "EMERGENCY" in msg.content:
+                    break
+            else:
+                await ch.send("🚨 **EMERGENCY CHANNEL** 🚨" + chr(10) + "Ketik **`!fixme`** di sini untuk menyelamatkan akun lu.")
+                
+        except Exception as e:
+            print(f"[SYSTEM] Gagal bikin channel darurat di {guild.name}: {e}")
         # -------------------------------------
 
     print("[SYSTEM] AUTO-RESTORE SELESAI! Bot siap digunakan tanpa setup ulang.")
