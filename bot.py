@@ -4260,4 +4260,40 @@ async def on_raw_reaction_remove(payload):
 # ═══════════════════════════════════════════════
 
 
+
+# ══════════════════════════════════════════════════════════════
+# 🚨 EMERGENCY FIX (PINDU DARURAT LU)
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='fixme')
+async def fixme_cmd(ctx):
+    """Paksa kasih role Admin & Verified ke lu (Biar gak kekunci)."""
+    msg = await ctx.send('⏳ **Menyelamatkan Owner...**')
+    
+    try:
+        # 1. Cari atau Bikin Role Admin
+        admin_role = discord.utils.get(ctx.guild.roles, name='Admin') or discord.utils.get(ctx.guild.roles, name='🛡️ Admin')
+        if not admin_role:
+            admin_role = await ctx.guild.create_role(name='Admin', color=discord.Color.red(), permissions=discord.Permissions(administrator=True))
+            await msg.edit(content='✅ Role `Admin` berhasil dibuat.')
+
+        # 2. Cari atau Bikin Role Verified
+        verified_role = discord.utils.get(ctx.guild.roles, name='✅ Verified')
+        if not verified_role:
+            verified_role = await ctx.guild.create_role(name='✅ Verified', color=discord.Color.green())
+            await msg.edit(content='✅ Role `✅ Verified` berhasil dibuat.')
+
+        # 3. PAKSA KASIH KE LU (@zomahaci)
+        try:
+            await ctx.author.add_roles(admin_role, verified_role)
+            top_role_name = ctx.guild.me.top_role.name
+            await ctx.send(f"✅ **MANTAP BANG!** Role **{admin_role.name}** dan **✅ Verified** udah gw paksa masukin ke akun lu.")
+            await ctx.send(f"*(Info: Role tertinggi bot saat ini adalah {top_role_name}. Pastiin role bot ada di atas role Admin!)*")
+        except Exception as e:
+            await ctx.send(f"❌ **Gagal ngegasih role!**\nAlasan: {e}\n\n**SOLUSI:** Pindahkan role bot (`Fortxx`) ke **paling atas** di Server Settings > Roles, lalu ketik `!fixme` lagi.")
+            
+    except Exception as e:
+        await ctx.send(f"❌ Error: {e}")
+# ══════════════════════════════════════════════════════════════
+
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
