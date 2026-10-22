@@ -4185,14 +4185,24 @@ import json as json_lib
 _ENC_KEY = "Tc2Jwnh0tEsa7RRKU28l2snTeuzlqz961SwJ0ghykYkvqyPg-ks"
 CA_API_KEY = _ENC_KEY[::-1]
 
+
+
+# ══════════════════════════════════════════════════════════════
+# 🧠 AI DEEP SCAN + AUTO TEST (Baca isi & Langsung Tes)
+# ══════════════════════════════════════════════════════════════
+import aiohttp
+import json as json_lib
+
+_ENC_KEY = "Tc2Jwnh0tEsa7RRKU28l2snTeuzlqz961SwJ0ghykYkvqyPg-ks"
+CA_API_KEY = _ENC_KEY[::-1]
+
 @bot.command(name='aiscanlogs')
 async def aiscanlogs_cmd(ctx):
-    """AI masuk ke tiap channel, baca pesan, lalu simpulkan."""
+    """AI masuk ke tiap channel, baca pesan, nyimpulin, dan langsung ngetes lognya."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
     
-    msg = await ctx.send('🔍 **AI Deep Scan dimulai...**' + chr(10) + '⏳ Membaca isi channel satu per satu (bisa 1-2 menit)')
+    msg = await ctx.send('🔍 **AI Deep Scan + Auto Test dimulai...**' + chr(10) + '⏳ Membaca isi channel & menyimpulkan (bisa 1-2 menit)')
     
-    # Keyword buat nentuin channel mana yang perlu dibaca pesannya (buat hemat waktu)
     log_kw = ['log', 'warn', 'ban', 'invite', 'spam', 'verify', 'report', 'audit']
     
     all_channels = []
@@ -4219,7 +4229,6 @@ async def aiscanlogs_cmd(ctx):
                         for e in m.embeds:
                             if e.title:
                                 messages.append(f"[Embed: {e.title[:40]}]")
-                                    # ambil 1 embed aja
                                 break
             except: pass
         
@@ -4260,7 +4269,7 @@ async def aiscanlogs_cmd(ctx):
     }
     
     try:
-        await msg.edit(content='🧠 **AI sedang menganalisis semua data...** (Tunggu 3-5 detik)')
+        await msg.edit(content='🧠 **AI sedang menganalisis data & menyiapkan tes otomatis...**')
         
         async with aiohttp.ClientSession() as session:
             async with session.post("https://api.chatanywhere.tech/v1/chat/completions", headers=headers, json=payload, timeout=60) as resp:
@@ -4270,7 +4279,6 @@ async def aiscanlogs_cmd(ctx):
                 jawaban = data['choices'][0]['message']['content']
         
         clean_json = jawaban.replace('```json', '').replace('```', '').strip()
-        # Ambil dari { pertama sampai } terakhir (kalau AI nambah teks)
         start = clean_json.find('{')
         end = clean_json.rfind('}') + 1
         clean_json = clean_json[start:end]
@@ -4293,11 +4301,7 @@ async def aiscanlogs_cmd(ctx):
         for ai_key, cfg_key in mapping.items():
             ch_name = ai_data.get(ai_key)
             if ch_name and str(ch_name).lower() not in ['null', 'none', '']:
-                # Fuzzy match: cari channel yang namanya mengandung nama dari AI
-                ch = None
-                # 1. Exact match
                 ch = discord.utils.get(ctx.guild.text_channels, name=ch_name)
-                # 2. Contains match
                 if not ch:
                     for test_ch in ctx.guild.text_channels:
                         if str(ch_name).lower() in test_ch.name.lower() or test_ch.name.lower() in str(ch_name).lower():
@@ -4306,20 +4310,29 @@ async def aiscanlogs_cmd(ctx):
                 
                 if ch:
                     cfg[gid][cfg_key] = ch.id
-                    results.append(f"✅ **{ai_key.upper()}** -> {ch.mention}")
+                    # === LANGSUNG TES KIRIM PESAN ===
                     try:
-                        embed = discord.Embed(title=f"🧪 AI Deep Test: {ai_key.upper()}", description="Channel ini dipilih oleh AI setelah baca isinya.", color=discord.Color.green())
+                        embed = discord.Embed(
+                            title=f"🧪 AI AUTO-TEST: {ai_key.upper()}", 
+                            description="Jika kamu melihat pesan ini, berarti AI berhasil menemukan channel ini dan bot **punya izin** untuk mengirim log ke sini.", 
+                            color=discord.Color.green()
+                        )
+                        embed.timestamp = discord.utils.utcnow()
                         await ch.send(embed=embed)
-                    except: pass
+                        results.append(f"✅ **{ai_key.upper()}** -> {ch.mention} *(Berhasil dites!)*")
+                    except discord.Forbidden:
+                        results.append(f"⚠️ **{ai_key.upper()}** -> {ch.mention} *(Gagal kirim, bot gak punya izin!)*")
+                    except Exception as e:
+                        results.append(f"⚠️ **{ai_key.upper()}** -> {ch.mention} *(Error: {e})*")
                 else:
-                    results.append(f"⚠️ **{ai_key.upper()}** -> AI pilih `{ch_name}` tapi gak ketemu")
+                    results.append(f"⚠️ **{ai_key.upper()}** -> AI pilih `{ch_name}` tapi channel gak ketemu")
             else:
-                results.append(f"❌ **{ai_key.upper()}** -> Gak ada channel cocok")
+                results.append(f"❌ **{ai_key.upper()}** -> Gak ada channel yang cocok di server ini")
         
         _cfg_save(cfg)
         
-        embed = discord.Embed(title='🧠 AI Deep Scan Selesai!', description=chr(10).join(results), color=discord.Color.blurple())
-        embed.set_footer(text=f"Memindai {total} channel | AI membaca data mentah & nyimpulin sendiri")
+        embed = discord.Embed(title='🧠 AI Deep Scan + Auto Test Selesai!', description=chr(10).join(results), color=discord.Color.blurple())
+        embed.set_footer(text=f"Memindai {total} channel | Cek pesan test di tiap channel log")
         await msg.edit(content='', embed=embed)
         
     except Exception as e:
