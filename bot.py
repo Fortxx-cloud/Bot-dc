@@ -4041,4 +4041,157 @@ except Exception as e:
     print(f"[SYSTEM] Gagal memuat Persistent Views: {e}")
 # ═══════════════════════════════════════════════════════════
 
+
+def is_mod_internal(member):
+    if member.guild_permissions.administrator: return True
+    mod_roles = ["👑 Owner", "🛡️ Admin", "⚔️ Moderator", "🔰 Staff"]
+    for r in member.roles:
+        if r.name in mod_roles: return True
+    return False
+
+# ══════════════════════════════════════════════════════════════
+# 👑 CARL-BOT KILLER FEATURES (Tags, Starboard, Leveling, Automod)
+# ══════════════════════════════════════════════════════════════
+
+TAGS_FILE = 'tags.json'
+LEVELS_FILE = 'levels.json'
+STARBOARD_FILE = 'starboard.json'
+AUTOMOD_FILE = 'automod.json'
+
+def load_json(file):
+    import json
+    if os.path.exists(file):
+        try:
+            with open(file, 'r') as f: return json.load(f)
+        except: return {}
+    return {}
+
+def save_json(file, data):
+    import json
+    with open(file, 'w') as f: json.dump(data, f, indent=2)
+
+# ─── 1. CUSTOM TAGS (AUTO RESPONDER) ───
+@bot.command(name='addcmd')
+async def addcmd_cmd(ctx, name: str, *, text: str):
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    tags = load_json(TAGS_FILE)
+    tags[name.lower()] = text
+    save_json(TAGS_FILE, tags)
+    await ctx.send(f'✅ Command `!{name}` berhasil ditambahkan!')
+
+@bot.command(name='delcmd')
+async def delcmd_cmd(ctx, name: str):
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    tags = load_json(TAGS_FILE)
+    if name.lower() in tags:
+        del tags[name.lower()]
+        save_json(TAGS_FILE, tags)
+        await ctx.send(f'✅ Command `!{name}` dihapus.')
+    else:
+        await ctx.send('❌ Tag gak ketemu.')
+
+# ─── 2. STARBOARD ───
+@bot.command(name='setupstarboard')
+async def setupstarboard_cmd(ctx, channel: discord.TextChannel):
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    cfg = load_json(STARBOARD_FILE)
+    cfg['channel'] = channel.id
+    cfg['threshold'] = 3 # Minimal 3 bintang
+    save_json(STARBOARD_FILE, cfg)
+    await ctx.send(f'✅ Starboard diatur ke {channel.mention}. Minimal 3 ⭐ buat masuk Hall of Fame!')
+
+@bot.event
+async def on_reaction_add(reaction, user):
+    if user.bot: return
+    if str(reaction.emoji) == '⭐':
+        cfg = load_json(STARBOARD_FILE)
+        if not cfg.get('channel') or reaction.count < cfg.get('threshold', 3): return
+        sb_ch = bot.get_channel(cfg['channel'])
+        if not sb_ch: return
+        if reaction.message.channel.id == sb_ch.id: return
+        
+        embed = discord.Embed(description=reaction.message.content or '*[Gambar/Embed]*', color=discord.Color.gold())
+        embed.set_author(name=reaction.message.author.display_name, icon_url=reaction.message.author.display_avatar.url)
+        embed.add_field(name='Source', value=f'[Klik disini]({reaction.message.jump_url})')
+        embed.set_footer(text=f'⭐ {reaction.count} | Hall of Fame')
+        
+        try:
+            if reaction.message.attachments:
+                embed.set_image(url=reaction.message.attachments[0].url)
+            await sb_ch.send(content=f'🌟 **{reaction.count}** | {reaction.message.channel.mention}', embed=embed)
+        except: pass
+
+# ─── 3. SISTEM LEVELING ───
+@bot.listen('on_message')
+async def leveling_listener(message):
+    if message.author.bot or not message.guild: return
+    import random, time
+    levels = load_json(LEVELS_FILE)
+    uid = str(message.author.id)
+    
+    if uid not in levels: levels[uid] = {'xp': 0, 'level': 1, 'last_msg': 0}
+    
+    now = time.time()
+    if now - levels[uid].get('last_msg', 0) > 60: # Cooldown 60 detik per XP
+        xp_gain = random.randint(15, 25)
+        levels[uid]['xp'] += xp_gain
+        levels[uid]['last_msg'] = now
+        
+        next_level_xp = levels[uid]['level'] * 100
+        if levels[uid]['xp'] >= next_level_xp:
+            levels[uid]['level'] += 1
+            levels[uid]['xp'] = 0
+            try:
+                await message.channel.send(f'🎉 Selamat {message.author.mention}, kamu naik ke **Level {levels[uid]["level"]}**!', delete_after=10)
+            except: pass
+        
+        save_json(LEVELS_FILE, levels)
+
+@bot.command(name='rank', aliases=['level'])
+async def rank_cmd(ctx, member: discord.Member = None):
+    member = member or ctx.author
+    levels = load_json(LEVELS_FILE)
+    data = levels.get(str(member.id), {'xp': 0, 'level': 1})
+    embed = discord.Embed(title=f'📊 Rank Card: {member.display_name}', color=discord.Color.blurple())
+    embed.set_thumbnail(url=member.display_avatar.url)
+    embed.add_field(name='🏆 Level', value=f'**{data["level"]}**', inline=True)
+    embed.add_field(name='✨ XP', value=f'{data["xp"]} / {data["level"] * 100}', inline=True)
+    await ctx.send(embed=embed)
+
+@bot.command(name='top', aliases=['leaderboard'])
+async def top_cmd(ctx):
+    levels = load_json(LEVELS_FILE)
+    sorted_levels = sorted(levels.items(), key=lambda x: (x[1].get('level', 1), x[1].get('xp', 0)), reverse=True)[:10]
+    desc = ''
+    for i, (uid, data) in enumerate(sorted_levels, 1):
+        try:
+            user = await bot.fetch_user(int(uid))
+            desc += f'**{i}.** {user.name} — Lvl {data["level"]} ({data["xp"]} XP)' + chr(10)
+        except: pass
+    if not desc: desc = 'Belum ada data.'
+    embed = discord.Embed(title='🏆 Top 10 Leaderboard', description=desc, color=discord.Color.gold())
+    await ctx.send(embed=embed)
+
+# ─── 4. AUTOMOD ANTI-LINK ───
+@bot.command(name='automod')
+async def automod_cmd(ctx, status: str = 'on'):
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    cfg = load_json(AUTOMOD_FILE)
+    cfg['anti_link'] = (status.lower() == 'on')
+    save_json(AUTOMOD_FILE, cfg)
+    await ctx.send(f'✅ AutoMod Anti-Link: **{status.upper()}**')
+
+@bot.listen('on_message')
+async def automod_listener(message):
+    if message.author.bot or not message.guild or is_mod_internal(message.author): return
+    cfg = load_json(AUTOMOD_FILE)
+    if cfg.get('anti_link'):
+        if 'discord.gg/' in message.content or 'discord.com/invite/' in message.content:
+            try:
+                await message.delete()
+                await message.channel.send(f'⚠️ {message.author.mention}, dilarang mengirim link Discord lain!', delete_after=5)
+            except: pass
+# ══════════════════════════════════════════════════════════════
+
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
