@@ -4222,47 +4222,6 @@ async def warn_cmd(ctx, member: discord.Member):
 
 
 # ══════ LOG KICK/BAN/LEAVE KE IN-OUT-LOG ══════
-@bot.event
-async def on_member_remove(member):
-    guild = member.guild
-    # Cari channel bernama in-out-log atau banned-logs
-    ch = discord.utils.find(lambda c: 'in-out-log' in c.name.lower() or 'banned-logs' in c.name.lower(), guild.text_channels)
-    if not ch: return
-    
-    is_kick = False
-    try:
-        async for e in guild.audit_logs(limit=1, action=discord.AuditLogAction.kick):
-            if e.target.id == member.id and (discord.utils.utcnow() - e.created_at).total_seconds() < 10:
-                is_kick = True
-                embed = discord.Embed(title="👢 MEMBER DI-KICK", description=f"**Target:** {member.mention} (`{member.id}`)\n**Mod:** {e.user.mention}\n**Alasan:** {e.reason or '-'}", color=discord.Color.orange())
-                embed.set_thumbnail(url=member.display_avatar.url)
-                await ch.send(embed=embed)
-                break
-    except: pass
-    
-    if not is_kick:
-        embed = discord.Embed(title="🚪 MEMBER KELUAR (LEAVE)", description=f"**User:** {member.mention} (`{member.id}`)", color=discord.Color.dark_grey())
-        embed.set_thumbnail(url=member.display_avatar.url)
-        try: await ch.send(embed=embed)
-        except: pass
-
-@bot.event
-async def on_member_ban(guild, user):
-    ch = discord.utils.find(lambda c: 'in-out-log' in c.name.lower() or 'banned-logs' in c.name.lower(), guild.text_channels)
-    if not ch: return
-    try:
-        async for e in guild.audit_logs(limit=1, action=discord.AuditLogAction.ban):
-            if e.target.id == user.id:
-                embed = discord.Embed(title="🔨 MEMBER DI-BAN", description=f"**Target:** {user.mention} (`{user.id}`)\n**Mod:** {e.user.mention}\n**Alasan:** {e.reason or '-'}", color=discord.Color.red())
-                embed.set_thumbnail(url=user.display_avatar.url)
-                await ch.send(embed=embed)
-                break
-    except: pass
-# ═══════════════════════════════════════════════
-
-
-
-
 
 
 @bot.command(name='fixme')
@@ -4405,6 +4364,75 @@ async def on_raw_reaction_remove(payload):
         if role and member:
             try: await member.remove_roles(role)
             except: pass
+# ══════════════════════════════════════════════════════════════
+
+
+
+# ══════════════════════════════════════════════════════════════
+# 🚪 IN-OUT LOG SYSTEM (MANUAL SETUP)
+# ══════════════════════════════════════════════════════════════
+
+@bot.command(name='setinoutlog')
+async def setinoutlog_cmd(ctx, channel: discord.TextChannel):
+    """Set channel buat log keluar/masuk member."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    cfg = _cfg_load()
+    gid = str(ctx.guild.id)
+    if gid not in cfg: cfg[gid] = {}
+    
+    cfg[gid]['in_out_log_ch'] = channel.id
+    _cfg_save(cfg)
+    
+    await ctx.send(f"✅ **Berhasil!** Log keluar/masuk (In-Out) sekarang bakal dikirim ke {channel.mention}.")
+
+@bot.event
+async def on_member_remove(member):
+    guild = member.guild
+    cfg = _cfg_load()
+    gid = str(guild.id)
+    
+    # Cari channel dari config, kalau gak ada baru cari by name
+    ch_id = cfg.get(gid, {}).get('in_out_log_ch')
+    ch = guild.get_channel(ch_id) if ch_id else discord.utils.find(lambda c: 'in-out-log' in c.name.lower(), guild.text_channels)
+    
+    if not ch: return
+    
+    is_kick = False
+    try:
+        async for e in guild.audit_logs(limit=1, action=discord.AuditLogAction.kick):
+            if e.target.id == member.id and (discord.utils.utcnow() - e.created_at).total_seconds() < 10:
+                is_kick = True
+                embed = discord.Embed(title="👢 MEMBER DI-KICK", description=f"**Target:** {member.mention} (`{member.id}`)" + chr(10) + f"**Mod:** {e.user.mention}" + chr(10) + f"**Alasan:** {e.reason or '-'}", color=discord.Color.orange())
+                embed.set_thumbnail(url=member.display_avatar.url)
+                await ch.send(embed=embed)
+                break
+    except: pass
+    
+    if not is_kick:
+        embed = discord.Embed(title="🚪 MEMBER KELUAR (LEAVE)", description=f"**User:** {member.mention} (`{member.id}`)" + chr(10) + f"**Sisa Member:** {guild.member_count}", color=discord.Color.dark_grey())
+        embed.set_thumbnail(url=member.display_avatar.url)
+        try: await ch.send(embed=embed)
+        except: pass
+
+@bot.event
+async def on_member_ban(guild, user):
+    cfg = _cfg_load()
+    gid = str(guild.id)
+    
+    ch_id = cfg.get(gid, {}).get('in_out_log_ch')
+    ch = guild.get_channel(ch_id) if ch_id else discord.utils.find(lambda c: 'in-out-log' in c.name.lower(), guild.text_channels)
+    
+    if not ch: return
+    
+    try:
+        async for e in guild.audit_logs(limit=1, action=discord.AuditLogAction.ban):
+            if e.target.id == user.id:
+                embed = discord.Embed(title="🔨 MEMBER DI-BAN", description=f"**Target:** {user.mention} (`{user.id}`)" + chr(10) + f"**Mod:** {e.user.mention}" + chr(10) + f"**Alasan:** {e.reason or '-'}", color=discord.Color.red())
+                embed.set_thumbnail(url=user.display_avatar.url)
+                await ch.send(embed=embed)
+                break
+    except: pass
 # ══════════════════════════════════════════════════════════════
 
 
