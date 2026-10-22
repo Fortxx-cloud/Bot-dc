@@ -378,35 +378,25 @@ async def clearwarns(ctx, member: discord.Member):
 # ══════════════════════════════════════════════════
 # EVENTS & RUN
 # ══════════════════════════════════════════════════
-@tasks.loop(seconds=15)
-async def rotate_status():
-    """Custom Status: Cuma tulisan, tanpa 'Playing'."""
-    guild_count = len(bot.guilds)
-    
-    statuses = [
-        discord.CustomActivity(name=f"🌐 bot-fortxx.wispbyte.app"),
-        discord.CustomActivity(name=f"🛒 FORTXX Mod Store & Support"),
-        discord.CustomActivity(name=f"📡 Active in {guild_count} Servers"),
-        discord.CustomActivity(name=f"👑 THEKINGFORXX | SYSTEM ONLINE")
-    ]
 
-    current = statuses[rotate_status.current_index % len(statuses)]
-    rotate_status.current_index += 1
-    
-    try:
-        await bot.change_presence(activity=current)
-    except Exception:
-        pass
-
-rotate_status.current_index = 0
 
 @bot.event
 async def on_ready():
     print(f"✅ Bot {bot.user} udah online!")
-    # Mulai muter status kalau belum jalan
-    if not rotate_status.is_running():
-        rotate_status.start()
-
+    
+    # Ambil jumlah server
+    guild_count = len(bot.guilds)
+    
+    # Bikin status statis (Diam, gak muter)
+    # Catatan: Discord gak ngebolehin tag/link di status, jadi cuma teks biasa
+    status_text = f"🌐 bot-fortxx.wispbyte.app | 👑 Owner: zomahaci | 📡 {guild_count} Servers"
+    
+    try:
+        activity = discord.CustomActivity(name=status_text)
+        await bot.change_presence(activity=activity)
+        print(f"[STATUS] Berhasil disetel ke: {status_text}")
+    except Exception as e:
+        print(f"[STATUS] Gagal set status: {e}")
 @bot.command()
 async def test(ctx):
     """Command test untuk cek bot masih hidup."""
