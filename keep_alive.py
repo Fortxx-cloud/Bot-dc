@@ -44,7 +44,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <meta http-equiv="refresh" content="60">
-            <title>FORTXX | Command Center</title>
+            <title>FORTXX | Command Center v3</title>
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
             <style>
                 :root {{
@@ -226,7 +226,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     <div class="stat-box"><div class="stat-val">{uptime_str}</div><div class="stat-lbl">Uptime</div></div>
                 </div>
 
-                <div class="section-title"><span>&#128736;</span> All System Modules (12)</div>
+                <div class="section-title"><span>&#128736;</span> All System Modules (13)</div>
                 <div class="features-grid">
                     <!-- 0. SERVER BUILDER -->
                     <div class="feature-card" onclick="openModal('builder')"><div class="f-icon">&#127959;</div><div class="f-info"><h4>Server Builder</h4><p>Auto build channels, roles & permissions.</p></div><span class="f-arrow">&#128269;</span></div>
@@ -265,7 +265,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 FORTXX SYSTEM &copy; 2026 | POWERED BY @zomahaci
             </div>
 
-            <!-- POP-UP (MODAL) -->
             <div id="cmdModal" class="modal">
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeModal()">&times;</span>
@@ -283,15 +282,15 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 updateClock();
 
                 const featureData = {{
-                    'builder': { title: '🏗 Server Builder Tools', cmds: [
-                        { name: '!buildcommunity', desc: 'Bikin struktur server komunitas dasar' },
-                        { name: '!buildcommunity2', desc: 'Tambah channel Events, Music, Welcome, Partner' },
-                        { name: '!buildcommunity3', desc: 'Tambah channel Creative, Lifestyle, Safe Space' },
-                        { name: '!buildroles', desc: 'Bikin semua role Staff, Minat, & Ping otomatis' },
-                        { name: '!setup_permissions', desc: 'Setel izin (perms) role otomatis' },
-                        { name: '!setup_channels', desc: 'Kunci channel informasi jadi Read-Only' },
-                        { name: '!ticketv2', desc: 'Pasang panel Ticket khusus komunitas' }
-                    ]},
+                    'builder': {{ title: '🏗 Server Builder Tools', cmds: [
+                        {{ name: '!buildcommunity', desc: 'Bikin struktur server komunitas dasar' }},
+                        {{ name: '!buildcommunity2', desc: 'Tambah channel Events, Music, Welcome, Partner' }},
+                        {{ name: '!buildcommunity3', desc: 'Tambah channel Creative, Lifestyle, Safe Space' }},
+                        {{ name: '!buildroles', desc: 'Bikin semua role Staff, Minat, & Ping otomatis' }},
+                        {{ name: '!setup_permissions', desc: 'Setel izin (perms) role otomatis' }},
+                        {{ name: '!setup_channels', desc: 'Kunci channel informasi jadi Read-Only' }},
+                        {{ name: '!ticketv2', desc: 'Pasang panel Ticket khusus komunitas' }}
+                    ]}},
                     'mod': {{ title: '🛡 Moderation System', cmds: [
                         {{ name: '!warn @user', desc: 'Kasih warning (Form Pop-up + Role)' }},
                         {{ name: '!warns @user', desc: 'Liat history warning' }},
@@ -397,7 +396,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
 def _run_server():
     port = 11963
     server = HTTPServer(('0.0.0.0', port), DashboardHandler)
-    print(f"[keep_alive] Command Center jalan di 0.0.0.0:{port}")
+    print(f"[keep_alive] Command Center v3 jalan di 0.0.0.0:{port}")
     server.serve_forever()
 
 def keep_alive(bot):
