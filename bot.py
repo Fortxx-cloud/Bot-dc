@@ -1,3 +1,4 @@
+from discord import app_commands
 from discord.ext import tasks
 import unicodedata
 nl = chr(10)
@@ -395,6 +396,11 @@ async def on_ready():
             name=status_text
         )
         await bot.change_presence(activity=activity)
+        try:
+            await bot.tree.sync()
+            print('[SYSTEM] Slash Commands berhasil disinkronisasi!')
+        except Exception as e:
+            print(f'[SYSTEM] Gagal sync slash: {e}')
         print(f"[STATUS] Berhasil disetel ke: Playing {status_text}")
     except Exception as e:
         print(f"[STATUS] Gagal set status: {e}")
@@ -4193,5 +4199,52 @@ async def automod_listener(message):
             except: pass
 # ══════════════════════════════════════════════════════════════
 
+
+
+# ══════ SETUP SLASH COMMANDS (SYSTEM UPGRADE) ══════
+bot.tree = app_commands.CommandTree(bot)
+
+@bot.command(name='syncslash')
+async def syncslash_cmd(ctx):
+    """Sinkronisasi Slash Command ke Discord (Owner only)."""
+    if not is_mod(ctx): return await ctx.send("❌ Mod only.")
+    msg = await ctx.send("⏳ Sinkronisasi Slash Command...")
+    try:
+        synced = await bot.tree.sync()
+        await msg.edit(content=f"✅ Berhasil sinkronisasi **{len(synced)}** Slash Command! Coba ketik `/` di chat.")
+    except Exception as e:
+        await msg.edit(content=f"❌ Gagal sync: {e}")
+
+# ─── SLASH COMMAND UTAMA ───
+@bot.tree.command(name="ping", description="Cek latency bot")
+async def slash_ping(interaction: discord.Interaction):
+    await interaction.response.send_message(f"🏓 Pong! WebSocket: `{round(bot.latency * 1000)}ms`")
+
+@bot.tree.command(name="help", description="Tampilkan menu bantuan bot")
+async def slash_help(interaction: discord.Interaction):
+    view = HelpMainView()
+    await interaction.response.send_message(embed=view._build_embed(), view=view, ephemeral=True)
+
+@bot.tree.command(name="userinfo", description="Lihat info profil member")
+async def slash_userinfo(interaction: discord.Interaction, member: discord.Member = None):
+    member = member or interaction.user
+    embed = discord.Embed(title=f"👤 Info: {member.display_name}", color=member.color if member.color != discord.Color.default() else discord.Color.blurple())
+    embed.set_thumbnail(url=member.display_avatar.url)
+    embed.add_field(name="🆔 ID", value=f"`{member.id}`", inline=True)
+    embed.add_field(name="🤖 Bot?", value="Ya" if member.bot else "Tidak", inline=True)
+    embed.add_field(name="📅 Dibuat", value=discord.utils.format_dt(member.created_at, "R"), inline=True)
+    await interaction.response.send_message(embed=embed)
+
+@bot.tree.command(name="rank", description="Lihat level kamu")
+async def slash_rank(interaction: discord.Interaction):
+    levels = load_json(LEVELS_FILE)
+    data = levels.get(str(interaction.user.id), {'xp': 0, 'level': 1})
+    embed = discord.Embed(title=f'📊 Rank Card: {interaction.user.display_name}', color=discord.Color.blurple())
+    embed.set_thumbnail(url=interaction.user.display_avatar.url)
+    embed.add_field(name='🏆 Level', value=f'**{data["level"]}**', inline=True)
+    embed.add_field(name='✨ XP', value=f'{data["xp"]} / {data["level"] * 100}', inline=True)
+    await interaction.response.send_message(embed=embed)
+
+# ═══════════════════════════════════════════════════
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
