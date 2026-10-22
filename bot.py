@@ -123,7 +123,7 @@ def is_mod(ctx):
 
 
 
-@bot.hybrid_command()
+@bot.command()
 async def setupwarnroles(ctx):
     """Buat role Warned 1/2/3 otomatis untuk sistem warning."""
     if not is_mod(ctx):
@@ -145,7 +145,7 @@ async def setupwarnroles(ctx):
 # ══════════════════════════════════════════════════
 # MODERATION COMMANDS
 # ══════════════════════════════════════════════════
-@bot.hybrid_command()
+@bot.command()
 async def kick(ctx, member: discord.Member, *, reason="Tidak ada alasan"):
     """Keluarkan member dari server (bisa join lagi)."""
     _ismod = is_mod(ctx)
@@ -173,7 +173,7 @@ async def kick(ctx, member: discord.Member, *, reason="Tidak ada alasan"):
     except:
         await ctx.send("❌ Bot gak punya izin.")
 
-@bot.hybrid_command()
+@bot.command()
 async def ban(ctx, member: discord.Member, *, reason="Tidak ada alasan"):
     """Ban member dari server secara permanen."""
     if not is_mod(ctx) or member.top_role >= ctx.guild.me.top_role:
@@ -185,7 +185,7 @@ async def ban(ctx, member: discord.Member, *, reason="Tidak ada alasan"):
     except:
         await ctx.send("❌ Bot gak punya izin.")
 
-@bot.hybrid_command()
+@bot.command()
 async def mute(ctx, member: discord.Member, duration="10m", *, reason="Tidak ada alasan"):
     """Bisukan member agar tidak bisa kirim pesan."""
     if not is_mod(ctx) or member.top_role >= ctx.guild.me.top_role:
@@ -200,7 +200,7 @@ async def mute(ctx, member: discord.Member, duration="10m", *, reason="Tidak ada
     except:
         await ctx.send("❌ Format durasi salah (contoh: 10m, 1h, 1d).")
 
-@bot.hybrid_command()
+@bot.command()
 async def unmute(ctx, member: discord.Member):
     """Cabut mute dari member."""
     if not is_mod(ctx): return await ctx.send("❌ Gak punya izin.")
@@ -335,7 +335,7 @@ class WarnView(discord.ui.View):
         await interaction.response.send_modal(WarnModal(self.member))
         self.stop()
 
-@bot.hybrid_command()
+@bot.command()
 async def warn(ctx, member: discord.Member):
     """Kasih warning ke member lewat form pop-up."""
     if not is_mod(ctx) or member.top_role >= ctx.guild.me.top_role:
@@ -344,7 +344,7 @@ async def warn(ctx, member: discord.Member):
     view = WarnView(member, ctx.author)
     await ctx.send(f"Silakan klik tombol di bawah untuk mengisi form warning untuk {member.mention}.", view=view)
 
-@bot.hybrid_command()
+@bot.command()
 async def warns(ctx, member: discord.Member):
     """Liat daftar warning yang diterima member."""
     user_warns = load_warns().get(str(ctx.guild.id), {}).get(str(member.id), [])
@@ -354,7 +354,7 @@ async def warns(ctx, member: discord.Member):
         embed.add_field(name=f"Warn #{i}", value=f"Alasan: {w['reason']}\nOleh: {w['by']}", inline=False)
     await ctx.send(embed=embed)
 
-@bot.hybrid_command()
+@bot.command()
 async def clearwarns(ctx, member: discord.Member):
     """Hapus semua warning & role warning dari member."""
     if not is_mod(ctx): return await ctx.send("❌ Gak punya izin.")
@@ -409,7 +409,7 @@ async def on_ready():
         print(f"[STATUS] Berhasil disetel ke: Playing {status_text}")
     except Exception as e:
         print(f"[STATUS] Gagal set status: {e}")
-@bot.hybrid_command()
+@bot.command()
 async def test(ctx):
     """Command test untuk cek bot masih hidup."""
     await ctx.send('🩸 Bot CJNG siap beroperasi!')
@@ -419,7 +419,7 @@ async def test(ctx):
 # ══════════════════════════════════════════════════
 # OWNER MANAGEMENT COMMANDS
 # ══════════════════════════════════════════════════
-@bot.hybrid_command()
+@bot.command()
 async def botrun(ctx, member: discord.Member):
     """Tambahin admin bot via Discord."""
     if ctx.author.id not in OWNER_IDS:
@@ -432,7 +432,7 @@ async def botrun(ctx, member: discord.Member):
     save_owners()
     await ctx.send(f"✅ **{member.display_name}** sekarang bisa pake command bot!")
 
-@bot.hybrid_command()
+@bot.command()
 async def botremove(ctx, member: discord.Member):
     """Cabut akses admin bot."""
     if ctx.author.id not in OWNER_IDS:
@@ -448,7 +448,7 @@ async def botremove(ctx, member: discord.Member):
     save_owners()
     await ctx.send(f"✅ Akses admin **{member.display_name}** dicabut.")
 
-@bot.hybrid_command()
+@bot.command()
 async def botlist(ctx):
     """Liat daftar admin bot."""
     if ctx.author.id not in OWNER_IDS:
@@ -486,7 +486,7 @@ async def ping_cmd(ctx):
     api = round((_t.perf_counter() - t0) * 1000)
     await msg.edit(content=f"🏓 **Pong!**\n📡 WebSocket: `{ws}ms`\n⚡ API: `{api}ms`")
 
-@bot.hybrid_command(name="uptime")
+@bot.command(name="uptime")
 async def uptime_cmd(ctx):
     """Berapa lama bot udah online."""
     secs = int(_t.time() - _BOT_START)
@@ -500,7 +500,7 @@ async def uptime_cmd(ctx):
     p.append(f"{s}s")
     await ctx.send(f"⏱️ Uptime: **{' '.join(p)}**")
 
-@bot.hybrid_command(name="avatar", aliases=["av"])
+@bot.command(name="avatar", aliases=["av"])
 async def avatar_cmd(ctx, member: discord.Member = None):
     """Tampilkan avatar user (default: kamu)."""
     member = member or ctx.author
@@ -509,7 +509,7 @@ async def avatar_cmd(ctx, member: discord.Member = None):
     e.add_field(name="📥 Download", value=f"[PNG]({member.display_avatar.replace(format='png', size=1024).url}) • [JPG]({member.display_avatar.replace(format='jpg', size=1024).url})")
     await ctx.send(embed=e)
 
-@bot.hybrid_command(name="userinfo", aliases=["ui", "whois"])
+@bot.command(name="userinfo", aliases=["ui", "whois"])
 async def userinfo_cmd(ctx, member: discord.Member = None):
     """Info lengkap user: ID, join, role, warning count."""
     member = member or ctx.author
@@ -532,7 +532,7 @@ async def userinfo_cmd(ctx, member: discord.Member = None):
         pass
     await ctx.send(embed=e)
 
-@bot.hybrid_command(name="serverinfo", aliases=["si"])
+@bot.command(name="serverinfo", aliases=["si"])
 async def serverinfo_cmd(ctx):
     """Info server: member count, boost, dibuat kapan."""
     g = ctx.guild
@@ -549,7 +549,7 @@ async def serverinfo_cmd(ctx):
     e.add_field(name="😀 Emoji", value=f"{len(g.emojis)}", inline=True)
     await ctx.send(embed=e)
 
-@bot.hybrid_command(name="purge", aliases=["clear"])
+@bot.command(name="purge", aliases=["clear"])
 async def purge_cmd(ctx, amount: int = 10, member: discord.Member = None):
     """Hapus N pesan terakhir. Contoh: !purge 50 / !purge 100 @user"""
     if not is_mod(ctx):
@@ -574,7 +574,7 @@ async def purge_cmd(ctx, amount: int = 10, member: discord.Member = None):
     except Exception as e:
         await ctx.send(f"❌ Gagal: {e}")
 
-@bot.hybrid_command(name="slowmode", aliases=["sm"])
+@bot.command(name="slowmode", aliases=["sm"])
 async def slowmode_cmd(ctx, seconds: int = 0):
     """Set slowmode channel (detik, 0=off, max 21600)."""
     if not is_mod(ctx):
@@ -587,7 +587,7 @@ async def slowmode_cmd(ctx, seconds: int = 0):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh permission `Manage Channels`.")
 
-@bot.hybrid_command(name="lock")
+@bot.command(name="lock")
 async def lock_cmd(ctx):
     """Kunci channel — member gak bisa kirim pesan."""
     if not is_mod(ctx):
@@ -600,7 +600,7 @@ async def lock_cmd(ctx):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh permission `Manage Channels`.")
 
-@bot.hybrid_command(name="unlock")
+@bot.command(name="unlock")
 async def unlock_cmd(ctx):
     """Buka kunci channel."""
     if not is_mod(ctx):
@@ -613,7 +613,7 @@ async def unlock_cmd(ctx):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh permission `Manage Channels`.")
 
-@bot.hybrid_command(name="timeout", aliases=["to"])
+@bot.command(name="timeout", aliases=["to"])
 async def timeout_cmd(ctx, member: discord.Member, duration: str = "10m", *, reason: str = "Tidak ada alasan"):
     """Timeout member. Contoh: !timeout @user 10m spam"""
     if not is_mod(ctx) or member.top_role >= ctx.guild.me.top_role:
@@ -631,7 +631,7 @@ async def timeout_cmd(ctx, member: discord.Member, duration: str = "10m", *, rea
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh permission `Moderate Members`.")
 
-@bot.hybrid_command(name="untimeout", aliases=["unto"])
+@bot.command(name="untimeout", aliases=["unto"])
 async def untimeout_cmd(ctx, member: discord.Member):
     """Cabut timeout member."""
     if not is_mod(ctx):
@@ -642,7 +642,7 @@ async def untimeout_cmd(ctx, member: discord.Member):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh permission `Moderate Members`.")
 
-@bot.hybrid_command(name="banlist", aliases=["bans"])
+@bot.command(name="banlist", aliases=["bans"])
 async def banlist_cmd(ctx):
     """Liat daftar member yang di-ban."""
     if not is_mod(ctx):
@@ -660,7 +660,7 @@ async def banlist_cmd(ctx):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh permission `Ban Members`.")
 
-@bot.hybrid_command(name="unban")
+@bot.command(name="unban")
 async def unban_cmd(ctx, user_id: int):
     """Unban user via ID. Contoh: !unban 123456789"""
     if not is_mod(ctx):
@@ -682,7 +682,7 @@ async def unban_cmd(ctx, user_id: int):
 _AFK = {}
 _REMINDERS = []
 
-@bot.hybrid_command(name="roleinfo", aliases=["ri"])
+@bot.command(name="roleinfo", aliases=["ri"])
 async def roleinfo_cmd(ctx, *, role: discord.Role = None):
     """Info role: warna, member count, permission. Tanpa argumen = daftar semua role."""
     if role is None:
@@ -714,7 +714,7 @@ async def roleinfo_cmd(ctx, *, role: discord.Role = None):
         e.add_field(name="🔑 Permission Kunci", value=", ".join(f"`{k}`" for k in key[:6]), inline=False)
     await ctx.send(embed=e)
 
-@bot.hybrid_command(name="channelinfo", aliases=["ci"])
+@bot.command(name="channelinfo", aliases=["ci"])
 async def channelinfo_cmd(ctx, channel: discord.TextChannel = None):
     """Info channel: topik, slowmode, dibuat kapan."""
     ch = channel or ctx.channel
@@ -727,7 +727,7 @@ async def channelinfo_cmd(ctx, channel: discord.TextChannel = None):
     e.add_field(name="📌 Posisi", value=str(ch.position), inline=True)
     await ctx.send(embed=e)
 
-@bot.hybrid_command(name="addrole", aliases=["giverole"])
+@bot.command(name="addrole", aliases=["giverole"])
 async def addrole_cmd(ctx, member: discord.Member, *, role: discord.Role):
     """Kasih role ke member. Contoh: !addrole @user Member"""
     if not is_mod(ctx):
@@ -740,7 +740,7 @@ async def addrole_cmd(ctx, member: discord.Member, *, role: discord.Role):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh `Manage Roles`.")
 
-@bot.hybrid_command(name="removerole", aliases=["takerole"])
+@bot.command(name="removerole", aliases=["takerole"])
 async def removerole_cmd(ctx, member: discord.Member, *, role: discord.Role):
     """Cabut role dari member."""
     if not is_mod(ctx):
@@ -753,7 +753,7 @@ async def removerole_cmd(ctx, member: discord.Member, *, role: discord.Role):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh `Manage Roles`.")
 
-@bot.hybrid_command(name="say")
+@bot.command(name="say")
 async def say_cmd(ctx, *, text: str):
     """Bot bilang sesuatu. Contoh: !say Halo semua!"""
     if not is_mod(ctx):
@@ -764,7 +764,7 @@ async def say_cmd(ctx, *, text: str):
         pass
     await ctx.send(text)
 
-@bot.hybrid_command(name="embed")
+@bot.command(name="embed")
 async def embed_cmd(ctx, *, content: str):
     """Bikin embed custom. Format: Judul | Deskripsi | Warna"""
     if not is_mod(ctx):
@@ -782,7 +782,7 @@ async def embed_cmd(ctx, *, content: str):
     e.set_footer(text=f"Oleh {ctx.author.display_name}", icon_url=ctx.author.display_avatar.url)
     await ctx.send(embed=e)
 
-@bot.hybrid_command(name="announce", aliases=["ann"])
+@bot.command(name="announce", aliases=["ann"])
 async def announce_cmd(ctx, channel: discord.TextChannel, *, text: str):
     """Kirim pengumuman ke channel. Contoh: !announce #umum Event jam 8!"""
     if not is_mod(ctx):
@@ -796,7 +796,7 @@ async def announce_cmd(ctx, channel: discord.TextChannel, *, text: str):
     except discord.Forbidden:
         await ctx.send(f"❌ Bot gak bisa kirim ke {channel.mention}.")
 
-@bot.hybrid_command(name="dm")
+@bot.command(name="dm")
 async def dm_cmd(ctx, member: discord.Member, *, text: str):
     """Kirim DM ke member lewat bot."""
     if not is_mod(ctx):
@@ -809,13 +809,13 @@ async def dm_cmd(ctx, member: discord.Member, *, text: str):
     except discord.Forbidden:
         await ctx.send(f"❌ **{member.display_name}** nutup DM.")
 
-@bot.hybrid_command(name="afk")
+@bot.command(name="afk")
 async def afk_cmd(ctx, *, reason: str = "AFK"):
     """Set status AFK. Bot auto-reply kalau di-mention."""
     _AFK[ctx.author.id] = {"reason": reason, "since": discord.utils.utcnow()}
     await ctx.send(f"💤 **{ctx.author.display_name}** sekarang AFK: {reason}")
 
-@bot.hybrid_command(name="remind", aliases=["reminder"])
+@bot.command(name="remind", aliases=["reminder"])
 async def remind_cmd(ctx, duration: str, *, text: str):
     """Set reminder. Contoh: !remind 10m cek event / !remind 2h submit"""
     mm = re.match(r"^(\d+)([smhd])$", duration.lower())
@@ -839,7 +839,7 @@ async def remind_cmd(ctx, duration: str, *, text: str):
     except Exception as ex:
         await ctx.send(f"❌ Gagal: {ex}")
 
-@bot.hybrid_command(name="poll")
+@bot.command(name="poll")
 async def poll_cmd(ctx, *, content: str):
     """Bikin poll. Format: !poll Pertanyaan? | Opsi1 | Opsi2 | ..."""
     if not is_mod(ctx):
@@ -1027,7 +1027,7 @@ class HelpMainView(discord.ui.View):
         await interaction.message.delete()
 
 
-@bot.hybrid_command(name="help", aliases=["h", "bantuan"])
+@bot.command(name="help", aliases=["h", "bantuan"])
 async def help_cmd(ctx, *, command: str = None):
     """Tampilkan daftar command atau detail command tertentu."""
     P = ctx.prefix
@@ -1043,7 +1043,7 @@ async def help_cmd(ctx, *, command: str = None):
     await ctx.send(embed=view._build_embed(), view=view)
 
 
-@bot.hybrid_command(name="setuphelp")
+@bot.command(name="setuphelp")
 async def setuphelp_cmd(ctx):
     """Kirim panel menu permanen ke channel bot-menu."""
     if not is_mod(ctx): return await ctx.send("❌ Mod only.")
@@ -1137,7 +1137,7 @@ def _get_warn_log_name():
 def _get_warn_tag_id():
     return _cfg_load().get("warn_tag_role") or globals().get("WARN_TAG_ROLE_ID", 0)
 
-@bot.hybrid_command(name="createchannel", aliases=["mkch", "newch"])
+@bot.command(name="createchannel", aliases=["mkch", "newch"])
 async def createchannel_cmd(ctx, name: str, type: str = "text"):
     """Buat channel. Type: text / voice / stage / forum"""
     if not is_mod(ctx):
@@ -1156,7 +1156,7 @@ async def createchannel_cmd(ctx, name: str, type: str = "text"):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh `Manage Channels`.")
 
-@bot.hybrid_command(name="createcategory", aliases=["mkcat"])
+@bot.command(name="createcategory", aliases=["mkcat"])
 async def createcategory_cmd(ctx, *, name: str):
     """Buat kategori baru."""
     if not is_mod(ctx):
@@ -1167,7 +1167,7 @@ async def createcategory_cmd(ctx, *, name: str):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh `Manage Channels`.")
 
-@bot.hybrid_command(name="deletechannel", aliases=["delch", "rmch"])
+@bot.command(name="deletechannel", aliases=["delch", "rmch"])
 async def deletechannel_cmd(ctx, channel: discord.abc.GuildChannel = None):
     """Hapus channel. Default: channel sekarang."""
     if not is_mod(ctx):
@@ -1181,7 +1181,7 @@ async def deletechannel_cmd(ctx, channel: discord.abc.GuildChannel = None):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh `Manage Channels`.")
 
-@bot.hybrid_command(name="renamechannel", aliases=["rench"])
+@bot.command(name="renamechannel", aliases=["rench"])
 async def renamechannel_cmd(ctx, channel: discord.abc.GuildChannel, *, new_name: str):
     """Rename channel. Contoh: !renamechannel #umum obrolan-umum"""
     if not is_mod(ctx):
@@ -1192,7 +1192,7 @@ async def renamechannel_cmd(ctx, channel: discord.abc.GuildChannel, *, new_name:
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh `Manage Channels`.")
 
-@bot.hybrid_command(name="topic")
+@bot.command(name="topic")
 async def topic_cmd(ctx, channel: discord.TextChannel = None, *, text: str = ""):
     """Set topik channel. Kosong = hapus topik."""
     if not is_mod(ctx):
@@ -1204,7 +1204,7 @@ async def topic_cmd(ctx, channel: discord.TextChannel = None, *, text: str = "")
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh `Manage Channels`.")
 
-@bot.hybrid_command(name="createrole", aliases=["mkrole", "newrole"])
+@bot.command(name="createrole", aliases=["mkrole", "newrole"])
 async def createrole_cmd(ctx, name: str, color: str = None):
     """Buat role. Color: hex (#ff0000) / nama (red, blue, gold, dll)."""
     if not is_mod(ctx):
@@ -1224,7 +1224,7 @@ async def createrole_cmd(ctx, name: str, color: str = None):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh `Manage Roles`.")
 
-@bot.hybrid_command(name="deleterole", aliases=["delrole", "rmrole"])
+@bot.command(name="deleterole", aliases=["delrole", "rmrole"])
 async def deleterole_cmd(ctx, *, role: discord.Role):
     """Hapus role. Contoh: !deleterole @NamaRole"""
     if not is_mod(ctx):
@@ -1238,7 +1238,7 @@ async def deleterole_cmd(ctx, *, role: discord.Role):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh `Manage Roles`.")
 
-@bot.hybrid_command(name="setwarnlog")
+@bot.command(name="setwarnlog")
 async def setwarnlog_cmd(ctx, channel: discord.TextChannel = None):
     """Set channel log warning. Tanpa argumen = lihat yang sekarang."""
     if not is_mod(ctx):
@@ -1253,7 +1253,7 @@ async def setwarnlog_cmd(ctx, channel: discord.TextChannel = None):
     _cfg_save(cfg)
     await ctx.send(f"✅ Warn log dipindah ke {channel.mention}.")
 
-@bot.hybrid_command(name="setwarntag")
+@bot.command(name="setwarntag")
 async def setwarntag_cmd(ctx, role: discord.Role = None):
     """Set role yang di-tag saat warn. Tanpa argumen = lihat yang sekarang."""
     if not is_mod(ctx):
@@ -1266,7 +1266,7 @@ async def setwarntag_cmd(ctx, role: discord.Role = None):
     _cfg_save(cfg)
     await ctx.send(f"✅ Tag role diubah ke {role.mention}.")
 
-@bot.hybrid_command(name="loginfo", aliases=["logcfg"])
+@bot.command(name="loginfo", aliases=["logcfg"])
 async def loginfo_cmd(ctx):
     """Lihat konfigurasi log sekarang."""
     warn_name = _get_warn_log_name()
@@ -1282,7 +1282,7 @@ async def loginfo_cmd(ctx):
     e.set_footer(text=f"Config file: {_CFG_FILE}")
     await ctx.send(embed=e)
 
-@bot.hybrid_command(name="listchannels", aliases=["channels"])
+@bot.command(name="listchannels", aliases=["channels"])
 async def listchannels_cmd(ctx):
     """Daftar semua channel di server."""
     if not is_mod(ctx):
@@ -1296,7 +1296,7 @@ async def listchannels_cmd(ctx):
         e.add_field(name=cat, value="\n".join(chs[:15]), inline=False)
     await ctx.send(embed=e)
 
-@bot.hybrid_command(name="listroles", aliases=["roles"])
+@bot.command(name="listroles", aliases=["roles"])
 async def listroles_cmd(ctx):
     """Daftar semua role di server."""
     if not is_mod(ctx):
@@ -1341,7 +1341,7 @@ async def bot_log(guild, title, description, color=discord.Color.blurple()):
     except Exception as ex:
         print(f"[bot_log] {ex}")
 
-@bot.hybrid_command(name="setbotlog")
+@bot.command(name="setbotlog")
 async def setbotlog_cmd(ctx, channel: discord.TextChannel = None):
     """Set channel log bot. Tanpa argumen = lihat channel sekarang."""
     if not is_mod(ctx):
@@ -1412,7 +1412,7 @@ def _parse_role_color(s):
         pass
     return None
 
-@bot.hybrid_command(name="role")
+@bot.command(name="role")
 async def role_bulk_cmd(ctx, member: discord.Member, *, roles: str):
     """Kasih/cabut banyak role sekaligus. Prefix `-` untuk cabut.
     Contoh: !role @user +VIP +Member -Muted"""
@@ -1466,7 +1466,7 @@ async def role_bulk_cmd(ctx, member: discord.Member, *, roles: str):
     if failed: parts.append(f"❌ Gagal {failed} (cek posisi/permission)")
     await ctx.send(f"**{member.display_name}**\n" + "\n".join(parts))
 
-@bot.hybrid_command(name="roleedit")
+@bot.command(name="roleedit")
 async def roleedit_cmd(ctx, role: discord.Role, key: str, *, value: str):
     """Edit role: nama, warna, hoist, mentionable.
     Contoh: !roleedit @VIP warna #ff0000
@@ -1501,7 +1501,7 @@ async def roleedit_cmd(ctx, role: discord.Role, key: str, *, value: str):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh `Manage Roles`.")
 
-@bot.hybrid_command(name="roleperm")
+@bot.command(name="roleperm")
 async def roleperm_cmd(ctx, role: discord.Role, perm: str, state: str = "on"):
     """Toggle satu permission role. Contoh: !roleperm @VIP send_messages on"""
     if not is_mod(ctx):
@@ -1528,7 +1528,7 @@ async def roleperm_cmd(ctx, role: discord.Role, perm: str, state: str = "on"):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh `Manage Roles`.")
 
-@bot.hybrid_command(name="massrole")
+@bot.command(name="massrole")
 async def massrole_cmd(ctx, role: discord.Role, target: str = "all"):
     """Kasih role ke semua member. target: all / humans / bots"""
     if not is_mod(ctx):
@@ -1557,7 +1557,7 @@ async def massrole_cmd(ctx, role: discord.Role, target: str = "all"):
             fail += 1
     await msg.edit(content=f"✅ **{role.name}** → **{ok}** member. Gagal: {fail}")
 
-@bot.hybrid_command(name="autorole")
+@bot.command(name="autorole")
 async def autorole_cmd(ctx, role: discord.Role = None):
     """Set role yang otomatis dikasih saat member join."""
     if not is_mod(ctx):
@@ -1585,7 +1585,7 @@ async def autorole_cmd(ctx, role: discord.Role = None):
     _cfg_save(cfg)
     await ctx.send(f"✅ Autorole **{role.name}** ditambahkan.")
 
-@bot.hybrid_command(name="rolepos")
+@bot.command(name="rolepos")
 async def rolepos_cmd(ctx, role: discord.Role, position: int):
     """Pindah posisi role. Contoh: !rolepos @VIP 5"""
     if not is_mod(ctx):
@@ -1598,7 +1598,7 @@ async def rolepos_cmd(ctx, role: discord.Role, position: int):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh `Manage Roles`.")
 
-@bot.hybrid_command(name="roleclone")
+@bot.command(name="roleclone")
 async def roleclone_cmd(ctx, role: discord.Role, *, name: str = None):
     """Clone role (nama, warna, permission, hoist)."""
     if not is_mod(ctx):
@@ -1634,7 +1634,7 @@ async def on_member_join(member):
         print(f"[autorole] {ex}")
 
 # ─── Sinkron role (mirror permission) ───
-@bot.hybrid_command(name="rolesync")
+@bot.command(name="rolesync")
 async def rolesync_cmd(ctx, source: discord.Role, target: discord.Role):
     """Samakan permission & warna role target dengan source."""
     if not is_mod(ctx):
@@ -1655,7 +1655,7 @@ async def rolesync_cmd(ctx, source: discord.Role, target: discord.Role):
 # ══════════════════════════════════════════════════════════════
 
 
-@bot.hybrid_command(name="setmodrole")
+@bot.command(name="setmodrole")
 async def setmodrole_cmd(ctx, role: discord.Role = None):
     """Set role yang bisa pakai command moderasi (gak perlu permission Discord).
     Tanpa argumen = lihat role mod sekarang."""
@@ -1793,7 +1793,7 @@ class TicketView(discord.ui.View):
         super().__init__(timeout=None)
         self.add_item(TicketSelect())
 
-@bot.hybrid_command(name='ticket')
+@bot.command(name='ticket')
 async def ticket_cmd(ctx, action: str = None):
     """Setup panel ticket (khusus Admin/Moderator)."""
     if not is_mod(ctx):
@@ -1853,7 +1853,7 @@ async def on_message_edit(before, after):
         'time': discord.utils.utcnow()
     }
 
-@bot.hybrid_command(name='snipe')
+@bot.command(name='snipe')
 async def snipe_cmd(ctx):
     """Liat pesan yang barusan dihapus di channel ini."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -1865,7 +1865,7 @@ async def snipe_cmd(ctx):
     await ctx.send(embed=embed)
     snipe_cache.pop(ctx.channel.id, None)
 
-@bot.hybrid_command(name='editsnipe', aliases=['esnipe'])
+@bot.command(name='editsnipe', aliases=['esnipe'])
 async def editsnipe_cmd(ctx):
     """Liat pesan yang barusan diedit di channel ini."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -1995,7 +1995,7 @@ class CharView(discord.ui.View):
     async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("Silakan pilih **Asal Daerah** kamu terlebih dahulu:", view=CharOriginView(), ephemeral=True)
 
-@bot.hybrid_command(name='setupchar')
+@bot.command(name='setupchar')
 async def setupchar_cmd(ctx):
     """Kirim panel pembuatan karakter RP di channel ini (Tanpa bikin channel baru)."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -2215,7 +2215,7 @@ async def tanya_aion(prompt: str, system_prompt: str = None, model: str = 'aion-
     except Exception as e:
         return f'❌ Gagal konek ke Aion: {e}'
 
-@bot.hybrid_command(name='ai')
+@bot.command(name='ai')
 async def ai_cmd(ctx, *, prompt: str):
     """Tanya AI apa aja. Contoh: !ai Apa itu Roleplay?"""
     await ctx.typing()
@@ -2223,7 +2223,7 @@ async def ai_cmd(ctx, *, prompt: str):
     # Batasi 2000 karakter biar gak error
     await ctx.send(jawaban[:2000])
 
-@bot.hybrid_command(name='rp')
+@bot.command(name='rp')
 async def rp_cmd(ctx, *, aksi: str):
     """Roleplay sama AI. Contoh: !rp *menodongkan pistol* Siapa bos lu?"""
     await ctx.typing()
@@ -2235,7 +2235,7 @@ async def rp_cmd(ctx, *, aksi: str):
 # ══════════════════════════════════════════════════════════════
 # 🤖 AI CHANNEL (AUTO REPLY TANPA COMMAND)
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='setupai')
+@bot.command(name='setupai')
 async def setupai_cmd(ctx):
     """Bikin channel khusus AI asisten di kategori PUBLIC ROOM."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -2288,7 +2288,7 @@ async def ai_channel_listener(message):
         print(f"[AI-CHANNEL] ERROR: {e}")
         await message.reply(f"❌ **Sistem AI Error:** `{e}`")
 
-@bot.hybrid_command(name='testai')
+@bot.command(name='testai')
 async def testai_cmd(ctx):
     """Cek apakah API Key Aion berfungsi."""
     if not is_mod(ctx): return
@@ -2299,7 +2299,7 @@ async def testai_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 # 🎨 AUTO DECORATOR (STYLE 1: ELITE CARTEL)
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='dekorasi')
+@bot.command(name='dekorasi')
 async def dekorasi_cmd(ctx, style: int = 1):
     """Hapus garis panjang dan teks aneh di nama kategori/channel."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -2432,7 +2432,7 @@ class EmbedBuilderView(discord.ui.View):
     async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(EmbedModal())
 
-@bot.hybrid_command(name='buatpesan')
+@bot.command(name='buatpesan')
 async def buatpesan_cmd(ctx):
     """Buka form pembuatan pesan embed (Mod only)."""
     if not is_mod(ctx):
@@ -2455,7 +2455,7 @@ except Exception:
 # ══════════════════════════════════════════════════════════════
 # 🟥 TEKS BERWARNA MERAH (ANSI CODE BLOCK)
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='merah')
+@bot.command(name='merah')
 async def merah_cmd(ctx, *, text: str):
     """Kirim teks berwarna merah menyala."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -2470,7 +2470,7 @@ async def merah_cmd(ctx, *, text: str):
         
     await ctx.send(red_text)
 
-@bot.hybrid_command(name='merahs')
+@bot.command(name='merahs')
 async def merahs_cmd(ctx, *, text: str):
     """Kirim teks merah tanpa menghapus pesan command."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -2479,7 +2479,7 @@ async def merahs_cmd(ctx, *, text: str):
 # ══════════════════════════════════════════════════════════════
 
 
-@bot.hybrid_command(name='testlog')
+@bot.command(name='testlog')
 async def testlog_cmd(ctx):
     """Tes kirim log ke channel bot-run & logs-warning."""
     if not is_mod(ctx): return
@@ -2566,7 +2566,7 @@ async def update_cartel_list(guild):
         pass
 
 
-@bot.hybrid_command(name='setupwarnlist')
+@bot.command(name='setupwarnlist')
 async def setupwarnlist_cmd(ctx):
     """Bikin channel Cartel Hitlist di REPORT ROOM."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -2640,7 +2640,7 @@ class CommunityRoleView(discord.ui.View):
         super().__init__(timeout=None)
         self.add_item(CommunityRoleSelect(roles))
 
-@bot.hybrid_command(name='buildcommunity')
+@bot.command(name='buildcommunity')
 async def buildcommunity_cmd(ctx):
     """Bikin struktur server komunitas/pribadi (Tanpa RP) + isi otomatis."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -2836,7 +2836,7 @@ async def ticketv2_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 # 🏗️ COMMUNITY BUILDER V2 (TAMBAHAN EVENT, MUSIC, WELCOME, PARTNER)
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='buildcommunity2')
+@bot.command(name='buildcommunity2')
 async def buildcommunity2_cmd(ctx):
     """Bikin channel tambahan buat komunitas lengkap dengan isinya."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -2889,7 +2889,7 @@ async def buildcommunity2_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 # 🏗️ COMMUNITY BUILDER V3 (CREATIVE, LIFESTYLE, ROLES, SAFE SPACE)
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='buildcommunity3')
+@bot.command(name='buildcommunity3')
 async def buildcommunity3_cmd(ctx):
     """Bikin channel hobi, notifikasi role, dan safe space."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -2951,7 +2951,7 @@ async def buildcommunity3_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 # 👑 AUTO ROLE BUILDER
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='buildroles')
+@bot.command(name='buildroles')
 async def buildroles_cmd(ctx):
     """Bikin semua role penting buat server komunitas otomatis."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -3020,7 +3020,7 @@ async def buildroles_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 # 🛡️ AUTO PERMISSION SETUP
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='setup_permissions')
+@bot.command(name='setup_permissions')
 async def setup_permissions_cmd(ctx):
     """Set izin (permission) otomatis ke role yang udah dibuat."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -3061,7 +3061,7 @@ async def setup_permissions_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 # 🔒 AUTO CHANNEL PERMISSIONS (READ-ONLY INFO CHANNELS)
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='setup_channels')
+@bot.command(name='setup_channels')
 async def setup_channels_cmd(ctx):
     """Kunci channel informasi biar member cuma bisa baca."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -3123,7 +3123,7 @@ async def setup_channels_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 # 📊 AUTO ROLE SORTER
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='aturroles')
+@bot.command(name='aturroles')
 async def aturroles_cmd(ctx):
     """Ngurutin posisi role dari paling tinggi ke paling rendah."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -3309,7 +3309,7 @@ async def buildsharemod_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 # 🏗️ PAMBOI TRAPS / GTA MOD SHARING BUILDER PART 2
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='buildsharemod2')
+@bot.command(name='buildsharemod2')
 async def buildsharemod2_cmd(ctx):
     """Bikin kategori & channel tambahan untuk Radar, UI, Plugin, dll."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -3373,7 +3373,7 @@ async def buildsharemod2_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 
 
-@bot.hybrid_command(name='buildsharemod3')
+@bot.command(name='buildsharemod3')
 async def buildsharemod3_cmd(ctx):
     """Aktifkan sistem log ke channel spesifik (Ban, Invite, Spam, Booster)."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -3478,7 +3478,7 @@ async def on_message_delete(message):
 # ══════════════════════════════════════════════════════════════
 # 🛠️ AUTO FIX PERMISSIONS (SHARED MOD SERVER)
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='fixperms')
+@bot.command(name='fixperms')
 async def fixperms_cmd(ctx):
     """Benerin izin channel: Warga bisa liat log, tapi gabisa chat."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -3576,7 +3576,7 @@ async def fixperms_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 # 🔒 GATEKEEPER: LOCK SERVER SAMPAI VERIFIKASI
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='lockserver')
+@bot.command(name='lockserver')
 async def lockserver_cmd(ctx):
     """Sembunyiin semua channel sampai member ambil role Verified."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -3646,7 +3646,7 @@ async def lockserver_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 # 🎭 FIX TAKE ROLE CHANNEL & PANEL
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='fixtakerole')
+@bot.command(name='fixtakerole')
 async def fixtakerole_cmd(ctx):
     """Benerin izin bot di channel take-roles & kirim panel role."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -3701,7 +3701,7 @@ async def fixtakerole_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 # 🚪 FIX JOIN: GERBANG VERIFIKASI YANG BENER
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='fixjoin')
+@bot.command(name='fixjoin')
 async def fixjoin_cmd(ctx):
     """Benerin gerbang verifikasi biar member baru bisa liat."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -3769,7 +3769,7 @@ async def fixjoin_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 
 
-@bot.hybrid_command(name='welcomemod')
+@bot.command(name='welcomemod')
 async def welcomemod_cmd(ctx):
     """Tes kirim pesan welcome GTA Mod ke channel #welcome."""
     if not is_mod(ctx): return
@@ -3784,7 +3784,7 @@ async def welcomemod_cmd(ctx):
     await ch.send(content=ctx.author.mention, embed=embed)
     await ctx.send(f"✅ Pesan welcome dites ke {ch.mention}!", delete_after=5)
 
-@bot.hybrid_command(name='bannedmod')
+@bot.command(name='bannedmod')
 async def bannedmod_cmd(ctx):
     """Tes kirim log banned ke channel #banned-logs."""
     if not is_mod(ctx): return
@@ -3795,7 +3795,7 @@ async def bannedmod_cmd(ctx):
     await ch.send(embed=embed)
     await ctx.send(f"✅ Log banned dites ke {ch.mention}!", delete_after=5)
 
-@bot.hybrid_command(name='invitemod')
+@bot.command(name='invitemod')
 async def invitemod_cmd(ctx):
     """Tes kirim log invite ke channel #invite-logs."""
     if not is_mod(ctx): return
@@ -3924,7 +3924,7 @@ except Exception:
 # ══════════════════════════════════════════════════════════════
 
 
-@bot.hybrid_command(name='setupall')
+@bot.command(name='setupall')
 async def setupall_cmd(ctx):
     """Kirim semua panel (Ticket, Char, Help) sekaligus dan aktifkan permanen."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -4032,236 +4032,20 @@ async def owner_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 
 
-# ══════ PERSISTENT VIEWS (SAFE LOAD) ══════
-views_to_load = [
-    "ModTicketView", "ModTicketCloseView",
-    "TicketView", "TicketCloseView",
-    "TicketV2View", "TicketV2CloseView",
-    "CharView", "HelpMainView",
-    "EmbedBuilderView", "AICreateView",
-    "AICloseView", "OwnerView"
-]
-
-for v_name in views_to_load:
-    try:
-        if v_name in globals():
-            if v_name == "CommunityRoleView":
-                bot.add_view(CommunityRoleView([]))
-            else:
-                cls = globals()[v_name]
-                bot.add_view(cls())
-            print(f"[SYSTEM] Loaded View: {v_name}")
-    except Exception as e:
-        print(f"[SYSTEM] Gagal load view {v_name}: {e}")
-
-# Khusus CommunityRoleView yang butuh parameter
+# ══════ PERSISTENT VIEWS (FIXED) ══════
 try:
-    if "CommunityRoleView" in globals():
-        bot.add_view(CommunityRoleView([]))
-        print("[SYSTEM] Loaded View: CommunityRoleView")
+    bot.add_view(ModTicketView())
+    bot.add_view(ModTicketCloseView())
+    if "TicketView" in globals(): bot.add_view(TicketView())
+    if "TicketCloseView" in globals(): bot.add_view(TicketCloseView())
+    if "CharView" in globals(): bot.add_view(CharView())
+    if "HelpMainView" in globals(): bot.add_view(HelpMainView())
+    if "EmbedBuilderView" in globals(): bot.add_view(EmbedBuilderView())
+    if "OwnerView" in globals(): bot.add_view(OwnerView())
+    if "CommunityRoleView" in globals(): bot.add_view(CommunityRoleView([]))
+    print("[SYSTEM] Persistent Views berhasil dimuat bersih!")
 except Exception as e:
-    pass
-# ═══════════════════════════════════════════════════════════
-
-
-
-def is_mod_internal(member):
-    if member.guild_permissions.administrator: return True
-    mod_roles = ["👑 Owner", "🛡️ Admin", "⚔️ Moderator", "🔰 Staff"]
-    for r in member.roles:
-        if r.name in mod_roles: return True
-    return False
-
-# ══════════════════════════════════════════════════════════════
-# 👑 CARL-BOT KILLER FEATURES (Tags, Starboard, Leveling, Automod)
-# ══════════════════════════════════════════════════════════════
-
-TAGS_FILE = 'tags.json'
-LEVELS_FILE = 'levels.json'
-STARBOARD_FILE = 'starboard.json'
-AUTOMOD_FILE = 'automod.json'
-
-def load_json(file):
-    import json
-    if os.path.exists(file):
-        try:
-            with open(file, 'r') as f: return json.load(f)
-        except: return {}
-    return {}
-
-def save_json(file, data):
-    import json
-    with open(file, 'w') as f: json.dump(data, f, indent=2)
-
-# ─── 1. CUSTOM TAGS (AUTO RESPONDER) ───
-@bot.hybrid_command(name='addcmd')
-async def addcmd_cmd(ctx, name: str, *, text: str):
-    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
-    tags = load_json(TAGS_FILE)
-    tags[name.lower()] = text
-    save_json(TAGS_FILE, tags)
-    await ctx.send(f'✅ Command `!{name}` berhasil ditambahkan!')
-
-@bot.hybrid_command(name='delcmd')
-async def delcmd_cmd(ctx, name: str):
-    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
-    tags = load_json(TAGS_FILE)
-    if name.lower() in tags:
-        del tags[name.lower()]
-        save_json(TAGS_FILE, tags)
-        await ctx.send(f'✅ Command `!{name}` dihapus.')
-    else:
-        await ctx.send('❌ Tag gak ketemu.')
-
-# ─── 2. STARBOARD ───
-@bot.hybrid_command(name='setupstarboard')
-async def setupstarboard_cmd(ctx, channel: discord.TextChannel):
-    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
-    cfg = load_json(STARBOARD_FILE)
-    cfg['channel'] = channel.id
-    cfg['threshold'] = 3 # Minimal 3 bintang
-    save_json(STARBOARD_FILE, cfg)
-    await ctx.send(f'✅ Starboard diatur ke {channel.mention}. Minimal 3 ⭐ buat masuk Hall of Fame!')
-
-@bot.event
-async def on_reaction_add(reaction, user):
-    if user.bot: return
-    if str(reaction.emoji) == '⭐':
-        cfg = load_json(STARBOARD_FILE)
-        if not cfg.get('channel') or reaction.count < cfg.get('threshold', 3): return
-        sb_ch = bot.get_channel(cfg['channel'])
-        if not sb_ch: return
-        if reaction.message.channel.id == sb_ch.id: return
-        
-        embed = discord.Embed(description=reaction.message.content or '*[Gambar/Embed]*', color=discord.Color.gold())
-        embed.set_author(name=reaction.message.author.display_name, icon_url=reaction.message.author.display_avatar.url)
-        embed.add_field(name='Source', value=f'[Klik disini]({reaction.message.jump_url})')
-        embed.set_footer(text=f'⭐ {reaction.count} | Hall of Fame')
-        
-        try:
-            if reaction.message.attachments:
-                embed.set_image(url=reaction.message.attachments[0].url)
-            await sb_ch.send(content=f'🌟 **{reaction.count}** | {reaction.message.channel.mention}', embed=embed)
-        except: pass
-
-# ─── 3. SISTEM LEVELING ───
-@bot.listen('on_message')
-async def leveling_listener(message):
-    if message.author.bot or not message.guild: return
-    import random, time
-    levels = load_json(LEVELS_FILE)
-    uid = str(message.author.id)
-    
-    if uid not in levels: levels[uid] = {'xp': 0, 'level': 1, 'last_msg': 0}
-    
-    now = time.time()
-    if now - levels[uid].get('last_msg', 0) > 60: # Cooldown 60 detik per XP
-        xp_gain = random.randint(15, 25)
-        levels[uid]['xp'] += xp_gain
-        levels[uid]['last_msg'] = now
-        
-        next_level_xp = levels[uid]['level'] * 100
-        if levels[uid]['xp'] >= next_level_xp:
-            levels[uid]['level'] += 1
-            levels[uid]['xp'] = 0
-            try:
-                await message.channel.send(f'🎉 Selamat {message.author.mention}, kamu naik ke **Level {levels[uid]["level"]}**!', delete_after=10)
-            except: pass
-        
-        save_json(LEVELS_FILE, levels)
-
-@bot.hybrid_command(name='rank', aliases=['level'])
-async def rank_cmd(ctx, member: discord.Member = None):
-    member = member or ctx.author
-    levels = load_json(LEVELS_FILE)
-    data = levels.get(str(member.id), {'xp': 0, 'level': 1})
-    embed = discord.Embed(title=f'📊 Rank Card: {member.display_name}', color=discord.Color.blurple())
-    embed.set_thumbnail(url=member.display_avatar.url)
-    embed.add_field(name='🏆 Level', value=f'**{data["level"]}**', inline=True)
-    embed.add_field(name='✨ XP', value=f'{data["xp"]} / {data["level"] * 100}', inline=True)
-    await ctx.send(embed=embed)
-
-@bot.hybrid_command(name='top', aliases=['leaderboard'])
-async def top_cmd(ctx):
-    levels = load_json(LEVELS_FILE)
-    sorted_levels = sorted(levels.items(), key=lambda x: (x[1].get('level', 1), x[1].get('xp', 0)), reverse=True)[:10]
-    desc = ''
-    for i, (uid, data) in enumerate(sorted_levels, 1):
-        try:
-            user = await bot.fetch_user(int(uid))
-            desc += f'**{i}.** {user.name} — Lvl {data["level"]} ({data["xp"]} XP)' + chr(10)
-        except: pass
-    if not desc: desc = 'Belum ada data.'
-    embed = discord.Embed(title='🏆 Top 10 Leaderboard', description=desc, color=discord.Color.gold())
-    await ctx.send(embed=embed)
-
-# ─── 4. AUTOMOD ANTI-LINK ───
-@bot.hybrid_command(name='automod')
-async def automod_cmd(ctx, status: str = 'on'):
-    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
-    cfg = load_json(AUTOMOD_FILE)
-    cfg['anti_link'] = (status.lower() == 'on')
-    save_json(AUTOMOD_FILE, cfg)
-    await ctx.send(f'✅ AutoMod Anti-Link: **{status.upper()}**')
-
-@bot.listen('on_message')
-async def automod_listener(message):
-    if message.author.bot or not message.guild or is_mod_internal(message.author): return
-    cfg = load_json(AUTOMOD_FILE)
-    if cfg.get('anti_link'):
-        if 'discord.gg/' in message.content or 'discord.com/invite/' in message.content:
-            try:
-                await message.delete()
-                await message.channel.send(f'⚠️ {message.author.mention}, dilarang mengirim link Discord lain!', delete_after=5)
-            except: pass
-# ══════════════════════════════════════════════════════════════
-
-
-
-# ══════ SETUP SLASH COMMANDS (SYSTEM UPGRADE) ══════
-# bot.tree otomatis dibuat oleh discord.py, tidak perlu di-assign manual.
-
-@bot.hybrid_command(name='syncslash')
-async def syncslash_cmd(ctx):
-    """Sinkronisasi Slash Command ke Discord (Owner only)."""
-    if not is_mod(ctx): return await ctx.send("❌ Mod only.")
-    msg = await ctx.send("⏳ Sinkronisasi Slash Command...")
-    try:
-        synced = await bot.tree.sync()
-        await msg.edit(content=f"✅ Berhasil sinkronisasi **{len(synced)}** Slash Command! Coba ketik `/` di chat.")
-    except Exception as e:
-        await msg.edit(content=f"❌ Gagal sync: {e}")
-
-# ─── SLASH COMMAND UTAMA ───
-@bot.tree.command(name="ping", description="Cek latency bot")
-async def slash_ping(interaction: discord.Interaction):
-    await interaction.response.send_message(f"🏓 Pong! WebSocket: `{round(bot.latency * 1000)}ms`")
-
-@bot.tree.command(name="help", description="Tampilkan menu bantuan bot")
-async def slash_help(interaction: discord.Interaction):
-    view = HelpMainView()
-    await interaction.response.send_message(embed=view._build_embed(), view=view, ephemeral=True)
-
-@bot.tree.command(name="userinfo", description="Lihat info profil member")
-async def slash_userinfo(interaction: discord.Interaction, member: discord.Member = None):
-    member = member or interaction.user
-    embed = discord.Embed(title=f"👤 Info: {member.display_name}", color=member.color if member.color != discord.Color.default() else discord.Color.blurple())
-    embed.set_thumbnail(url=member.display_avatar.url)
-    embed.add_field(name="🆔 ID", value=f"`{member.id}`", inline=True)
-    embed.add_field(name="🤖 Bot?", value="Ya" if member.bot else "Tidak", inline=True)
-    embed.add_field(name="📅 Dibuat", value=discord.utils.format_dt(member.created_at, "R"), inline=True)
-    await interaction.response.send_message(embed=embed)
-
-@bot.tree.command(name="rank", description="Lihat level kamu")
-async def slash_rank(interaction: discord.Interaction):
-    levels = load_json(LEVELS_FILE)
-    data = levels.get(str(interaction.user.id), {'xp': 0, 'level': 1})
-    embed = discord.Embed(title=f'📊 Rank Card: {interaction.user.display_name}', color=discord.Color.blurple())
-    embed.set_thumbnail(url=interaction.user.display_avatar.url)
-    embed.add_field(name='🏆 Level', value=f'**{data["level"]}**', inline=True)
-    embed.add_field(name='✨ XP', value=f'{data["xp"]} / {data["level"] * 100}', inline=True)
-    await interaction.response.send_message(embed=embed)
-
+    print(f"[SYSTEM] Gagal memuat Persistent Views: {e}")
 # ═══════════════════════════════════════════════════
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
