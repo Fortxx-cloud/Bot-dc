@@ -4065,33 +4065,40 @@ async def botinfo_cmd(ctx):
             if guild.vanity_url:
                 invite_url = guild.vanity_url
             else:
-                # 2. Coba tarik invite yang ada
+                # 2. Cek Invite yang udah ada
                 try:
                     invites = await guild.invites()
                     if invites:
                         invite_url = invites[0].url
                 except discord.Forbidden:
-                    pass
-                
-                # 3. Kalau gak ada, coba bikin baru
+                    print(f"[INVITE] Gagal cek invites di {guild.name}: Butuh Manage Server")
+                except Exception as e:
+                    print(f"[INVITE] Error cek invites {guild.name}: {e}")
+
+                # 3. Kalau gak ada, cari channel text pertama dan bikin invite di situ
                 if not invite_url:
                     try:
-                        invite = await guild.create_invite(max_age=0, max_uses=0, reason="FORTXX Bot Info")
-                        invite_url = invite.url
+                        # Cari channel text pertama yang bot bisa liat
+                        target_ch = discord.utils.find(lambda c: c.permissions_for(guild.me).create_instant_invite, guild.text_channels)
+                        if target_ch:
+                            invite = await target_ch.create_invite(max_age=0, max_uses=0, reason="FORTXX Bot Info")
+                            invite_url = invite.url
+                        else:
+                            print(f"[INVITE] Gagal bikin link di {guild.name}: Gak ada channel text yang bisa diakses.")
                     except discord.Forbidden:
-                        invite_url = "NO_PERMISSION"
-        except Exception:
-            pass
+                        print(f"[INVITE] Gagal bikin link di {guild.name}: Discord nolak (Forbidden)")
+                    except Exception as e:
+                        print(f"[INVITE] Error bikin link {guild.name}: {e}")
+        except Exception as e:
+            print(f"[INVITE] Error umum di {guild.name}: {e}")
             
-        await asyncio.sleep(1) # Jeda biar gak kena rate limit Discord
+        await asyncio.sleep(2) # Jeda 2 detik biar gak kena rate limit Discord
 
         # Format teks
-        if invite_url and invite_url != "NO_PERMISSION":
+        if invite_url:
             server_list += f'**{i}.** [{guild.name}]({invite_url}) (`{guild.member_count:,}` Member)' + chr(10)
-        elif invite_url == "NO_PERMISSION":
-            server_list += f'**{i}.** {guild.name} (`{guild.member_count:,}` Member) ❌ *(Butuh Izin Create Invite)*' + chr(10)
         else:
-            server_list += f'**{i}.** {guild.name} (`{guild.member_count:,}` Member)' + chr(10)
+            server_list += f'**{i}.** {guild.name} (`{guild.member_count:,}` Member) [Gagal load link]' + chr(10)
         
     if len(servers) > 15:
         server_list += f'... dan **{len(servers) - 15}** server lainnya.'
