@@ -378,26 +378,18 @@ async def clearwarns(ctx, member: discord.Member):
 # ══════════════════════════════════════════════════
 # EVENTS & RUN
 # ══════════════════════════════════════════════════
-@tasks.loop(seconds=20)
+@tasks.loop(seconds=15)
 async def rotate_status():
-    """Fungsi buat muter status bot setiap 20 detik."""
+    """Custom Status: Cuma tulisan, tanpa 'Playing'."""
     guild_count = len(bot.guilds)
     
-    # Ambil maksimal 2 nama server terbesar/aktif
-    server_names = [g.name for g in bot.guilds][:2]
-    server_str = ", ".join(server_names)
-    if guild_count > 2:
-        server_str += f" +{guild_count - 2} more"
-
     statuses = [
-        discord.Activity(type=discord.ActivityType.playing, name="🌐 Web: bot-fortxx.wispbyte.app"),
-        discord.Activity(type=discord.ActivityType.watching, name=f"📡 Active in {guild_count} Servers"),
-        discord.Activity(type=discord.ActivityType.playing, name="👑 THEKINGFORXX | SYSTEM ONLINE"),
-        discord.Activity(type=discord.ActivityType.listening, name="🛒 FORTXX Mod Store & Support"),
-        discord.Activity(type=discord.ActivityType.watching, name=f"🌐 {server_str}")
+        discord.CustomActivity(name=f"🌐 bot-fortxx.wispbyte.app"),
+        discord.CustomActivity(name=f"🛒 FORTXX Mod Store & Support"),
+        discord.CustomActivity(name=f"📡 Active in {guild_count} Servers"),
+        discord.CustomActivity(name=f"👑 THEKINGFORXX | SYSTEM ONLINE")
     ]
 
-    # Rotasi status
     current = statuses[rotate_status.current_index % len(statuses)]
     rotate_status.current_index += 1
     
@@ -4003,5 +3995,49 @@ try:
 except Exception as e:
     print(f"[SYSTEM] Gagal memuat Persistent Views: {e}")
 # ═══════════════════════════════════════════════════════════
+
+
+# ══════════════════════════════════════════════════════════════
+# ✨ PREMIUM VISUAL EFFECTS
+# ══════════════════════════════════════════════════════════════
+@bot.listen('on_command')
+async def premium_typing_listener(ctx):
+    """Kasih reaction ✅ biar bot keliatan responsif."""
+    try:
+        await ctx.message.add_reaction("✅")
+    except Exception:
+        pass
+
+
+
+@bot.before_invoke
+async def premium_ux_before(ctx):
+    """Efek Premium: Hapus command user (kalo bukan command setup) & kasih typing."""
+    # Jangan hapus command yang butuh input manual kayak !buatpesan atau setup
+    safe_commands = ['setup', 'build', 'ticket', 'help', 'say', 'embed', 'poll']
+    is_safe = any(cmd in ctx.command.name.lower() for cmd in safe_commands)
+    
+    if not is_safe:
+        try:
+            await ctx.message.delete()
+        except Exception:
+            pass
+            
+    try:
+        await ctx.typing()
+    except Exception:
+        pass
+
+@bot.after_invoke
+async def premium_ux_after(ctx):
+    """Setelah command jalan, hapus reaction loading (opsional)."""
+    pass
+
+
+def add_watermark(embed):
+    """Nambahin footer premium ke embed."""
+    embed.set_footer(text="FORTXX SYSTEM • Premium Experience", icon_url=bot.user.display_avatar.url)
+    embed.timestamp = discord.utils.utcnow()
+    return embed
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
