@@ -3655,4 +3655,59 @@ async def lockserver_cmd(ctx):
         await msg.edit(content=f'❌ Gagal mengunci server: {e}')
 # ══════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════
+# 🎭 FIX TAKE ROLE CHANNEL & PANEL
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='fixtakerole')
+async def fixtakerole_cmd(ctx):
+    """Benerin izin bot di channel take-roles & kirim panel role."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    # 1. Cari channel take-roles
+    channel = discord.utils.find(lambda c: 'take-role' in c.name.lower(), ctx.guild.text_channels)
+    if not channel:
+        channel = await ctx.guild.create_text_channel('✳️・take-roles')
+        await ctx.send(f'✅ Channel {channel.mention} dibuat karena belum ada!')
+    
+    # 2. Paksa buka izin buat Bot sendiri di channel itu
+    try:
+        bot_ow = channel.overwrites_for(ctx.guild.me)
+        bot_ow.read_messages = True
+        bot_ow.send_messages = True
+        bot_ow.embed_links = True
+        await channel.set_permissions(ctx.guild.me, overwrite=bot_ow)
+        print(f'[FIX] Izin bot dibenerin di #{channel.name}')
+    except Exception as e:
+        await ctx.send(f'⚠️ Gagal benerin izin bot: {e}')
+        
+    # 3. Bikin role-role minat kalo belum ada
+    roles_to_create = ['🎮 Gamer', '🎵 Musik', '🎨 Artist', '🐶 Pet Lover', '🍔 Foodie']
+    guild_roles = []
+    for r_name in roles_to_create:
+        r = discord.utils.get(ctx.guild.roles, name=r_name)
+        if not r:
+            try:
+                r = await ctx.guild.create_role(name=r_name, reason='Auto Role Setup')
+            except: pass
+        if r: guild_roles.append(r)
+        
+    # 4. Kirim Panel Dropdown
+    embed = discord.Embed(
+        title='🎭 AMBIL ROLE KOMUNITAS',
+        description='Silakan pilih role yang sesuai dengan minatmu di menu dropdown di bawah ini.' + nl + nl + '*Lu bisa milih lebih dari satu role.*',
+        color=discord.Color.blurple()
+    )
+    
+    # Cek apakah udah ada pesan panel di channel itu biar gak dobel
+    try:
+        async for msg in channel.history(limit=10):
+            if msg.author == bot.user and msg.embeds and 'AMBIL ROLE' in msg.embeds[0].title:
+                await msg.delete()
+    except Exception:
+        pass
+        
+    await channel.send(embed=embed, view=CommunityRoleView(guild_roles))
+    await ctx.send(f'✅ Panel Role berhasil dikirim ke {channel.mention}! Coba cek sekarang.' + nl + '*(Note: Warga yang belum verify gabisa liat, pastiin lu udah klik verify dulu).*')
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
