@@ -3710,4 +3710,74 @@ async def fixtakerole_cmd(ctx):
     await ctx.send(f'✅ Panel Role berhasil dikirim ke {channel.mention}! Coba cek sekarang.' + nl + '*(Note: Warga yang belum verify gabisa liat, pastiin lu udah klik verify dulu).*')
 # ══════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════
+# 🚪 FIX JOIN: GERBANG VERIFIKASI YANG BENER
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='fixjoin')
+async def fixjoin_cmd(ctx):
+    """Benerin gerbang verifikasi biar member baru bisa liat."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Membenahi Gerbang Verifikasi...** Mohon tunggu 1 menit.')
+    
+    # 1. Bikin Role Verified kalo belum ada
+    verified_role = discord.utils.get(ctx.guild.roles, name='✅ Verified')
+    if not verified_role:
+        verified_role = await ctx.guild.create_role(name='✅ Verified', color=discord.Color.green(), reason='Gatekeeper System')
+    
+    # 2. Bikin Kategori 'START HERE' (Biar aman dari sembunyiin kategori lain)
+    cat_start = discord.utils.get(ctx.guild.categories, name='🚪 〢 START HERE')
+    if not cat_start:
+        cat_start = await ctx.guild.create_category('🚪 〢 START HERE')
+    
+    # Buka Kategori START HERE buat @everyone
+    await cat_start.set_permissions(ctx.guild.default_role, read_messages=True)
+    
+    # 3. Bikin / Cari Channel verify
+    verify_ch = discord.utils.find(lambda c: 'verify' in c.name.lower(), ctx.guild.text_channels)
+    if not verify_ch:
+        verify_ch = await ctx.guild.create_text_channel('✅・verify', category=cat_start)
+        
+    # 4. Benerin Izin Channel Verify (Buka buat semua, tapi gabisa chat)
+    await verify_ch.set_permissions(ctx.guild.default_role, read_messages=True, send_messages=False)
+    await verify_ch.set_permissions(verified_role, read_messages=True, send_messages=False) # Kalo udah verified, tetep gausa chat di sini
+    
+    # 5. Kunci semua channel & kategori LAIN
+    locked_count = 0
+    for cat in ctx.guild.categories:
+        if cat.id != cat_start.id: # Jangan kunci kategori Start Here
+            await cat.set_permissions(ctx.guild.default_role, read_messages=False)
+            locked_count += 1
+            
+    for ch in ctx.guild.text_channels:
+        if ch.id != verify_ch.id and not ch.category: # Kunci yang gak punya kategori juga
+            await ch.set_permissions(ctx.guild.default_role, read_messages=False)
+            await ch.set_permissions(verified_role, read_messages=True)
+            locked_count += 1
+            
+    # 6. Kirim Pesan Verifikasi + Reaksi
+    embed = discord.Embed(
+        title='✅ VERIFIKASI SERVER',
+        description='Halo! Sebelum masuk, silakan klik reaksi **✅** di bawah ini untuk membuka seluruh akses ke server.' + nl + nl + '*Wajib di-klik ya, kalau tidak nanti tidak bisa lihat channel lain.*',
+        color=discord.Color.green()
+    )
+    
+    # Hapus pesan lama di channel verify biar bersih
+    try:
+        async for m in verify_ch.history(limit=10):
+            if m.author == bot.user: await m.delete()
+    except: pass
+    
+    msg_v = await verify_ch.send(embed=embed)
+    await msg_v.add_reaction('✅')
+    
+    # Simpan ID ke config
+    cfg = _cfg_load()
+    cfg['verify_message_id'] = msg_v.id
+    cfg['verify_role_id'] = verified_role.id
+    _cfg_save(cfg)
+    
+    await msg.edit(content=f'✅ **Selesai!** Kategori START HERE udah dibuka, dan {locked_count} channel/kategori lain udah dikunci.' + nl + 'Coba minta temen lu join/relogin, dia harusnya cuma bisa liat channel {verify_ch.mention}.')
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
