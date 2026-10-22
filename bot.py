@@ -22,7 +22,10 @@ def normalize_text(t):
     # Ngubah huruf miring/aneh (𝘣𝘰𝘵) jadi huruf biasa (bot)
     return unicodedata.normalize('NFKD', t).encode('ascii', 'ignore').decode('ascii').lower()
 
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix='!', intents=intents,
+    max_messages=100,
+    member_cache_flags=discord.MemberCacheFlags.none(),
+    chunk_guilds_at_startup=False)
 
 
 
