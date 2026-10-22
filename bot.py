@@ -145,7 +145,7 @@ async def setupwarnroles(ctx):
 # ══════════════════════════════════════════════════
 # MODERATION COMMANDS
 # ══════════════════════════════════════════════════
-@bot.command()
+@bot.hybrid_command()
 async def kick(ctx, member: discord.Member, *, reason="Tidak ada alasan"):
     """Keluarkan member dari server (bisa join lagi)."""
     _ismod = is_mod(ctx)
@@ -173,7 +173,7 @@ async def kick(ctx, member: discord.Member, *, reason="Tidak ada alasan"):
     except:
         await ctx.send("❌ Bot gak punya izin.")
 
-@bot.command()
+@bot.hybrid_command()
 async def ban(ctx, member: discord.Member, *, reason="Tidak ada alasan"):
     """Ban member dari server secara permanen."""
     if not is_mod(ctx) or member.top_role >= ctx.guild.me.top_role:
@@ -335,7 +335,7 @@ class WarnView(discord.ui.View):
         await interaction.response.send_modal(WarnModal(self.member))
         self.stop()
 
-@bot.command()
+@bot.hybrid_command()
 async def warn(ctx, member: discord.Member):
     """Kasih warning ke member lewat form pop-up."""
     if not is_mod(ctx) or member.top_role >= ctx.guild.me.top_role:
@@ -477,7 +477,7 @@ import time as _t
 from datetime import timedelta as _td
 _BOT_START = _t.time()
 
-@bot.hybrid_command(name="ping")
+@bot.hybrid_command(name='ping')
 async def ping_cmd(ctx):
     """Cek latency bot ke Discord."""
     ws = round(bot.latency * 1000)
@@ -500,7 +500,7 @@ async def uptime_cmd(ctx):
     p.append(f"{s}s")
     await ctx.send(f"⏱️ Uptime: **{' '.join(p)}**")
 
-@bot.command(name="avatar", aliases=["av"])
+@bot.hybrid_command(name='avatar')
 async def avatar_cmd(ctx, member: discord.Member = None):
     """Tampilkan avatar user (default: kamu)."""
     member = member or ctx.author
@@ -509,7 +509,7 @@ async def avatar_cmd(ctx, member: discord.Member = None):
     e.add_field(name="📥 Download", value=f"[PNG]({member.display_avatar.replace(format='png', size=1024).url}) • [JPG]({member.display_avatar.replace(format='jpg', size=1024).url})")
     await ctx.send(embed=e)
 
-@bot.command(name="userinfo", aliases=["ui", "whois"])
+@bot.hybrid_command(name='userinfo')
 async def userinfo_cmd(ctx, member: discord.Member = None):
     """Info lengkap user: ID, join, role, warning count."""
     member = member or ctx.author
@@ -532,7 +532,7 @@ async def userinfo_cmd(ctx, member: discord.Member = None):
         pass
     await ctx.send(embed=e)
 
-@bot.command(name="serverinfo", aliases=["si"])
+@bot.hybrid_command(name='serverinfo')
 async def serverinfo_cmd(ctx):
     """Info server: member count, boost, dibuat kapan."""
     g = ctx.guild
@@ -613,7 +613,7 @@ async def unlock_cmd(ctx):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh permission `Manage Channels`.")
 
-@bot.command(name="timeout", aliases=["to"])
+@bot.hybrid_command(name='timeout')
 async def timeout_cmd(ctx, member: discord.Member, duration: str = "10m", *, reason: str = "Tidak ada alasan"):
     """Timeout member. Contoh: !timeout @user 10m spam"""
     if not is_mod(ctx) or member.top_role >= ctx.guild.me.top_role:
@@ -753,7 +753,7 @@ async def removerole_cmd(ctx, member: discord.Member, *, role: discord.Role):
     except discord.Forbidden:
         await ctx.send("❌ Bot butuh `Manage Roles`.")
 
-@bot.command(name="say")
+@bot.hybrid_command(name='say')
 async def say_cmd(ctx, *, text: str):
     """Bot bilang sesuatu. Contoh: !say Halo semua!"""
     if not is_mod(ctx):
@@ -764,7 +764,7 @@ async def say_cmd(ctx, *, text: str):
         pass
     await ctx.send(text)
 
-@bot.command(name="embed")
+@bot.hybrid_command(name='embed')
 async def embed_cmd(ctx, *, content: str):
     """Bikin embed custom. Format: Judul | Deskripsi | Warna"""
     if not is_mod(ctx):
@@ -839,7 +839,7 @@ async def remind_cmd(ctx, duration: str, *, text: str):
     except Exception as ex:
         await ctx.send(f"❌ Gagal: {ex}")
 
-@bot.command(name="poll")
+@bot.hybrid_command(name='poll')
 async def poll_cmd(ctx, *, content: str):
     """Bikin poll. Format: !poll Pertanyaan? | Opsi1 | Opsi2 | ..."""
     if not is_mod(ctx):
@@ -1027,7 +1027,7 @@ class HelpMainView(discord.ui.View):
         await interaction.message.delete()
 
 
-@bot.command(name="help", aliases=["h", "bantuan"])
+@bot.hybrid_command(name='help')
 async def help_cmd(ctx, *, command: str = None):
     """Tampilkan daftar command atau detail command tertentu."""
     P = ctx.prefix
@@ -1793,7 +1793,7 @@ class TicketView(discord.ui.View):
         super().__init__(timeout=None)
         self.add_item(TicketSelect())
 
-@bot.command(name='ticket')
+@bot.hybrid_command(name='ticket')
 async def ticket_cmd(ctx, action: str = None):
     """Setup panel ticket (khusus Admin/Moderator)."""
     if not is_mod(ctx):
@@ -2056,7 +2056,7 @@ async def goodbye_event_cartel(member):
 # ══════════════════════════════════════════════════════════════
 # ✅ VERIFICATION GATEKEEPER (REACTION ROLE)
 # ══════════════════════════════════════════════════════════════
-@bot.hybrid_command(name='setupverify')
+@bot.command(name='setupverify')
 async def setupverify_cmd(ctx):
     """Setup sistem verifikasi & lock channel otomatis."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -2821,7 +2821,7 @@ class TicketV2View(discord.ui.View):
         super().__init__(timeout=None)
         self.add_item(TicketV2Select())
 
-@bot.hybrid_command(name='ticketv2')
+@bot.command(name='ticketv2')
 async def ticketv2_cmd(ctx):
     """Bikin panel Ticket V2 (Komunitas)."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -3169,7 +3169,7 @@ async def aturroles_cmd(ctx):
         await msg.edit(content=f'❌ Gagal mengurutkan role: {e}')
 # ══════════════════════════════════════════════════════════════
 
-@bot.hybrid_command(name="buildsharemod")
+@bot.hybrid_command(name='buildsharemod')
 async def buildsharemod_cmd(ctx):
     """Bikin struktur server mod GTA FORTXX lengkap dengan Role, Perms, & Isi."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -3576,7 +3576,7 @@ async def fixperms_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 # 🔒 GATEKEEPER: LOCK SERVER SAMPAI VERIFIKASI
 # ══════════════════════════════════════════════════════════════
-@bot.command(name='lockserver')
+@bot.hybrid_command(name='lockserver')
 async def lockserver_cmd(ctx):
     """Sembunyiin semua channel sampai member ambil role Verified."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -3896,7 +3896,7 @@ class ModTicketView(discord.ui.View):
         super().__init__(timeout=None)
         self.add_item(ModTicketSelect())
 
-@bot.hybrid_command(name='createticketmod')
+@bot.command(name='createticketmod')
 async def createticketmod_cmd(ctx):
     """Bikin panel Ticket khusus server Shared Mod."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
@@ -3916,15 +3916,10 @@ async def createticketmod_cmd(ctx):
     await ctx.send(embed=embed, view=ModTicketView())
 
 # Daftarin persistent view
-try:
-    bot.add_view(ModTicketView())
-    bot.add_view(ModTicketCloseView())
-except Exception:
-    pass
 # ══════════════════════════════════════════════════════════════
 
 
-@bot.command(name='setupall')
+@bot.hybrid_command(name='setupall')
 async def setupall_cmd(ctx):
     """Kirim semua panel (Ticket, Char, Help) sekaligus dan aktifkan permanen."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
