@@ -2011,37 +2011,20 @@ async def setupchar_cmd(ctx):
 # 👋 WELCOME MESSAGE (CÁRTEL DE JALISCO)
 # ══════════════════════════════════════════════════════════════
 @bot.listen('on_member_join')
-async def welcome_event_cartel(member):
+async def welcome_event_mod(member):
+    # Cari channel welcome
     ch = discord.utils.find(lambda c: 'welcome' in c.name.lower(), member.guild.text_channels)
     if ch:
-        take_role_ch = discord.utils.find(lambda c: 'take-role-name-ic' in c.name.lower(), member.guild.text_channels)
-        take_role_mention = take_role_ch.mention if take_role_ch else '`#📜┃take-role-name-ic`'
-        
-        welcome_text = (
-            'Kamu baru saja menginjakkan kaki di wilayah **Cártel de Jalisco Nueva Generación.**' + chr(10) + chr(10) +
-            '⚔️ **PROTOKOL KARTEL:**' + chr(10) +
-            '1️⃣ Hormati **El Jefe** & **La Jefa** tanpa terkecuali.' + chr(10) +
-            '2️⃣ Jaga rahasia *plaza*. Jangan pernah khianati keluarga.' + chr(10) +
-            f'3️⃣ Ambil identitasmu di {take_role_mention}.' + chr(10) +
-            '4️⃣ **Wajib pakai nama IC (In Character) di dalam server.**' + chr(10) + chr(10) +
-            '☕ Meja sudah disiapkan. Kopi sudah dituang.' + chr(10) +
-            'Mulai sekarang, darahmu adalah darah kami.' + chr(10) +
-            '**Bienvenido a la familia.**'
-        )
-        
         embed = discord.Embed(
-            title=f'🩸 BIENVENIDO, {member.name.upper()}!',
-            description=welcome_text,
-            color=discord.Color.red()
+            title="👋 SELAMAT DATANG DI FORTXX!",
+            description=f"Halo {member.mention}! Selamat bergabung di server sharing mod GTA." + nl + nl + "📜 Baca peraturan di **#rules**" + nl + "✅ Ambil role di **#verify**" + nl + "🛒 Cek list harga di **#list-harga**" + nl + nl + "*Jangan lupa klik ✅ di channel verify biar bisa liat channel lainnya!*",
+            color=discord.Color.green()
         )
         embed.set_thumbnail(url=member.display_avatar.url)
-        
+        embed.set_footer(text=f"Member ke-{member.guild.member_count}")
         await ch.send(content=member.mention, embed=embed)
-# ══════════════════════════════════════════════════════════════
 
-# ══════════════════════════════════════════════════════════════
-# 🩸 GOODBYE MESSAGE (CÁRTEL DE JALISCO)
-# ══════════════════════════════════════════════════════════════
+
 @bot.listen('on_member_remove')
 async def goodbye_event_cartel(member):
     ch = discord.utils.find(lambda c: 'welcome' in c.name.lower(), member.guild.text_channels)
@@ -3779,5 +3762,43 @@ async def fixjoin_cmd(ctx):
     
     await msg.edit(content=f'✅ **Selesai!** Kategori START HERE udah dibuka, dan {locked_count} channel/kategori lain udah dikunci.' + nl + 'Coba minta temen lu join/relogin, dia harusnya cuma bisa liat channel {verify_ch.mention}.')
 # ══════════════════════════════════════════════════════════════
+
+
+@bot.command(name='welcomemod')
+async def welcomemod_cmd(ctx):
+    """Tes kirim pesan welcome GTA Mod ke channel #welcome."""
+    if not is_mod(ctx): return
+    ch = discord.utils.find(lambda c: 'welcome' in c.name.lower(), ctx.guild.text_channels)
+    if not ch: return await ctx.send("❌ Channel #welcome gak ketemu.")
+    embed = discord.Embed(
+        title="👋 SELAMAT DATANG DI FORTXX!",
+        description=f"Halo {ctx.author.mention}! Selamat bergabung di server sharing mod GTA." + chr(10) + chr(10) + "📜 Baca peraturan di **#rules**" + chr(10) + "✅ Ambil role di **#verify**" + chr(10) + "🛒 Cek list harga di **#list-harga**",
+        color=discord.Color.green()
+    )
+    embed.set_thumbnail(url=ctx.author.display_avatar.url)
+    await ch.send(content=ctx.author.mention, embed=embed)
+    await ctx.send(f"✅ Pesan welcome dites ke {ch.mention}!", delete_after=5)
+
+@bot.command(name='bannedmod')
+async def bannedmod_cmd(ctx):
+    """Tes kirim log banned ke channel #banned-logs."""
+    if not is_mod(ctx): return
+    ch = discord.utils.find(lambda c: 'banned-logs' in c.name.lower(), ctx.guild.text_channels)
+    if not ch: return await ctx.send("❌ Channel #banned-logs gak ketemu.")
+    embed = discord.Embed(title="🔨 MEMBER DI-BAN", description=f"**Target:** {ctx.author.mention} (`{ctx.author.id}`)" + chr(10) + f"**Mod:** {ctx.author.mention}" + chr(10) + "**Alasan:** Tes sistem log banned", color=discord.Color.dark_red())
+    embed.set_thumbnail(url=ctx.author.display_avatar.url)
+    await ch.send(embed=embed)
+    await ctx.send(f"✅ Log banned dites ke {ch.mention}!", delete_after=5)
+
+@bot.command(name='invitemod')
+async def invitemod_cmd(ctx):
+    """Tes kirim log invite ke channel #invite-logs."""
+    if not is_mod(ctx): return
+    ch = discord.utils.find(lambda c: 'invite-logs' in c.name.lower(), ctx.guild.text_channels)
+    if not ch: return await ctx.send("❌ Channel #invite-logs gak ketemu.")
+    embed = discord.Embed(title="📩 INVITE BARU", description=f"**User:** {ctx.author.mention}" + chr(10) + "**Bergabung via:** `discord.gg/fortxx`", color=discord.Color.blue())
+    embed.set_thumbnail(url=ctx.author.display_avatar.url)
+    await ch.send(embed=embed)
+    await ctx.send(f"✅ Log invite dites ke {ch.mention}!", delete_after=5)
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
