@@ -4048,20 +4048,40 @@ except Exception as e:
 # ══════════════════════════════════════════════════════════════
 @bot.command(name='botinfo', aliases=['info', 'vitur', 'status'])
 async def botinfo_cmd(ctx):
-    """Nampilin info bot, web, owner, dan list server."""
+    """Nampilin info bot, web, owner, dan list server (dengan link)."""
     
-    # GANTI LINK DI BAWAH INI DENGAN LINK DC LU
-    dc_link = "https://discord.gg/fYMu3msZ"
+    dc_link = "https://discord.gg/fYMu3msZ" # Link DC utama lu
     web_link = "https://bot-fortxx.wispbyte.app"
     
-    # Kumpulin data server
     servers = bot.guilds
     total_members = sum(g.member_count for g in servers)
     
-    # Bikin list server (maksimal 15 biar gak kepanjangan)
     server_list = ''
+    # Bot nyoba bikin/narik link invite dari tiap server
     for i, guild in enumerate(servers[:15], 1):
-        server_list += f'**{i}.** {guild.name} (`{guild.member_count:,}` Member)' + chr(10)
+        invite_url = None
+        try:
+            # 1. Cek apakah server punya link vanity (Server Boost Lvl 3)
+            if guild.vanity_url:
+                invite_url = guild.vanity_url
+            else:
+                # 2. Kalau gak ada, coba tarik link invite yang udah ada
+                invites = await guild.invites()
+                if invites:
+                    invite_url = invites[0].url
+                else:
+                    # 3. Kalau gak ada sama sekali, bot coba BIKIN link baru
+                    invite = await guild.create_invite(max_age=0, max_uses=0, reason="Bot Info Auto-Link")
+                    invite_url = invite.url
+        except Exception:
+            # Kalau bot gak punya izin, link bakal kosong
+            invite_url = None
+
+        # Format teksnya
+        if invite_url:
+            server_list += f'**{i}.** [{guild.name}]({invite_url}) (`{guild.member_count:,}` Member)' + chr(10)
+        else:
+            server_list += f'**{i}.** {guild.name} (`{guild.member_count:,}` Member)' + chr(10)
         
     if len(servers) > 15:
         server_list += f'... dan **{len(servers) - 15}** server lainnya.'
@@ -4076,7 +4096,7 @@ async def botinfo_cmd(ctx):
     )
     embed.set_thumbnail(url=bot.user.display_avatar.url)
     
-    embed.add_field(name='💬 Discord Server', value=f'[Klik disini untuk Join DC]({dc_link})', inline=False)
+    embed.add_field(name='💬 Discord Server Utama', value=f'[Klik disini untuk Join]({dc_link})', inline=False)
     embed.add_field(name='🌐 Web Dashboard', value=f'[bot-fortxx.wispbyte.app]({web_link})', inline=False)
     embed.add_field(name='👑 Owner / Developer', value='<@1433702926760804352> (zomahaci)', inline=False)
     
