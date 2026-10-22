@@ -3265,4 +3265,111 @@ async def aturroles_cmd(ctx):
         await msg.edit(content=f'❌ Gagal mengurutkan role: {e}')
 # ══════════════════════════════════════════════════════════════
 
+@bot.command(name="buildsharemod")
+async def buildsharemod_cmd(ctx):
+    """Bikin struktur server khusus sharing mod GTA ala FORTXX."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Membangun Server Mod GTA FORTXX...**' + nl + 'Total ada 15 Kategori & 80+ Channel.' + nl + 'Proses ini memakan waktu 3-4 menit karena Discord membatasi pembuatan channel. **Tinggalin aja jangan dibatalin.**')
+    
+    structure = [
+        ('📌 〢 LOGS & INFO', [
+            ('👋・welcome', 'text'), ('✈️・goodbye', 'text'), ('📩・invite-logs', 'text'), 
+            ('🚫・banned-logs', 'text'), ('⬆️・level-up', 'text'), ('🚧・spam-bot', 'text'), 
+            ('🚀・booster-log', 'text')
+        ]),
+        ('🛡️ 〢 DASHBOARD', [
+            ('😈・fortxx-traps', 'text'), ('📢・announcement', 'text'), ('🔗・official-link', 'text'), 
+            ('📌・voting-area', 'text'), ('🎲・spoiler-modpack', 'text'), ('🔔・content-notify', 'text'), 
+            ('♻️・remastered-mod', 'text'), ('📋・change-logs', 'text')
+        ]),
+        ('🛒 〢 FORTXX STORE', [
+            ('📢・information-market', 'text'), ('💰・list-harga', 'text'), ('🛠️・production-team', 'text'), 
+            ('💵・modpack-mobile', 'text'), ('💵・modpack-production', 'text'), ('💵・gta-pc', 'text'), 
+            ('💵・other-sell', 'text'), ('🔔・open-ticket', 'text'), ('✉️・qris-code', 'text'), 
+            ('⭐・rating-me', 'text'), ('📝・logs-buyer', 'text')
+        ]),
+        ('🤝 〢 PARTNERSHIP LIST', [
+            ('📢・partners-info', 'text'), ('🤝・partner', 'text'), 
+            ('📺・content-partners', 'text'), ('📋・partners-list', 'text')
+        ]),
+        ('🎭 〢 ROLE INFORMASI', [
+            ('📢・information-roles', 'text'), ('💜・req-followers', 'text'), 
+            ('🎁・free-roles', 'text'), ('🧩・choice-roles', 'text'), ('✳️・take-roles', 'text')
+        ]),
+        ('😎 〢 MAIN GANGSTER AN', [
+            ('👟・low-budget-drip', 'text'), ('💼・gang-gif-rap-sturdy', 'text'), 
+            ('📸・gang-picture-selfie', 'text'), ('💀・samp-dead-opps', 'text')
+        ]),
+        ('💬 〢 GENERAL', [
+            ('💵・support-me', 'text'), ('🍀・giveaway-modpack', 'text'), ('🔧・list-mekanik-gta', 'text'), 
+            ('💬・chat-public', 'text'), ('🖼️・gallery-public', 'text'), ('🆙・screenshoot-ingame', 'text'), 
+            ('🔍・nyari-mod', 'text'), ('😭・problem-gta-mobile', 'text'), ('😭・problem-gta-pc', 'text')
+        ]),
+        ('📤 〢 SHARING AREA', [
+            ('🔗・share-discord', 'text'), ('🎙️・share-music', 'text'), 
+            ('📺・share-content', 'text'), ('🆓・share-gta-andro-pc', 'text')
+        ]),
+        ('🔊 〢 VOICE ROOM', [
+            ('🦉・NYANTAI', 'voice'), ('🌍・MINECRAFT', 'voice'), 
+            ('🔧・KONSULTASI-1', 'voice'), ('🔧・KONSULTASI-2', 'voice'), 
+            ('🎵・MUSYIK-1', 'voice'), ('🎵・MUSYIK-2', 'voice'), 
+            ('🔒・talk', 'voice'), ('🗣️・interview-kerja-real', 'voice')
+        ]),
+        ('🚗 〢 SHOWROOM SKIN GTA', [
+            ('🍇・fortxx', 'text'), ('🧃・treylocc', 'text'), 
+            ('🍊・ojerasy', 'text'), ('🧩・atarzmods', 'text'), ('🦊・finnz', 'text')
+        ]),
+        ('💸 〢 MARKETPLACE', [
+            ('💵・gta-porsale-mobile', 'text'), ('💵・gta-porsale-desktop', 'text'), 
+            ('💵・skin-porsale', 'text'), ('🚨・search-item-rmt', 'text')
+        ]),
+        ('🔫 〢 WEAPON AREA', [
+            ('🔫・pistol-weapon', 'text'), ('🔫・shotgun-weapon', 'text'), ('🔫・smg-weapon', 'text'), 
+            ('🔫・rifle-weapon', 'text'), ('🔫・sniper-weapon', 'text'), ('🔫・mele-weapon', 'text'), 
+            ('📦・gun-pack', 'text'), ('🔫・weapon-icon', 'text'), ('✳️・hitmarker', 'text'), 
+            ('🖌️・weapon-anim', 'text'), ('💨・muzzle-texture', 'text'), 
+            ('🔊・weapon-sound', 'text'), ('🔊・hit-sound', 'text')
+        ]),
+        ('🌍 〢 GTA WORLD', [
+            ('🧱・texture-mod', 'text'), ('🌲・vegetation-mod', 'text'), ('🏙️・grafik-mod', 'text'), 
+            ('🌧️・skybox-mod', 'text'), ('🌈・pc-grafik', 'text'), ('🛣️・road-mod', 'text'), 
+            ('💥・effect-mod', 'text'), ('🐛・particle-mod', 'text'), ('📦・other-mod', 'text')
+        ]),
+        ('👕 〢 MODELS MODIF', [
+            ('♿・skin-low-poly', 'text'), ('👕・skin-basic', 'text'), ('👚・skin-cewe', 'text'), 
+            ('👽・skin-compee', 'text'), ('😆・skin-funny', 'text'), ('🚨・skin-apart', 'text'), 
+            ('🚶・anim-ifp', 'text'), ('🎒・toys-mod', 'text'), ('🏠・envi-mod', 'text')
+        ]),
+        ('🏎️ 〢 VEHICLE AREA', [
+            ('🚗・car-mod', 'text'), ('🛵・motorcycle-mod', 'text'), 
+            ('🚓・apart-car', 'text'), ('⚓・sperpat-vehicle', 'text')
+        ])
+    ]
+    
+    created = 0
+    
+    try:
+        for cat_name, channels in structure:
+            category = discord.utils.get(ctx.guild.categories, name=cat_name)
+            if not category:
+                category = await ctx.guild.create_category(cat_name)
+                await asyncio.sleep(1.5)
+            
+            for ch_name, ch_type in channels:
+                existing = discord.utils.get(category.channels, name=ch_name)
+                if not existing:
+                    if ch_type == 'text':
+                        await ctx.guild.create_text_channel(ch_name, category=category)
+                    elif ch_type == 'voice':
+                        await ctx.guild.create_voice_channel(ch_name, category=category)
+                    created += 1
+                    await asyncio.sleep(1.5)
+                
+        await msg.edit(content=f'✅ **Server Mod GTA FORTXX Berhasil Dibangun!** ({created} channel dibuat).' + nl + 'Silakan cek, strukturnya udah persis kayak referensi lu, Bang!')
+        
+    except Exception as e:
+        await msg.edit(content=f'❌ Gagal membangun server (Mungkin kena rate limit Discord): {e}' + nl + 'Tunggu 5 menit, lalu jalankan command ini lagi (bot bakal lanjutin yang belum kebuat).')
+
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
