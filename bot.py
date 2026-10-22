@@ -338,17 +338,31 @@ async def on_ready():
         
         if not emergency_ch:
             try:
-                # Bikin channel di paling atas
                 emergency_ch = await guild.create_text_channel(emergency_name, position=0)
-                # Buka akses buat semua orang
-                await emergency_ch.set_permissions(guild.default_role, read_messages=True, send_messages=True)
-                
-                # Kirim pesan instruksi (PAKAI CONCATENATION)
-                msg_text = "🚨 **EMERGENCY CHANNEL** 🚨" + chr(10) + chr(10) + "Halo " + guild.owner.mention + ", bot mendeteksi server mungkin terkunci dan kamu tidak bisa melihat channel lain." + chr(10) + chr(10) + "Silakan ketik **`!fixme`** di channel ini untuk membuka akses kembali."
-                await emergency_ch.send(msg_text)
-                print(f"[SYSTEM] Emergency channel berhasil dibuat di {guild.name}.")
+                print(f"[SYSTEM] Emergency channel BERHASIL DIBUAT di {guild.name}.")
             except Exception as e:
-                print(f"[SYSTEM] Gagal bikin emergency channel: {e}")
+                print(f"[SYSTEM] GAGAL BIKIN CHANNEL DARURAT: {e}")
+        
+        # Kalau channel-nya ada (baru dibuat atau udah dari sononya), PAKSA BUKA IZINNYA
+        if emergency_ch:
+            try:
+                # Buka buat semua orang
+                await emergency_ch.set_permissions(guild.default_role, read_messages=True, send_messages=True)
+                # Buka khusus buat Owner server
+                if guild.owner:
+                    await emergency_ch.set_permissions(guild.owner, read_messages=True, send_messages=True)
+                
+                # Kirim pesan (cuma kalau belum ada 10 pesan terakhir dari bot)
+                async for msg in emergency_ch.history(limit=5):
+                    if msg.author == bot.user and "EMERGENCY" in msg.content:
+                        break
+                else:
+                    msg_text = "🚨 **EMERGENCY CHANNEL** 🚨" + chr(10) + chr(10) + "Halo " + guild.owner.mention + ", bot mendeteksi server mungkin terkunci. Silakan ketik **`!fixme`** di channel ini."
+                    await emergency_ch.send(msg_text)
+                    
+                print(f"[SYSTEM] Izin Emergency Channel berhasil dipaksa terbuka di {guild.name}.")
+            except Exception as e:
+                print(f"[SYSTEM] GAGAL BUKA IZIN EMERGENCY: {e}")
         # -------------------------------------
 
     print("[SYSTEM] AUTO-RESTORE SELESAI! Bot siap digunakan tanpa setup ulang.")
