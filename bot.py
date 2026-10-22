@@ -3267,109 +3267,139 @@ async def aturroles_cmd(ctx):
 
 @bot.command(name="buildsharemod")
 async def buildsharemod_cmd(ctx):
-    """Bikin struktur server khusus sharing mod GTA ala FORTXX."""
+    """Bikin struktur server mod GTA FORTXX lengkap dengan Role, Perms, & Isi."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
     
-    msg = await ctx.send('⏳ **Membangun Server Mod GTA FORTXX...**' + nl + 'Total ada 15 Kategori & 80+ Channel.' + nl + 'Proses ini memakan waktu 3-4 menit karena Discord membatasi pembuatan channel. **Tinggalin aja jangan dibatalin.**')
+    msg = await ctx.send('⏳ **MEMBANGUN SERVER FORTXX ULTIMATE...**' + nl + 'Proses ini memakan waktu 3-5 menit karena membuat 9 Role + 80+ Channel + Mengatur Izin.' + nl + '**Silakan tinggalkan HP sebentar, jangan spam command lain.**')
     
+    # 1. BIKIN ROLE DULU
+    roles_data = [
+        ("👑 Owner", discord.Color.gold(), discord.Permissions(administrator=True)),
+        ("🛡️ Admin", discord.Color.red(), discord.Permissions(administrator=True)),
+        ("⚔️ Moderator", discord.Color.orange(), discord.Permissions(kick_members=True, manage_messages=True, view_audit_log=True)),
+        ("🔰 Staff", discord.Color.blue(), discord.Permissions(manage_messages=True, view_audit_log=True)),
+        ("🤖 Bots", discord.Color.dark_grey(), discord.Permissions(manage_channels=True, manage_roles=True)),
+        ("✅ Verified", discord.Color.green(), discord.Permissions(read_messages=True, send_messages=True)),
+        ("💵 Seller", discord.Color.from_rgb(255, 200, 0), discord.Permissions(read_messages=True)),
+        ("🛒 Buyer", discord.Color.from_rgb(150, 150, 150), discord.Permissions(read_messages=True)),
+    ]
+    
+    for name, color, perms in roles_data:
+        if not discord.utils.get(ctx.guild.roles, name=name):
+            await ctx.guild.create_role(name=name, color=color, permissions=perms)
+            await asyncio.sleep(1.5)
+
+    # Siapin Overwrites (Izin) buat kategori privat
+    staff_roles = ["👑 Owner", "🛡️ Admin", "⚔️ Moderator", "🔰 Staff"]
+    staff_overwrites = {ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False)}
+    for r_name in staff_roles:
+        r = discord.utils.get(ctx.guild.roles, name=r_name)
+        if r: staff_overwrites[r] = discord.PermissionOverwrite(read_messages=True)
+
+    read_only_overwrites = {
+        ctx.guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=False)
+    }
+    
+    # 2. BIKIN KATEGORI & CHANNEL + KONTEN
     structure = [
         ('📌 〢 LOGS & INFO', [
-            ('👋・welcome', 'text'), ('✈️・goodbye', 'text'), ('📩・invite-logs', 'text'), 
-            ('🚫・banned-logs', 'text'), ('⬆️・level-up', 'text'), ('🚧・spam-bot', 'text'), 
-            ('🚀・booster-log', 'text')
+            ('👋・welcome', 'text', read_only_overwrites), 
+            ('📜・rules', 'text', read_only_overwrites),
+            ('✈️・goodbye', 'text', read_only_overwrites), 
+            ('📩・invite-logs', 'text', staff_overwrites), 
+            ('🚫・banned-logs', 'text', staff_overwrites), 
+            ('⬆️・level-up', 'text', {}), 
+            ('🚧・spam-bot', 'text', staff_overwrites), 
+            ('🚀・booster-log', 'text', {})
         ]),
         ('🛡️ 〢 DASHBOARD', [
-            ('😈・fortxx-traps', 'text'), ('📢・announcement', 'text'), ('🔗・official-link', 'text'), 
-            ('📌・voting-area', 'text'), ('🎲・spoiler-modpack', 'text'), ('🔔・content-notify', 'text'), 
-            ('♻️・remastered-mod', 'text'), ('📋・change-logs', 'text')
+            ('😈・fortxx-traps', 'text', staff_overwrites), 
+            ('📢・announcement', 'text', read_only_overwrites), 
+            ('🔗・official-link', 'text', read_only_overwrites), 
+            ('📌・voting-area', 'text', {}), 
+            ('🎲・spoiler-modpack', 'text', {}), 
+            ('🔔・content-notify', 'text', read_only_overwrites), 
+            ('♻️・remastered-mod', 'text', {}), 
+            ('📋・change-logs', 'text', read_only_overwrites)
         ]),
         ('🛒 〢 FORTXX STORE', [
-            ('📢・information-market', 'text'), ('💰・list-harga', 'text'), ('🛠️・production-team', 'text'), 
-            ('💵・modpack-mobile', 'text'), ('💵・modpack-production', 'text'), ('💵・gta-pc', 'text'), 
-            ('💵・other-sell', 'text'), ('🔔・open-ticket', 'text'), ('✉️・qris-code', 'text'), 
-            ('⭐・rating-me', 'text'), ('📝・logs-buyer', 'text')
+            ('📢・information-market', 'text', read_only_overwrites), 
+            ('💰・list-harga', 'text', read_only_overwrites), 
+            ('🛠️・production-team', 'text', staff_overwrites), 
+            ('💵・modpack-mobile', 'text', {}), 
+            ('💵・modpack-production', 'text', {}), 
+            ('💵・gta-pc', 'text', {}), 
+            ('💵・other-sell', 'text', {}), 
+            ('🔔・open-ticket', 'text', {}), 
+            ('✉️・qris-code', 'text', read_only_overwrites), 
+            ('⭐・rating-me', 'text', {}), 
+            ('📝・logs-buyer', 'text', staff_overwrites)
         ]),
-        ('🤝 〢 PARTNERSHIP LIST', [
-            ('📢・partners-info', 'text'), ('🤝・partner', 'text'), 
-            ('📺・content-partners', 'text'), ('📋・partners-list', 'text')
-        ]),
-        ('🎭 〢 ROLE INFORMASI', [
-            ('📢・information-roles', 'text'), ('💜・req-followers', 'text'), 
-            ('🎁・free-roles', 'text'), ('🧩・choice-roles', 'text'), ('✳️・take-roles', 'text')
-        ]),
-        ('😎 〢 MAIN GANGSTER AN', [
-            ('👟・low-budget-drip', 'text'), ('💼・gang-gif-rap-sturdy', 'text'), 
-            ('📸・gang-picture-selfie', 'text'), ('💀・samp-dead-opps', 'text')
-        ]),
-        ('💬 〢 GENERAL', [
-            ('💵・support-me', 'text'), ('🍀・giveaway-modpack', 'text'), ('🔧・list-mekanik-gta', 'text'), 
-            ('💬・chat-public', 'text'), ('🖼️・gallery-public', 'text'), ('🆙・screenshoot-ingame', 'text'), 
-            ('🔍・nyari-mod', 'text'), ('😭・problem-gta-mobile', 'text'), ('😭・problem-gta-pc', 'text')
-        ]),
-        ('📤 〢 SHARING AREA', [
-            ('🔗・share-discord', 'text'), ('🎙️・share-music', 'text'), 
-            ('📺・share-content', 'text'), ('🆓・share-gta-andro-pc', 'text')
-        ]),
-        ('🔊 〢 VOICE ROOM', [
-            ('🦉・NYANTAI', 'voice'), ('🌍・MINECRAFT', 'voice'), 
-            ('🔧・KONSULTASI-1', 'voice'), ('🔧・KONSULTASI-2', 'voice'), 
-            ('🎵・MUSYIK-1', 'voice'), ('🎵・MUSYIK-2', 'voice'), 
-            ('🔒・talk', 'voice'), ('🗣️・interview-kerja-real', 'voice')
-        ]),
-        ('🚗 〢 SHOWROOM SKIN GTA', [
-            ('🍇・fortxx', 'text'), ('🧃・treylocc', 'text'), 
-            ('🍊・ojerasy', 'text'), ('🧩・atarzmods', 'text'), ('🦊・finnz', 'text')
-        ]),
-        ('💸 〢 MARKETPLACE', [
-            ('💵・gta-porsale-mobile', 'text'), ('💵・gta-porsale-desktop', 'text'), 
-            ('💵・skin-porsale', 'text'), ('🚨・search-item-rmt', 'text')
-        ]),
-        ('🔫 〢 WEAPON AREA', [
-            ('🔫・pistol-weapon', 'text'), ('🔫・shotgun-weapon', 'text'), ('🔫・smg-weapon', 'text'), 
-            ('🔫・rifle-weapon', 'text'), ('🔫・sniper-weapon', 'text'), ('🔫・mele-weapon', 'text'), 
-            ('📦・gun-pack', 'text'), ('🔫・weapon-icon', 'text'), ('✳️・hitmarker', 'text'), 
-            ('🖌️・weapon-anim', 'text'), ('💨・muzzle-texture', 'text'), 
-            ('🔊・weapon-sound', 'text'), ('🔊・hit-sound', 'text')
-        ]),
-        ('🌍 〢 GTA WORLD', [
-            ('🧱・texture-mod', 'text'), ('🌲・vegetation-mod', 'text'), ('🏙️・grafik-mod', 'text'), 
-            ('🌧️・skybox-mod', 'text'), ('🌈・pc-grafik', 'text'), ('🛣️・road-mod', 'text'), 
-            ('💥・effect-mod', 'text'), ('🐛・particle-mod', 'text'), ('📦・other-mod', 'text')
-        ]),
-        ('👕 〢 MODELS MODIF', [
-            ('♿・skin-low-poly', 'text'), ('👕・skin-basic', 'text'), ('👚・skin-cewe', 'text'), 
-            ('👽・skin-compee', 'text'), ('😆・skin-funny', 'text'), ('🚨・skin-apart', 'text'), 
-            ('🚶・anim-ifp', 'text'), ('🎒・toys-mod', 'text'), ('🏠・envi-mod', 'text')
-        ]),
-        ('🏎️ 〢 VEHICLE AREA', [
-            ('🚗・car-mod', 'text'), ('🛵・motorcycle-mod', 'text'), 
-            ('🚓・apart-car', 'text'), ('⚓・sperpat-vehicle', 'text')
-        ])
+        ('🤝 〢 PARTNERSHIP LIST', [('📢・partners-info', 'text', {}), ('🤝・partner', 'text', {}), ('📺・content-partners', 'text', {}), ('📋・partners-list', 'text', read_only_overwrites)]),
+        ('🎭 〢 ROLE INFORMASI', [('📢・information-roles', 'text', read_only_overwrites), ('💜・req-followers', 'text', {}), ('🎁・free-roles', 'text', read_only_overwrites), ('🧩・choice-roles', 'text', {}), ('✳️・take-roles', 'text', {})]),
+        ('😎 〢 MAIN GANGSTER AN', [('👟・low-budget-drip', 'text', {}), ('💼・gang-gif-rap-sturdy', 'text', {}), ('📸・gang-picture-selfie', 'text', {}), ('💀・samp-dead-opps', 'text', {})]),
+        ('💬 〢 GENERAL', [('💵・support-me', 'text', {}), ('🍀・giveaway-modpack', 'text', {}), ('🔧・list-mekanik-gta', 'text', {}), ('💬・chat-public', 'text', {}), ('🖼️・gallery-public', 'text', {}), ('🆙・screenshoot-ingame', 'text', {}), ('🔍・nyari-mod', 'text', {}), ('😭・problem-gta-mobile', 'text', {}), ('😭・problem-gta-pc', 'text', {})]),
+        ('📤 〢 SHARING AREA', [('🔗・share-discord', 'text', {}), ('🎙️・share-music', 'text', {}), ('📺・share-content', 'text', {}), ('🆓・share-gta-andro-pc', 'text', {})]),
+        ('🔊 〢 VOICE ROOM', [('🦉・NYANTAI', 'voice', {}), ('🌍・MINECRAFT', 'voice', {}), ('🔧・KONSULTASI-1', 'voice', {}), ('🔧・KONSULTASI-2', 'voice', {}), ('🎵・MUSYIK-1', 'voice', {}), ('🎵・MUSYIK-2', 'voice', {}), ('🔒・talk', 'voice', {}), ('🗣️・interview-kerja-real', 'voice', {})]),
+        ('🚗 〢 SHOWROOM SKIN GTA', [('🍇・fortxx', 'text', {}), ('🧃・treylocc', 'text', {}), ('🍊・ojerasy', 'text', {}), ('🧩・atarzmods', 'text', {}), ('🦊・finnz', 'text', {})]),
+        ('💸 〢 MARKETPLACE', [('💵・gta-porsale-mobile', 'text', {}), ('💵・gta-porsale-desktop', 'text', {}), ('💵・skin-porsale', 'text', {}), ('🚨・search-item-rmt', 'text', {})]),
+        ('🔫 〢 WEAPON AREA', [('🔫・pistol-weapon', 'text', {}), ('🔫・shotgun-weapon', 'text', {}), ('🔫・smg-weapon', 'text', {}), ('🔫・rifle-weapon', 'text', {}), ('🔫・sniper-weapon', 'text', {}), ('🔫・mele-weapon', 'text', {}), ('📦・gun-pack', 'text', {}), ('🔫・weapon-icon', 'text', {}), ('✳️・hitmarker', 'text', {}), ('🖌️・weapon-anim', 'text', {}), ('💨・muzzle-texture', 'text', {}), ('🔊・weapon-sound', 'text', {}), ('🔊・hit-sound', 'text', {})]),
+        ('🌍 〢 GTA WORLD', [('🧱・texture-mod', 'text', {}), ('🌲・vegetation-mod', 'text', {}), ('🏙️・grafik-mod', 'text', {}), ('🌧️・skybox-mod', 'text', {}), ('🌈・pc-grafik', 'text', {}), ('🛣️・road-mod', 'text', {}), ('💥・effect-mod', 'text', {}), ('🐛・particle-mod', 'text', {}), ('📦・other-mod', 'text', {})]),
+        ('👕 〢 MODELS MODIF', [('♿・skin-low-poly', 'text', {}), ('👕・skin-basic', 'text', {}), ('👚・skin-cewe', 'text', {}), ('👽・skin-compee', 'text', {}), ('😆・skin-funny', 'text', {}), ('🚨・skin-apart', 'text', {}), ('🚶・anim-ifp', 'text', {}), ('🎒・toys-mod', 'text', {}), ('🏠・envi-mod', 'text', {})]),
+        ('🏎️ 〢 VEHICLE AREA', [('🚗・car-mod', 'text', {}), ('🛵・motorcycle-mod', 'text', {}), ('🚓・apart-car', 'text', {}), ('⚓・sperpat-vehicle', 'text', {})])
     ]
     
     created = 0
+    log_channels = {}
     
     try:
         for cat_name, channels in structure:
-            category = discord.utils.get(ctx.guild.categories, name=cat_name)
-            if not category:
-                category = await ctx.guild.create_category(cat_name)
-                await asyncio.sleep(1.5)
+            category = await ctx.guild.create_category(cat_name)
+            await asyncio.sleep(1.5)
             
-            for ch_name, ch_type in channels:
-                existing = discord.utils.get(category.channels, name=ch_name)
-                if not existing:
-                    if ch_type == 'text':
-                        await ctx.guild.create_text_channel(ch_name, category=category)
-                    elif ch_type == 'voice':
-                        await ctx.guild.create_voice_channel(ch_name, category=category)
-                    created += 1
-                    await asyncio.sleep(1.5)
+            for ch_name, ch_type, overwrites in channels:
+                if ch_type == 'text':
+                    ch = await ctx.guild.create_text_channel(ch_name, category=category, overwrites=overwrites)
+                    
+                    # === ISI PESAN OTOMATIS ===
+                    if 'welcome' in ch_name:
+                        e = discord.Embed(title="👋 SELAMAT DATANG DI FORTXX!", description="Jangan lupa baca **#📜・rules** dan ambil role di **#✳️・take-roles**.", color=discord.Color.green())
+                        await ch.send(embed=e)
+                    elif 'rules' in ch_name:
+                        e = discord.Embed(title="📜 PERATURAN SERVER FORTXX", description="1. Dilarang toxic & SARA.\n2. Dilarang spam / promosi tanpa izin.\n3. Wajib menghormati Staff.\n4. Gunakan channel sesuai fungsinya.\n5. No SCAM / RIP dalam jual beli.", color=discord.Color.red())
+                        await ch.send(embed=e)
+                        await ch.send("**Sanksi Pelanggaran:** Warning -> Mute -> Kick -> Ban.")
+                    elif 'announcement' in ch_name:
+                        await ch.send(embed=discord.Embed(title="📢 PENGUMUMAN FORTXX", description="Info update mod, event, dan maintenance server akan dipublish di sini.", color=discord.Color.gold()))
+                    elif 'list-harga' in ch_name:
+                        await ch.send(embed=discord.Embed(title="💰 LIST HARGA MODPACK", description="Silakan hubungi Seller di **#🔔・open-ticket** untuk pemesanan.", color=discord.Color.blue()))
+                    
+                    # Simpan ID buat Log Config
+                    if 'invite-logs' in ch_name: log_channels['invite'] = ch
+                    if 'banned-logs' in ch_name: log_channels['banned'] = ch
+                    if 'spam-bot' in ch_name: log_channels['spam'] = ch
+                    if 'logs-buyer' in ch_name: log_channels['buyer'] = ch
+                    
+                elif ch_type == 'voice':
+                    await ctx.guild.create_voice_channel(ch_name, category=category)
                 
-        await msg.edit(content=f'✅ **Server Mod GTA FORTXX Berhasil Dibangun!** ({created} channel dibuat).' + nl + 'Silakan cek, strukturnya udah persis kayak referensi lu, Bang!')
+                created += 1
+                await asyncio.sleep(1.5)
+        
+        # Simpan log channel ke config
+        try:
+            cfg = _cfg_load()
+            if 'invite' in log_channels: cfg['invite_log_ch'] = log_channels['invite'].id
+            if 'banned' in log_channels: cfg['banned_log_ch'] = log_channels['banned'].id
+            if 'spam' in log_channels: cfg['spam_log_ch'] = log_channels['spam'].id
+            _cfg_save(cfg)
+        except: pass
+
+        await msg.edit(content=f'✅ **SERVER FORTXX BERHASIL DIBANGUN!** ({created} channel dibuat).' + nl + 'Role, Izin, & Isi Rules udah otomatis terpasang!')
         
     except Exception as e:
-        await msg.edit(content=f'❌ Gagal membangun server (Mungkin kena rate limit Discord): {e}' + nl + 'Tunggu 5 menit, lalu jalankan command ini lagi (bot bakal lanjutin yang belum kebuat).')
+        await msg.edit(content=f'❌ Gagal membangun (Mungkin kena rate limit): {e}' + nl + 'Tunggu 5 menit, lalu jalankan command ini lagi. Bot akan melanjutkan channel yang belum dibuat tanpa dobel.')
+
 
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
