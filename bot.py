@@ -4061,28 +4061,35 @@ async def botinfo_cmd(ctx):
     for i, guild in enumerate(servers[:15], 1):
         invite_url = None
         try:
-            # 1. Cek Vanity URL (Server Boost lvl 3)
+            # 1. Cek Vanity URL
             if guild.vanity_url:
                 invite_url = guild.vanity_url
             else:
-                # 2. Coba BIKIN link baru (cuma butuh izin Create Invite)
+                # 2. Coba tarik invite yang ada
                 try:
-                    invite = await guild.create_invite(max_age=0, max_uses=0, reason="FORTXX Bot Info")
-                    invite_url = invite.url
+                    invites = await guild.invites()
+                    if invites:
+                        invite_url = invites[0].url
                 except discord.Forbidden:
-                    # 3. Kalau gagal bikin, coba tarik link yg udah ada (butuh Manage Server)
+                    pass
+                
+                # 3. Kalau gak ada, coba bikin baru
+                if not invite_url:
                     try:
-                        invites = await guild.invites()
-                        if invites:
-                            invite_url = invites[0].url
-                    except Exception:
-                        pass
+                        invite = await guild.create_invite(max_age=0, max_uses=0, reason="FORTXX Bot Info")
+                        invite_url = invite.url
+                    except discord.Forbidden:
+                        invite_url = "NO_PERMISSION"
         except Exception:
-            invite_url = None
+            pass
+            
+        await asyncio.sleep(1) # Jeda biar gak kena rate limit Discord
 
-        # Format teksnya
-        if invite_url:
+        # Format teks
+        if invite_url and invite_url != "NO_PERMISSION":
             server_list += f'**{i}.** [{guild.name}]({invite_url}) (`{guild.member_count:,}` Member)' + chr(10)
+        elif invite_url == "NO_PERMISSION":
+            server_list += f'**{i}.** {guild.name} (`{guild.member_count:,}` Member) ❌ *(Butuh Izin Create Invite)*' + chr(10)
         else:
             server_list += f'**{i}.** {guild.name} (`{guild.member_count:,}` Member)' + chr(10)
         
