@@ -4061,20 +4061,23 @@ async def botinfo_cmd(ctx):
     for i, guild in enumerate(servers[:15], 1):
         invite_url = None
         try:
-            # 1. Cek apakah server punya link vanity (Server Boost Lvl 3)
+            # 1. Cek Vanity URL (Server Boost lvl 3)
             if guild.vanity_url:
                 invite_url = guild.vanity_url
             else:
-                # 2. Kalau gak ada, coba tarik link invite yang udah ada
-                invites = await guild.invites()
-                if invites:
-                    invite_url = invites[0].url
-                else:
-                    # 3. Kalau gak ada sama sekali, bot coba BIKIN link baru
-                    invite = await guild.create_invite(max_age=0, max_uses=0, reason="Bot Info Auto-Link")
+                # 2. Coba BIKIN link baru (cuma butuh izin Create Invite)
+                try:
+                    invite = await guild.create_invite(max_age=0, max_uses=0, reason="FORTXX Bot Info")
                     invite_url = invite.url
+                except discord.Forbidden:
+                    # 3. Kalau gagal bikin, coba tarik link yg udah ada (butuh Manage Server)
+                    try:
+                        invites = await guild.invites()
+                        if invites:
+                            invite_url = invites[0].url
+                    except Exception:
+                        pass
         except Exception:
-            # Kalau bot gak punya izin, link bakal kosong
             invite_url = None
 
         # Format teksnya
