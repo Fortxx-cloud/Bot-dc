@@ -4174,45 +4174,107 @@ import json as json_lib
 _ENC_KEY = "Tc2Jwnh0tEsa7RRKU28l2snTeuzlqz961SwJ0ghykYkvqyPg-ks"
 CA_API_KEY = _ENC_KEY[::-1]
 
+
+
+# ══════════════════════════════════════════════════════════════
+# 🧠 AI DEEP SCAN (Baca Isi Channel per Channel)
+# ══════════════════════════════════════════════════════════════
+import aiohttp
+import json as json_lib
+
+_ENC_KEY = "Tc2Jwnh0tEsa7RRKU28l2snTeuzlqz961SwJ0ghykYkvqyPg-ks"
+CA_API_KEY = _ENC_KEY[::-1]
+
 @bot.command(name='aiscanlogs')
 async def aiscanlogs_cmd(ctx):
-    """Nyuruh AI (GPT-6.1-Sol) buat nebak channel log mana yang cocok."""
+    """AI masuk ke tiap channel, baca pesan, lalu simpulkan."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
     
-    msg = await ctx.send('🧠 **AI (GPT-6.1-Sol) sedang membaca nama channel...**' + chr(10) + 'Tunggu 3-5 detik ya.')
+    msg = await ctx.send('🔍 **AI Deep Scan dimulai...**' + chr(10) + '⏳ Membaca isi channel satu per satu (bisa 1-2 menit)')
     
-    all_channels = [c.name for c in ctx.guild.text_channels]
-    channel_list_str = ', '.join(all_channels)
+    # Keyword buat nentuin channel mana yang perlu dibaca pesannya (buat hemat waktu)
+    log_kw = ['log', 'warn', 'ban', 'invite', 'spam', 'verify', 'report', 'audit']
     
-    prompt = (
-        "You are a strict JSON generator. Output ONLY a valid JSON object. No markdown, no explanations. "
-        f"Here is the list of Discord channels: {channel_list_str}. "
-        "Pick ONE channel name that best matches each log category: "
-        "warn_log, ban_log, invite_log, spam_log, bot_log. "
-        "Use this exact JSON format: "
-        '{"warn_log": "channel-name", "ban_log": "channel-name", "invite_log": "channel-name", "spam_log": "channel-name", "bot_log": "channel-name"}. '
-        "If no channel matches a category, use null."
-    )
+    all_channels = []
+    total = len(ctx.guild.text_channels)
+    processed = 0
     
-    headers = {
-        "Authorization": f"Bearer {CA_API_KEY}",
-        "Content-Type": "application/json"
-    }
+    for ch in ctx.guild.text_channels:
+        processed += 1
+        if processed % 5 == 0:
+            try:
+                await msg.edit(content=f'🔍 **AI Deep Scan...**' + chr(10) + f'⏳ Progress: {processed}/{total} channel')
+            except: pass
+        
+        topic = ch.topic or ""
+        should_read = any(kw in ch.name.lower() or kw in topic.lower() for kw in log_kw)
+        
+        messages = []
+        if should_read:
+            try:
+                async for m in ch.history(limit=3):
+                    if m.content:
+                        messages.append(m.content[:60].replace(chr(10), ' '))
+                    elif m.embeds:
+                        for e in m.embeds:
+                            if e.title:
+                                messages.append(f"[Embed: {e.title[:40]}]")
+                                    # ambil 1 embed aja
+                                break
+            except: pass
+        
+        all_channels.append({
+            'name': ch.name,
+            'topic': topic[:80],
+            'messages': messages
+        })
+        
+        if should_read:
+            await asyncio.sleep(1) # Rate limit
+    
+    # Bangun prompt raksasa
+    prompt = "Kamu adalah analis sistem Discord. Analisis SEMUA channel di bawah ini dan tentukan channel log mana yang cocok.\n\n"
+    for i, info in enumerate(all_channels, 1):
+        prompt += f"{i}. #{info['name']}"
+        if info['topic']:
+            prompt += f" | Topik: {info['topic']}"
+        if info['messages']:
+            prompt += f" | Isi: {' / '.join(info['messages'])}"
+        prompt += "\n"
+    
+    prompt += "\n\nTugasmu: Pilih SATU channel untuk tiap jenis log berikut:"
+    prompt += "\n- warn_log (log warning member)"
+    prompt += "\n- ban_log (log ban/kick member)"
+    prompt += "\n- invite_log (log member join via invite)"
+    prompt += "\n- spam_log (log pesan spam yang dihapus)"
+    prompt += "\n- bot_log (log aktivitas bot/command)"
+    prompt += "\n\nOutput HANYA JSON valid (tanpa markdown, tanpa penjelasan):"
+    prompt += '\n{"warn_log": "nama-channel-tanpa-tanda-#", "ban_log": "nama-channel", "invite_log": "nama-channel", "spam_log": "nama-channel", "bot_log": "nama-channel"}'
+    prompt += "\nJika tidak ada yang cocok untuk suatu kategori, isi null."
+    
+    headers = {"Authorization": f"Bearer {CA_API_KEY}", "Content-Type": "application/json"}
     payload = {
         "model": "gpt-6.1-sol",
         "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 200
+        "max_tokens": 300
     }
     
     try:
+        await msg.edit(content='🧠 **AI sedang menganalisis semua data...** (Tunggu 3-5 detik)')
+        
         async with aiohttp.ClientSession() as session:
-            async with session.post("https://api.chatanywhere.tech/v1/chat/completions", headers=headers, json=payload, timeout=30) as resp:
+            async with session.post("https://api.chatanywhere.tech/v1/chat/completions", headers=headers, json=payload, timeout=60) as resp:
                 if resp.status != 200:
                     return await msg.edit(content=f"❌ Error ChatAnywhere: HTTP {resp.status}")
                 data = await resp.json()
                 jawaban = data['choices'][0]['message']['content']
-                
+        
         clean_json = jawaban.replace('```json', '').replace('```', '').strip()
+        # Ambil dari { pertama sampai } terakhir (kalau AI nambah teks)
+        start = clean_json.find('{')
+        end = clean_json.rfind('}') + 1
+        clean_json = clean_json[start:end]
+        
         ai_data = json_lib.loads(clean_json)
         
         cfg = _cfg_load()
@@ -4230,27 +4292,38 @@ async def aiscanlogs_cmd(ctx):
         results = []
         for ai_key, cfg_key in mapping.items():
             ch_name = ai_data.get(ai_key)
-            if ch_name and ch_name != 'null' and ch_name != 'None':
+            if ch_name and str(ch_name).lower() not in ['null', 'none', '']:
+                # Fuzzy match: cari channel yang namanya mengandung nama dari AI
+                ch = None
+                # 1. Exact match
                 ch = discord.utils.get(ctx.guild.text_channels, name=ch_name)
+                # 2. Contains match
+                if not ch:
+                    for test_ch in ctx.guild.text_channels:
+                        if str(ch_name).lower() in test_ch.name.lower() or test_ch.name.lower() in str(ch_name).lower():
+                            ch = test_ch
+                            break
+                
                 if ch:
                     cfg[gid][cfg_key] = ch.id
                     results.append(f"✅ **{ai_key.upper()}** -> {ch.mention}")
                     try:
-                        embed = discord.Embed(title=f"🧪 AI TEST: {ai_key.upper()}", description="Channel dipilih oleh AI GPT-6.1-Sol.", color=discord.Color.green())
+                        embed = discord.Embed(title=f"🧪 AI Deep Test: {ai_key.upper()}", description="Channel ini dipilih oleh AI setelah baca isinya.", color=discord.Color.green())
                         await ch.send(embed=embed)
                     except: pass
                 else:
-                    results.append(f"⚠️ **{ai_key.upper()}** -> AI milih `{ch_name}` tapi gak ketemu")
+                    results.append(f"⚠️ **{ai_key.upper()}** -> AI pilih `{ch_name}` tapi gak ketemu")
             else:
-                results.append(f"❌ **{ai_key.upper()}** -> Gak ada channel yang cocok")
-                
+                results.append(f"❌ **{ai_key.upper()}** -> Gak ada channel cocok")
+        
         _cfg_save(cfg)
         
-        embed = discord.Embed(title='🧠 AI Scan Selesai!', description=chr(10).join(results), color=discord.Color.blurple())
+        embed = discord.Embed(title='🧠 AI Deep Scan Selesai!', description=chr(10).join(results), color=discord.Color.blurple())
+        embed.set_footer(text=f"Memindai {total} channel | AI membaca data mentah & nyimpulin sendiri")
         await msg.edit(content='', embed=embed)
         
     except Exception as e:
-        await msg.edit(content=f"❌ Error: {e}")
+        await msg.edit(content=f"❌ Error: {e}" + chr(10) + f"Jawaban AI: {jawaban[:300] if 'jawaban' in locals() else 'Gagal'}")
 # ══════════════════════════════════════════════════════════════
 
 
