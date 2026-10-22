@@ -120,31 +120,7 @@ def is_mod(ctx):
 
 
 
-@bot.event
-async def on_member_remove(member):
-    if member.bot:
-        return
-    channel = discord.utils.find(lambda c: WELCOME_KEYWORD in c.name.lower(), member.guild.channels)
-    if channel is None:
-        return
-    embed = discord.Embed(
-        title=f"🩸 OTRO CAÍDO...",
-        description=(
-            f"**{member.display_name}** telah meninggalkan familia.\n\n"
-            f"🥀 Kursi di meja keluarga kini kosong.\n"
-            f"Jalan yang kau pilih adalah jalan keluar dari ikatan darah.\n\n"
-            f"**Que Dios te acompañe.**\n"
-            f"*Adiós... o hasta nunca.*"
-        ),
-        color=discord.Color.from_rgb(60, 0, 0)
-    )
-    embed.set_thumbnail(url=member.display_avatar.url)
-    embed.set_footer(text=f"☠️ Miembro sisa: {member.guild.member_count} | CJNG")
-    await channel.send(embed=embed)
 
-# ══════════════════════════════════════════════════
-# SETUP ROLE WARN (OTOMATIS)
-# ══════════════════════════════════════════════════
 @bot.command()
 async def setupwarnroles(ctx):
     """Buat role Warned 1/2/3 otomatis untuk sistem warning."""
@@ -1355,19 +1331,6 @@ async def setbotlog_cmd(ctx, channel: discord.TextChannel = None):
 
 
 # ══════ EVENT LOGGERS ══════
-@bot.event
-async def on_member_ban(guild, user):
-    try:
-        async for e in guild.audit_logs(limit=1, action=discord.AuditLogAction.ban):
-            if e.target.id == user.id:
-                await bot_log(guild, "🔨 BAN",
-                    f"**Target:** {user.mention} (`{user.id}`)\n"
-                    f"**Mod:** {e.user.mention} (`{e.user.id}`)\n"
-                    f"**Alasan:** {e.reason or '-'}",
-                    discord.Color.dark_red())
-                return
-    except Exception:
-        pass
 
 @bot.event
 async def on_member_unban(guild, user):
@@ -1382,54 +1345,7 @@ async def on_member_unban(guild, user):
     except Exception:
         pass
 
-@bot.event
-async def on_member_remove(member):
-    g = member.guild
-    try:
-        async for e in g.audit_logs(limit=1, action=discord.AuditLogAction.ban):
-            if e.target.id == member.id and (discord.utils.utcnow() - e.created_at).total_seconds() < 10:
-                return
-    except Exception:
-        pass
-    try:
-        async for e in g.audit_logs(limit=1, action=discord.AuditLogAction.kick):
-            if e.target.id == member.id and (discord.utils.utcnow() - e.created_at).total_seconds() < 10:
-                await bot_log(g, "👢 KICK",
-                    f"**Target:** {member} (`{member.id}`)\n"
-                    f"**Mod:** {e.user.mention} (`{e.user.id}`)\n"
-                    f"**Alasan:** {e.reason or '-'}",
-                    discord.Color.orange())
-                return
-    except Exception:
-        pass
-    await bot_log(g, "🚪 LEAVE", f"**{member}** (`{member.id}`) keluar server", discord.Color.greyple())
 
-@bot.event
-async def on_member_update(before, after):
-    g = after.guild
-    if before.timed_out_until != after.timed_out_until:
-        if after.timed_out_until:
-            await bot_log(g, "⏳ TIMEOUT",
-                f"**Target:** {after.mention} (`{after.id}`)\n"
-                f"**Sampai:** {discord.utils.format_dt(after.timed_out_until, 'R')}",
-                discord.Color.orange())
-        else:
-            await bot_log(g, "🔓 TIMEOUT CABUT",
-                f"**Target:** {after.mention} (`{after.id}`)",
-                discord.Color.green())
-    added = set(after.roles) - set(before.roles)
-    removed = set(before.roles) - set(after.roles)
-    if not (added or removed):
-        return
-    WARN_NAMES = {"Warned 1", "Warned 2", "Warned 3"}
-    if added and removed and all(r.name in WARN_NAMES for r in added) and all(r.name in WARN_NAMES for r in removed):
-        return
-    parts = [f"**Target:** {after.mention} (`{after.id}`)"]
-    if added:
-        parts.append("➕ " + " ".join(r.mention for r in added))
-    if removed:
-        parts.append("➖ " + " ".join(r.mention for r in removed))
-    await bot_log(g, "🎭 ROLE UPDATE", "\n".join(parts), discord.Color.blurple())
 
 @bot.event
 async def on_guild_channel_create(channel):
@@ -3467,5 +3383,206 @@ async def buildsharemod2_cmd(ctx):
     except Exception as e:
         await msg.edit(content=f'❌ Gagal membangun: {e}' + nl + 'Tunggu 5 menit, lalu jalankan command ini lagi (bot bakal lanjutin yang belum kebuat).')
 # ══════════════════════════════════════════════════════════════
+
+
+@bot.command(name='buildsharemod3')
+async def buildsharemod3_cmd(ctx):
+    """Aktifkan sistem log ke channel spesifik (Ban, Invite, Spam, Booster)."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Menghubungkan sistem Log...** Mohon tunggu.')
+    
+    # Cari channel berdasarkan nama
+    channels = {
+        'invite_log_ch': 'invite-logs',
+        'banned_log_ch': 'banned-logs',
+        'spam_log_ch': 'spam-bot',
+        'booster_log_ch': 'booster-log'
+    }
+    
+    cfg = _cfg_load()
+    found = 0
+    
+    for key, name in channels.items():
+        # Cari channel yang namanya mengandung keyword
+        ch = discord.utils.find(lambda c: name in c.name.lower(), ctx.guild.text_channels)
+        if ch:
+            cfg[key] = ch.id
+            found += 1
+    
+    _cfg_save(cfg)
+    
+    embed = discord.Embed(
+        title="✅ Sistem Log Aktif!",
+        description=f"Berhasil menghubungkan **{found}** channel log ke sistem bot." + chr(10) + chr(10) + "Sekarang bot akan otomatis mengirim log Ban, Kick, Invite, Spam, dan Booster ke channel masing-masing.",
+        color=discord.Color.green()
+    )
+    await msg.edit(content='', embed=embed)
+
+
+# ══════ EVENT LOGGERS (FORTXX SPECIFIC) ══════
+@bot.event
+async def on_member_ban(guild, user):
+    try:
+        async for e in guild.audit_logs(limit=1, action=discord.AuditLogAction.ban):
+            if e.target.id == user.id:
+                cfg = _cfg_load()
+                ch = guild.get_channel(cfg.get('banned_log_ch', 0))
+                if ch:
+                    embed = discord.Embed(title="🔨 MEMBER DI-BAN", description=f"**Target:** {user.mention} (`{user.id}`)\n**Mod:** {e.user.mention}\n**Alasan:** {e.reason or '-'}", color=discord.Color.dark_red())
+                    embed.set_thumbnail(url=user.display_avatar.url)
+                    await ch.send(embed=embed)
+                return
+    except Exception:
+        pass
+
+@bot.event
+async def on_member_remove(member):
+    g = member.guild
+    # Cek apakah ini kick
+    is_kick = False
+    try:
+        async for e in g.audit_logs(limit=1, action=discord.AuditLogAction.kick):
+            if e.target.id == member.id and (discord.utils.utcnow() - e.created_at).total_seconds() < 10:
+                is_kick = True
+                cfg = _cfg_load()
+                ch = g.get_channel(cfg.get('banned_log_ch', 0)) # Kick masuk ke banned log
+                if ch:
+                    embed = discord.Embed(title="👢 MEMBER DI-KICK", description=f"**Target:** {member.mention} (`{member.id}`)\n**Mod:** {e.user.mention}\n**Alasan:** {e.reason or '-'}", color=discord.Color.orange())
+                    embed.set_thumbnail(url=member.display_avatar.url)
+                    await ch.send(embed=embed)
+                break
+    except Exception:
+        pass
+        
+    if not is_kick:
+        # Kirim log leave biasa (opsional, ke channel bot-run general)
+        await bot_log(g, "🚪 LEAVE", f"**{member}** (`{member.id}`) keluar server", discord.Color.greyple())
+
+@bot.event
+async def on_member_update(before, after):
+    g = after.guild
+    cfg = _cfg_load()
+    
+    # Cek Booster
+    if before.premium_since is None and after.premium_since is not None:
+        ch = g.get_channel(cfg.get('booster_log_ch', 0))
+        if ch:
+            embed = discord.Embed(title="🚀 SERVER BOOST!", description=f"**{after.mention}** baru saja mem-boost server! Terima kasih banyak!", color=discord.Color.from_rgb(255, 100, 200))
+            embed.set_thumbnail(url=after.display_avatar.url)
+            await ch.send(embed=embed)
+
+@bot.event
+async def on_message_delete(message):
+    if message.author.bot or not message.guild: return
+    cfg = _cfg_load()
+    ch = message.guild.get_channel(cfg.get('spam_log_ch', 0))
+    
+    # Log ke spam-bot kalau ada channelnya, kalau gak ada ke general log
+    if ch:
+        # Cek apakah pesan mengandung link atau kata kasar (simple spam detection)
+        content = message.content.lower()
+        if "http" in content or "discord.gg" in content or len(message.mentions) > 3:
+            embed = discord.Embed(title="🚧 PESAN SPAM DIHAPUS", description=f"**Pengirim:** {message.author.mention} (`{message.author.id}`)\n**Channel:** {message.channel.mention}\n**Isi Pesan:** {message.content[:500]}", color=discord.Color.red())
+            await ch.send(embed=embed)
+# ═════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════
+# 🛠️ AUTO FIX PERMISSIONS (SHARED MOD SERVER)
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='fixperms')
+async def fixperms_cmd(ctx):
+    """Benerin izin channel: Warga bisa liat log, tapi gabisa chat."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Menyisir dan membenahi izin semua channel...** Mohon tunggu sebentar.')
+    
+    # Kategori Kata Kunci
+    # 1. LOGS: Warga bisa liat, tapi gabisa chat.
+    logs_keywords = ['logs', 'spam-bot', 'level-up', 'booster-log', 'change-logs']
+    
+    # 2. STAFF: Warga gabisa liat sama sekali (bener-bener privat).
+    staff_keywords = ['production-team', 'fortxx-traps', 'staff']
+    
+    # 3. READ-ONLY: Warga cuma bisa baca (Rules, Info, Harga).
+    readonly_keywords = ['welcome', 'rules', 'goodbye', 'announcement', 'official-link', 'information-market', 'list-harga', 'information-roles', 'partners-info']
+    
+    # 4. REACTION: Warga bisa baca & klik emoji (Verify, Take Roles, Voting).
+    reaction_keywords = ['verify', 'take-roles', 'voting-area']
+    
+    # Role staff yang tetep bisa chat di mana aja
+    staff_roles = ['👑 Owner', '🛡️ Admin', '⚔️ Moderator', '🔰 Staff', 'Admin', 'Moderator', 'Staff']
+    
+    fixed = 0
+    
+    try:
+        for ch in ctx.guild.text_channels:
+            ch_name = ch.name.lower()
+            
+            # 1. LOGS (Bisa diliat, gabisa chat)
+            if any(k in ch_name for k in logs_keywords):
+                overwrite = ch.overwrites_for(ctx.guild.default_role)
+                overwrite.read_messages = True
+                overwrite.send_messages = False
+                overwrite.add_reactions = False
+                await ch.set_permissions(ctx.guild.default_role, overwrite=overwrite)
+                
+            # 2. STAFF (Sembunyiin total)
+            elif any(k in ch_name for k in staff_keywords):
+                overwrite = ch.overwrites_for(ctx.guild.default_role)
+                overwrite.read_messages = False
+                await ch.set_permissions(ctx.guild.default_role, overwrite=overwrite)
+                
+            # 3. READ-ONLY (Info)
+            elif any(k in ch_name for k in readonly_keywords):
+                overwrite = ch.overwrites_for(ctx.guild.default_role)
+                overwrite.read_messages = True
+                overwrite.send_messages = False
+                overwrite.add_reactions = False
+                await ch.set_permissions(ctx.guild.default_role, overwrite=overwrite)
+                
+            # 4. REACTION-ONLY (Verify, Take Role, Voting)
+            elif any(k in ch_name for k in reaction_keywords):
+                overwrite = ch.overwrites_for(ctx.guild.default_role)
+                overwrite.read_messages = True
+                overwrite.send_messages = False
+                overwrite.add_reactions = True
+                await ch.set_permissions(ctx.guild.default_role, overwrite=overwrite)
+                
+            # 5. SISANYA BEBAS CHAT (General, Mod, Jual Beli, dll)
+            else:
+                overwrite = ch.overwrites_for(ctx.guild.default_role)
+                overwrite.read_messages = True
+                overwrite.send_messages = True
+                overwrite.attach_files = True
+                overwrite.embed_links = True
+                await ch.set_permissions(ctx.guild.default_role, overwrite=overwrite)
+                
+            # Pastiin Staff & Bot tetep bisa akses & chat semuanya
+            for r_name in staff_roles:
+                r = discord.utils.get(ctx.guild.roles, name=r_name)
+                if r:
+                    staff_ow = ch.overwrites_for(r)
+                    staff_ow.read_messages = True
+                    staff_ow.send_messages = True
+                    await ch.set_permissions(r, overwrite=staff_ow)
+                    
+            bot_ow = ch.overwrites_for(ctx.guild.me)
+            bot_ow.read_messages = True
+            bot_ow.send_messages = True
+            await ch.set_permissions(ctx.guild.me, overwrite=bot_ow)
+            
+            fixed += 1
+            await asyncio.sleep(1.5) # Jeda anti rate-limit
+            
+        embed = discord.Embed(
+            title='✅ Izin Channel Berhasil Dibenahi!',
+            description=f'Semua **{fixed}** channel udah di-setting dengan benar.' + nl + nl + '**Warga sekarang:**' + nl + '• Bebas chat di channel umum.' + nl + '• **Bisa ngeliat log** (tapi gabisa chat).' + nl + '• Gabisa liat channel Staff/Dashboard privat.',
+            color=discord.Color.green()
+        )
+        await msg.edit(content='', embed=embed)
+        
+    except Exception as e:
+        await msg.edit(content=f'❌ Gagal membenahi izin: {e}')
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
