@@ -2529,91 +2529,61 @@ async def merahs_cmd(ctx, *, text: str):
 
 @bot.command(name='testlog')
 async def testlog_cmd(ctx):
-    """Tes kirim log ke channel bot-run & logs-warning."""
-    if not is_mod(ctx): return
-    await ctx.send("⏳ Mengirim log percobaan...")
+    """Ngetes semua channel log di server ini secara pintar."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
     
-    # Tes bot-run
-    await bot_log(ctx.guild, "🧪 TES LOG BOT", "Kalau lu liat ini di channel bot-run, berarti log bot berfungsi!", discord.Color.green())
-    
-    # Tes logs-warning
-    warn_ch = None
-    for ch in ctx.guild.text_channels:
-        n = normalize_text(ch.name)
-        if "logs-warning" in n or "warn-log" in n or "warn" in n:
-            warn_ch = ch
-            break
-            
-    if warn_ch:
-        try:
-            embed = discord.Embed(title="🧪 TES LOG WARNING", description="Kalau lu liat ini di channel logs-warning, berarti log warning berfungsi!", color=discord.Color.orange())
-            await warn_ch.send(embed=embed)
-        except Exception as e:
-            await ctx.send(f"❌ Gagal kirim ke {warn_ch.mention}: {e}")
-    else:
-        await ctx.send("❌ Channel logs-warning gak ketemu.")
-        
-    await ctx.send("✅ Selesai! Cek channel masing-masing.")
-
-
-async def update_cartel_list(guild):
-    """Update list warning di channel Cartel Hitlist secara otomatis."""
+    msg = await ctx.send('⏳ **Mengecek & menguji channel log di server ini...**')
     cfg = _cfg_load()
-    ch_id = cfg.get("warn_list_channel")
-    msg_id = cfg.get("warn_list_msg")
-    if not ch_id or not msg_id: return
+    gid = str(ctx.guild.id)
+    if gid not in cfg: cfg[gid] = {}
     
-    ch = guild.get_channel(int(ch_id))
-    if not ch: return
-
-    try:
-        msg = await ch.fetch_message(int(msg_id))
-    except Exception:
-        return
-
-    warns = load_warns()
-    gid = str(guild.id)
-    guild_warns = warns.get(gid, {})
-
-    desc = ""
-    count = 1
-    for uid, w_list in guild_warns.items():
-        if not w_list: continue
-        total = len(w_list)
-        last_reason = w_list[-1].get('reason', 'Tidak ada alasan')
+    log_types = {
+        'warn': {'keys': ['warn-log', 'logs-warning', 'warn'], 'color': discord.Color.orange(), 'title': '🩸 TES LOG WARNING'},
+        'ban': {'keys': ['banned-logs', 'ban-log', 'ban'], 'color': discord.Color.red(), 'title': '🚫 TES LOG BANNED'},
+        'invite': {'keys': ['invite-logs', 'invite'], 'color': discord.Color.blue(), 'title': '📩 TES LOG INVITE'},
+        'spam': {'keys': ['spam-bot', 'spam'], 'color': discord.Color.dark_red(), 'title': '🚧 TES LOG SPAM'},
+        'bot': {'keys': ['bot-run', 'bot-logs', 'bot-command'], 'color': discord.Color.green(), 'title': '🔥 TES LOG BOT'}
+    }
+    
+    results = []
+    
+    for log_type, info in log_types.items():
+        ch = None
+        cfg_key = f"{log_type}_ch"
+        if log_type == 'warn': cfg_key = 'warn_log_channel'
+        elif log_type == 'bot': cfg_key = 'bot_log_channel'
         
-        if total >= MAX_WARN:
-            status = "💀 𝗧𝗘𝗥𝗘𝗟𝗜𝗠𝗜𝗡𝗔𝗦𝗜 (DI-KICK)"
-            emoji = "🩸"
-        elif total == MAX_WARN - 1:
-            status = "⚠️ 𝗧𝗔𝗥𝗚𝗘𝗧 𝗨𝗧𝗔𝗠𝗔"
-            emoji = "🔴"
-        else:
-            status = "👁️ 𝗗𝗜𝗔𝗪𝗔𝗦𝗜"
-            emoji = "🟡"
+        # Cek dari Config Server
+        if cfg_key in cfg[gid]:
+            ch = ctx.guild.get_channel(cfg[gid][cfg_key])
             
-        desc += f"{emoji} **{count}. <@{uid}>** `[{total}/{MAX_WARN}]`" + nl
-        desc += f"┣ 📜 **Alasan:** *{last_reason}*" + nl
-        desc += f"┗ ⚔️ **Status:** {status}" + nl + nl
-        count += 1
-
-    if not desc:
-        desc = "🕊️ **DAFTAR BERSIH.** Saat ini tidak ada warga yang masuk daftar hitam Cartel."
-
-    embed = discord.Embed(
-        title="🩸 𝗖𝗔𝗥𝗧𝗘𝗟 𝗛𝗜𝗧𝗟𝗜𝗦𝗧 (WARN LIST) 🩸",
-        description=desc,
-        color=discord.Color.dark_red()
-    )
-    embed.set_footer(text="Cártel de Jalisco Nueva Generación • Sistem Peringatan Otomatis")
-    embed.timestamp = discord.utils.utcnow()
+        # Kalau gak ada, Scan by Keyword
+        if not ch:
+            for c in ctx.guild.text_channels:
+                if any(k in c.name.lower() for k in info['keys']):
+                    ch = c
+                    cfg[gid][cfg_key] = ch.id
+                    break
+                    
+        # Kirim Tes
+        if ch:
+            try:
+                embed = discord.Embed(title=info['title'], description=f"Sistem log **{log_type.upper()}** berfungsi di server **{ctx.guild.name}**!", color=info['color'])
+                embed.timestamp = discord.utils.utcnow()
+                await ch.send(embed=embed)
+                results.append(f"✅ **{log_type.upper()}** : {ch.mention} (Berhasil)")
+            except Exception:
+                results.append(f"❌ **{log_type.upper()}** : {ch.mention} (Gagal, cek izin bot)")
+        else:
+            results.append(f"⚠️ **{log_type.upper()}** : Channel tidak ditemukan")
+            
+    _cfg_save(cfg)
     
-    try:
-        await msg.edit(embed=embed)
-    except Exception:
-        pass
-
-
+    # Pake chr(10) biar gak error string
+    desc_text = chr(10).join(results)
+    embed = discord.Embed(title=f'📋 Hasil Tes Log: {ctx.guild.name}', description=desc_text, color=discord.Color.blurple())
+    embed.set_footer(text="Semua channel di atas udah otomatis disimpan di sistem.")
+    await msg.edit(content='', embed=embed)
 @bot.command(name='setupwarnlist')
 async def setupwarnlist_cmd(ctx):
     """Bikin channel Cartel Hitlist di REPORT ROOM."""
