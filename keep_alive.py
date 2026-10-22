@@ -228,6 +228,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
                 <div class="section-title"><span>&#128736;</span> All System Modules (12)</div>
                 <div class="features-grid">
+                    <!-- 0. SERVER BUILDER -->
+                    <div class="feature-card" onclick="openModal('builder')"><div class="f-icon">&#127959;</div><div class="f-info"><h4>Server Builder</h4><p>Auto build channels, roles & permissions.</p></div><span class="f-arrow">&#128269;</span></div>
                     <!-- 1. MODERATION -->
                     <div class="feature-card" onclick="openModal('mod')"><div class="f-icon">&#128737;</div><div class="f-info"><h4>Moderation</h4><p>Warn, Kick, Ban, Timeout & Snipe.</p></div><span class="f-arrow">&#128269;</span></div>
                     <!-- 2. TICKET -->
@@ -281,6 +283,15 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 updateClock();
 
                 const featureData = {{
+                    'builder': { title: '🏗 Server Builder Tools', cmds: [
+                        { name: '!buildcommunity', desc: 'Bikin struktur server komunitas dasar' },
+                        { name: '!buildcommunity2', desc: 'Tambah channel Events, Music, Welcome, Partner' },
+                        { name: '!buildcommunity3', desc: 'Tambah channel Creative, Lifestyle, Safe Space' },
+                        { name: '!buildroles', desc: 'Bikin semua role Staff, Minat, & Ping otomatis' },
+                        { name: '!setup_permissions', desc: 'Setel izin (perms) role otomatis' },
+                        { name: '!setup_channels', desc: 'Kunci channel informasi jadi Read-Only' },
+                        { name: '!ticketv2', desc: 'Pasang panel Ticket khusus komunitas' }
+                    ]},
                     'mod': {{ title: '🛡 Moderation System', cmds: [
                         {{ name: '!warn @user', desc: 'Kasih warning (Form Pop-up + Role)' }},
                         {{ name: '!warns @user', desc: 'Liat history warning' }},

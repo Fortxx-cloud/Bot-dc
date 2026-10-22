@@ -893,22 +893,26 @@ def _build_categories():
             "timeout", "untimeout", "banlist", "unban",
             "snipe", "editsnipe"
         ),
+        "🏗️ Server Builder": (
+            "buildcommunity", "buildcommunity2", "buildcommunity3",
+            "buildroles", "setup_permissions", "setup_channels", "ticketv2"
+        ),
         "🎫 Ticket & Karakter": (
             "ticket", "char", "setupchar"
         ),
         "🤖 Sistem AI": (
             "setupai", "testai", "ai", "rp"
         ),
-        "⚙️ Server Setup": (
+        "⚙️ Settings & Log": (
             "setupverify", "setupwelcome", "dekorasi", "buatpesan",
-            "setbotlog", "setwarnlog", "setwarntag", "loginfo"
+            "setbotlog", "setwarnlog", "setwarntag", "loginfo", "testlog"
         ),
         "🎭 Role & Channel": (
             "role", "addrole", "removerole", "createrole", "deleterole",
             "massrole", "autorole", "rolepos", "rolesync", "roleclone",
             "roleinfo", "listroles", "roleedit", "roleperm",
             "createchannel", "deletechannel", "renamechannel",
-            "createcategory", "topic", "listchannels", "channelinfo", "setuphelp", "testlog"
+            "createcategory", "topic", "listchannels", "channelinfo"
         ),
         "👑 Owner": (
             "botrun", "botremove", "botlist", "setmodrole"
@@ -921,7 +925,6 @@ def _build_categories():
             "say", "embed", "poll"
         ),
     }
-    # Inisialisasi semua key
     for k in _map:
         cats[k] = []
 
@@ -3149,6 +3152,68 @@ async def setup_permissions_cmd(ctx):
         
     except Exception as e:
         await msg.edit(content=f'❌ Gagal mengatur izin: {e}')
+# ══════════════════════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════
+# 🔒 AUTO CHANNEL PERMISSIONS (READ-ONLY INFO CHANNELS)
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='setup_channels')
+async def setup_channels_cmd(ctx):
+    """Kunci channel informasi biar member cuma bisa baca."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Mengatur izin channel informasi...** Mohon tunggu sebentar.')
+    
+    # List channel yang mau dikunci (Read-Only)
+    lock_list = ['announcements', 'rules', 'welcome', 'partner', 'events']
+    # Channel yang butuh reaction (verify, giveaways) tapi tetep gak bisa chat
+    reaction_list = ['verify', 'giveaways']
+    
+    # Role Staff yang tetep bisa chat
+    staff_roles = ['👑 Owner', '🛡️ Admin', '⚔️ Moderator', '🔰 Staff', 'Admin', 'Moderator', 'Staff']
+    
+    locked = 0
+    
+    try:
+        for ch in ctx.guild.text_channels:
+            is_lock = any(k in ch.name.lower() for k in lock_list)
+            is_reaction = any(k in ch.name.lower() for k in reaction_list)
+            
+            if is_lock or is_reaction:
+                # 1. Lock @everyone
+                overwrite = ch.overwrites_for(ctx.guild.default_role)
+                overwrite.read_messages = True
+                overwrite.send_messages = False
+                if is_reaction:
+                    overwrite.add_reactions = True
+                await ch.set_permissions(ctx.guild.default_role, overwrite=overwrite)
+                
+                # 2. Kasih akses ke Staff & Bot biar tetep bisa chat
+                for r_name in staff_roles:
+                    role = discord.utils.get(ctx.guild.roles, name=r_name)
+                    if role:
+                        staff_overwrite = ch.overwrites_for(role)
+                        staff_overwrite.read_messages = True
+                        staff_overwrite.send_messages = True
+                        await ch.set_permissions(role, overwrite=staff_overwrite)
+                        
+                bot_overwrite = ch.overwrites_for(ctx.guild.me)
+                bot_overwrite.read_messages = True
+                bot_overwrite.send_messages = True
+                await ch.set_permissions(ctx.guild.me, overwrite=bot_overwrite)
+                
+                locked += 1
+                await asyncio.sleep(1.5) # Jeda anti rate-limit
+                
+        embed = discord.Embed(
+            title='🔒 Channel Informasi Dikunci!',
+            description=f'Berhasil mengatur izin untuk **{locked}** channel.' + nl + nl + 'Member biasa sekarang **hanya bisa membaca** di channel:' + nl + '`#announcements`, `#rules`, `#welcome`, dll.' + nl + nl + '*Note: Channel `#verify` & `#giveaways` tetap bisa diklik emojinya.*',
+            color=discord.Color.green()
+        )
+        await msg.edit(content='', embed=embed)
+        
+    except Exception as e:
+        await msg.edit(content=f'❌ Gagal mengatur izin channel: {e}')
 # ══════════════════════════════════════════════════════════════
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
