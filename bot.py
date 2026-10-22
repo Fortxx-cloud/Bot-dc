@@ -2926,4 +2926,119 @@ async def ticketv2_cmd(ctx):
     await ctx.send(embed=embed, view=TicketV2View())
 # ══════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════
+# 🏗️ COMMUNITY BUILDER V2 (TAMBAHAN EVENT, MUSIC, WELCOME, PARTNER)
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='buildcommunity2')
+async def buildcommunity2_cmd(ctx):
+    """Bikin channel tambahan buat komunitas lengkap dengan isinya."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Membangun Channel Tambahan...** Mohon tunggu sebentar.')
+    created = 0
+    
+    try:
+        # 1. EVENTS & FUN
+        cat_fun = await ctx.guild.create_category('🎉 〢 EVENTS & FUN')
+        ch = await ctx.guild.create_text_channel('🎉・giveaways', category=cat_fun)
+        e = discord.Embed(title='🎉 GIVEAWAY CENTER', description='Di sini tempatnya event giveaway berhadiah menarik!' + nl + nl + 'Syarat mengikuti giveaway:' + nl + '1. Wajib jadi member server.' + nl + '2. Klik reaksi emoji yang disediakan bot.' + nl + '3. Jangan pakai akun ganda (alt).', color=discord.Color.gold())
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        ch = await ctx.guild.create_text_channel('📅・events', category=cat_fun)
+        e = discord.Embed(title='📅 JADWAL EVENT', description='Pantau channel ini untuk melihat jadwal event mabar, nobar, atau acara komunitas lainnya.', color=discord.Color.blurple())
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        ch = await ctx.guild.create_text_channel('💡・suggestions', category=cat_fun)
+        e = discord.Embed(title='💡 KOTAK SARAN', description='Punya ide biar server ini makin keren?' + nl + 'Silakan tulis saran lu di sini. Admin akan meninjau setiap saran yang masuk.', color=discord.Color.green())
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        ch = await ctx.guild.create_text_channel('😂・bot-spam', category=cat_fun)
+        e = discord.Embed(title='🤖 ZONA BOT', description='Bebas spam command bot di sini tanpa ngganggu member lain yang lagi ngobrol di general chat.', color=discord.Color.from_rgb(255, 150, 100))
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        # 2. MUSIC & CHILL
+        cat_music = await ctx.guild.create_category('🎵 〢 MUSIC & CHILL')
+        await ctx.guild.create_voice_channel('🎵・Music VC', category=cat_music); created += 1; await asyncio.sleep(1.5)
+        await ctx.guild.create_voice_channel('🎧・Chill VC', category=cat_music); created += 1; await asyncio.sleep(1.5)
+        
+        # 3. WELCOME
+        cat_welcome = await ctx.guild.create_category('🚪 〢 WELCOME')
+        ch = await ctx.guild.create_text_channel('👋・welcome', category=cat_welcome)
+        e = discord.Embed(title='👋 SELAMAT DATANG!', description='Channel ini otomatis akan menyapa member baru yang join ke server.' + nl + nl + 'Jika kamu member baru, jangan lupa baca #rules dan ambil role di #self-roles ya!', color=discord.Color.from_rgb(100, 200, 255))
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        # 4. PARTNERSHIP
+        cat_partner = await ctx.guild.create_category('🤝 〢 PARTNERSHIP')
+        ch = await ctx.guild.create_text_channel('🤝・partner', category=cat_partner)
+        e = discord.Embed(title='🤝 PARTNERSHIP', description='Ingin bekerja sama dengan server kami?' + nl + nl + 'Syarat Partner:' + nl + '1. Server aktif (minimal 50 member).' + nl + '2. Tidak mengandung unsur SARA, NSFW, atau ilegal.' + nl + nl + 'Hubungi Admin/Owner jika tertarik.', color=discord.Color.from_rgb(200, 100, 255))
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        await msg.edit(content=f'✅ **Berhasil Menambahkan {created} Channel Baru + Isinya!** Silakan cek kategori baru di bawah.' )
+        
+    except Exception as e:
+        await msg.edit(content=f'❌ Gagal membuat channel tambahan: {e}')
+# ══════════════════════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════
+# 🏗️ COMMUNITY BUILDER V3 (CREATIVE, LIFESTYLE, ROLES, SAFE SPACE)
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='buildcommunity3')
+async def buildcommunity3_cmd(ctx):
+    """Bikin channel hobi, notifikasi role, dan safe space."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Membangun Channel Level 3...** Mohon tunggu sebentar.')
+    created = 0
+    
+    try:
+        # 1. CREATIVE & MEDIA
+        cat_creative = await ctx.guild.create_category('📸 〢 CREATIVE & MEDIA')
+        ch = await ctx.guild.create_text_channel('🎨・art-showcase', category=cat_creative)
+        e = discord.Embed(title='🎨 ART SHOWCASE', description='Pamerkan gambar, fanart, atau hasil editing lu di sini! Dilarang mencuri karya orang lain ya.', color=discord.Color.from_rgb(255, 100, 200))
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        ch = await ctx.guild.create_text_channel('📸・photography', category=cat_creative)
+        e = discord.Embed(title='📸 PHOTOGRAPHY', description='Share foto pemandangan, koleksi, atau momen estetik yang lu ambil.', color=discord.Color.from_rgb(100, 200, 255))
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        ch = await ctx.guild.create_text_channel('✍️・writing-corner', category=cat_creative)
+        e = discord.Embed(title='✍️ WRITING CORNER', description='Tempat buat share cerita pendek, puisi, atau tulisan lu. Support sesama penulis!', color=discord.Color.from_rgb(200, 200, 100))
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        # 2. LIFESTYLE
+        cat_life = await ctx.guild.create_category('🐾 〢 LIFESTYLE')
+        ch = await ctx.guild.create_text_channel('🐶・pets', category=cat_life)
+        e = discord.Embed(title='🐶 PETS CORNER', description='Posting foto hewan peliharaan lu di sini. Kucing, anjing, ikan, semua boleh!', color=discord.Color.from_rgb(150, 255, 150))
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        ch = await ctx.guild.create_text_channel('🍔・food-talk', category=cat_life)
+        e = discord.Embed(title='🍔 FOOD TALK', description='Lagi makan apa hari ini? Share resep atau rekomendasi tempat makan enak!', color=discord.Color.from_rgb(255, 200, 100))
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        # 3. NOTIFICATION ROLES
+        cat_roles = await ctx.guild.create_category('🔔 〢 NOTIFICATION ROLES')
+        ch = await ctx.guild.create_text_channel('🎨・color-roles', category=cat_roles)
+        e = discord.Embed(title='🎨 PILIH WARNA NAMA', description='Ingin nama lu berwarna? Ketik pesan atau ambil role warna di sini (Admin bisa setup dropdown warna).', color=discord.Color.purple())
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        ch = await ctx.guild.create_text_channel('🔔・ping-roles', category=cat_roles)
+        e = discord.Embed(title='🔔 NOTIFIKASI (PING)', description='Pilih role di sini biar lu dapet notifikasi khusus (Event, Giveaway, Pengumuman) tanpa harus di-tag @everyone.', color=discord.Color.red())
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        # 4. SAFE SPACE
+        cat_safe = await ctx.guild.create_category('🫂 〢 SAFE SPACE')
+        ch = await ctx.guild.create_text_channel('🫂・vent-room', category=cat_safe)
+        e = discord.Embed(title='🫂 VENT ROOM', description='Butuh tempat cerita kalau lagi capek atau sedih? Tulis di sini.' + nl + nl + '**ATURAN:** Dilarang menghakimi, mem-bully, atau menyebarkan cerita orang lain dari channel ini!', color=discord.Color.from_rgb(150, 150, 255))
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        ch = await ctx.guild.create_text_channel('💭・confessions', category=cat_safe)
+        e = discord.Embed(title='💭 CONFESSIONS', description='Kirim pesan rahasia tanpa nama (anonymous) di sini. Bisa pakai bot anonymous kalau ada.', color=discord.Color.dark_grey())
+        await ch.send(embed=e); created += 1; await asyncio.sleep(1.5)
+        
+        await msg.edit(content=f'✅ **Berhasil Menambahkan {created} Channel Baru (Level 3)!** Server lu sekarang udah super lengkap.' )
+        
+    except Exception as e:
+        await msg.edit(content=f'❌ Gagal membuat channel: {e}')
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
