@@ -1986,45 +1986,24 @@ class CharView(discord.ui.View):
 
 @bot.command(name='setupchar')
 async def setupchar_cmd(ctx):
-    """Kirim panel pembuatan karakter RP di channel ini."""
-    if not is_mod(ctx): 
-        return await ctx.send('❌ Mod only.')
+    """Kirim panel pembuatan karakter RP di channel ini (Tanpa bikin channel baru)."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
     
+    embed = discord.Embed(
+        title="📜 Pembuatan Karakter RP",
+        description="Silakan klik tombol **Buat Karakter** di bawah ini untuk mengisi form profil karakter Anda." + chr(10) + chr(10) + "*(Pastikan Anda mengisi data dengan benar karena Nickname server akan otomatis berubah sesuai Nama IC).*",
+        color=discord.Color.blurple()
+    )
+    
+    # Coba hapus pesan command lu biar bersih
     try:
-        category = discord.utils.get(ctx.guild.categories, name='TAKE ROLE')
-        if not category:
-            category = await ctx.guild.create_category('TAKE ROLE')
-            
-        channel_name = '📜┃take-role-name-ic'
-        channel = discord.utils.find(lambda c: 'take-role-name-ic' in c.name.lower(), ctx.guild.text_channels)
+        await ctx.message.delete()
+    except Exception:
+        pass
         
-        if not channel:
-            channel = await ctx.guild.create_text_channel(channel_name, category=category, position=0)
-            await ctx.send(f"✅ Channel {channel.mention} berhasil dibuat di kategori TAKE ROLE!")
-            
-        # Bikin channel daftar-karakter kalau belum ada
-        char_list_ch = discord.utils.find(lambda c: 'daftar-karakter' in c.name.lower(), ctx.guild.text_channels)
-        if not char_list_ch:
-            char_list_ch = await ctx.guild.create_text_channel('📜┃daftar-karakter', category=category, position=1)
-            await ctx.send(f"✅ Channel {char_list_ch.mention} berhasil dibuat untuk menampung kartu karakter!")
-        else:
-            await channel.edit(category=category, position=0)
-            await ctx.send(f"✅ Channel {channel.mention} berhasil dipindahkan ke paling atas kategori TAKE ROLE!")
-            
-        embed = discord.Embed(
-            title="📜 Pembuatan Karakter RP",
-            description="Silakan klik tombol **Buat Karakter** di bawah ini untuk mengisi form profil karakter Anda." + chr(10) + chr(10) + "*(Pastikan Anda mengisi data dengan benar karena Nickname server akan otomatis berubah sesuai Nama IC).*",
-            color=discord.Color.blurple()
-        )
-        
-        await channel.send(embed=embed, view=CharView())
-        
-    except Exception as e:
-        await ctx.send(f"❌ **Error Detail:** `{e}`")
+    await ctx.send(embed=embed, view=CharView())
+    await ctx.send("✅ Panel Karakter berhasil dikirim!", delete_after=5)
 
-# ══════════════════════════════════════════════════════════════
-# 👋 WELCOME MESSAGE (CÁRTEL DE JALISCO)
-# ══════════════════════════════════════════════════════════════
 @bot.listen('on_member_join')
 async def welcome_event_mod(member):
     # Cari channel welcome
@@ -3969,24 +3948,7 @@ async def setupall_cmd(ctx):
     await msg.edit(content='✅ **Semua panel berhasil dikirim & diaktifkan permanen!**' + chr(10) + 'Sekarang lu bisa Restart bot berkali-kali, tombolnya gak bakal mati lagi.')
 
 
-# ══════ PERSISTENT VIEWS (WAJIB BIAR TOMBOL GAK MATI) ══════
-try:
-    bot.add_view(ModTicketView())
-    bot.add_view(ModTicketCloseView())
-    bot.add_view(TicketView())
-    bot.add_view(TicketCloseView())
-    bot.add_view(TicketV2View())
-    bot.add_view(TicketV2CloseView())
-    bot.add_view(CharView())
-    bot.add_view(HelpMainView())
-    bot.add_view(EmbedBuilderView())
-    bot.add_view(AICreateView())
-    bot.add_view(AICloseView())
-    bot.add_view(CommunityRoleView([])) # Tambahan buat role
-    print("[SYSTEM] Semua Persistent Views berhasil dimuat!")
-except Exception as e:
-    print(f"[SYSTEM] Gagal memuat Persistent Views: {e}")
-# ═══════════════════════════════════════════════════════════
+
 
 
 # ══════════════════════════════════════════════════════════════
@@ -4057,5 +4019,26 @@ async def owner_cmd(ctx):
     
     await ctx.send(embed=embed, view=OwnerView())
 # ══════════════════════════════════════════════════════════════
+
+
+# ══════ PERSISTENT VIEWS (WAJIB BIAR TOMBOL GAK MATI) ══════
+try:
+    bot.add_view(ModTicketView())
+    bot.add_view(ModTicketCloseView())
+    bot.add_view(TicketView())
+    bot.add_view(TicketCloseView())
+    bot.add_view(TicketV2View())
+    bot.add_view(TicketV2CloseView())
+    bot.add_view(CharView()) # <--- INI DIA BIAR KARAKTER GAK MATI
+    bot.add_view(HelpMainView())
+    bot.add_view(EmbedBuilderView())
+    bot.add_view(AICreateView())
+    bot.add_view(AICloseView())
+    bot.add_view(CommunityRoleView([]))
+    bot.add_view(OwnerView())
+    print("[SYSTEM] Semua Persistent Views berhasil dimuat!")
+except Exception as e:
+    print(f"[SYSTEM] Gagal memuat Persistent Views: {e}")
+# ═══════════════════════════════════════════════════════════
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
