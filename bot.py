@@ -384,17 +384,18 @@ async def clearwarns(ctx, member: discord.Member):
 async def on_ready():
     print(f"✅ Bot {bot.user} udah online!")
     
-    # Ambil jumlah server
-    guild_count = len(bot.guilds)
-    
-    # Bikin status statis (Diam, gak muter)
-    # Catatan: Discord gak ngebolehin tag/link di status, jadi cuma teks biasa
-    status_text = f"🌐 bot-fortxx.wispbyte.app | 👑 Owner: zomahaci | 📡 {guild_count} Servers"
+    # Teks status (dibikin pendek biar gak kepotong di HP)
+    # Lu bisa ganti "FORTXX Server" jadi nama DC pribadi lu
+    status_text = "🌐 bot-fortxx.wispbyte.app | FORTXX Store"
     
     try:
-        activity = discord.CustomActivity(name=status_text)
+        # Pakai ActivityType.playing biar muncul tulisan "Playing ..."
+        activity = discord.Activity(
+            type=discord.ActivityType.playing, 
+            name=status_text
+        )
         await bot.change_presence(activity=activity)
-        print(f"[STATUS] Berhasil disetel ke: {status_text}")
+        print(f"[STATUS] Berhasil disetel ke: Playing {status_text}")
     except Exception as e:
         print(f"[STATUS] Gagal set status: {e}")
 @bot.command()
