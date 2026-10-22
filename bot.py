@@ -2695,12 +2695,48 @@ async def setupwarnlist_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 import json
 
+class CommunityRoleSelect(discord.ui.Select):
+    def __init__(self, roles):
+        options = [discord.SelectOption(label=r.name, value=str(r.id), emoji="🎭") for r in roles[:25]]
+        super().__init__(placeholder="Pilih role komunitas kamu...", min_values=0, max_values=len(options), options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        # Hapus role yang tidak dipilih, tambahkan yang dipilih
+        selected_ids = [int(v) for v in self.values]
+        all_options_ids = [int(opt.value) for opt in self.options]
+        
+        to_add = []
+        to_remove = []
+        
+        for rid in all_options_ids:
+            role = interaction.guild.get_role(rid)
+            if not role: continue
+            
+            if rid in selected_ids:
+                if role not in interaction.user.roles:
+                    to_add.append(role)
+            else:
+                if role in interaction.user.roles:
+                    to_remove.append(role)
+                    
+        try:
+            if to_add: await interaction.user.add_roles(*to_add)
+            if to_remove: await interaction.user.remove_roles(*to_remove)
+            await interaction.response.send_message("✅ Role komunitas lu berhasil di-update!", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Gagal update role: {e}", ephemeral=True)
+
+class CommunityRoleView(discord.ui.View):
+    def __init__(self, roles):
+        super().__init__(timeout=None)
+        self.add_item(CommunityRoleSelect(roles))
+
 @bot.command(name='buildcommunity')
 async def buildcommunity_cmd(ctx):
-    """Bikin struktur server, isi pesan, DAN pasang panel interaktif."""
+    """Bikin struktur server komunitas/pribadi (Tanpa RP) + isi otomatis."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
     
-    msg = await ctx.send('⏳ **Membangun Server Ultimate...** Mohon tunggu (1-2 menit).')
+    msg = await ctx.send('⏳ **Membangun Server Komunitas...** Mohon tunggu (1-2 menit).')
     
     try:
         with open('templates.json', 'r') as f:
@@ -2730,58 +2766,62 @@ async def buildcommunity_cmd(ctx):
                 if ch_data['type'] == 'text':
                     ch = await ctx.guild.create_text_channel(ch_data['name'], category=category, topic=ch_data.get('topic', ''))
                     
-                    # ===== ISI PESAN & PANEL OTOMATIS =====
                     if 'rules' in ch.name:
                         embed = discord.Embed(title="📜 PERATURAN SERVER", description="1. Hormati sesama member.\n2. Dilarang spam & toxic.\n3. Ikuti arahan Staff.\n4. Dilarang promosi tanpa izin.", color=discord.Color.gold())
                         await ch.send(embed=embed)
                         
                     elif 'verify' in ch.name:
-                        # Bikin Role WARGA CJNG
-                        role = discord.utils.get(ctx.guild.roles, name='WARGA CJNG')
+                        role = discord.utils.get(ctx.guild.roles, name='✅ Verified')
                         if not role:
-                            role = await ctx.guild.create_role(name='WARGA CJNG', color=discord.Color.dark_red(), reason='Auto Setup')
+                            role = await ctx.guild.create_role(name='✅ Verified', color=discord.Color.green(), reason='Auto Setup')
                         
-                        embed = discord.Embed(title="✅ VERIFIKASI SERVER", description="Klik reaksi **✅** di bawah ini untuk mendapatkan role **WARGA CJNG** dan membuka seluruh channel.", color=discord.Color.green())
+                        embed = discord.Embed(title="✅ VERIFIKASI SERVER", description="Klik reaksi **✅** di bawah ini untuk membuka seluruh channel.", color=discord.Color.green())
                         msg_v = await ch.send(embed=embed)
                         await msg_v.add_reaction('✅')
                         
-                        # Simpan config
                         cfg = _cfg_load()
                         cfg['verify_message_id'] = msg_v.id
                         cfg['verify_role_id'] = role.id
                         _cfg_save(cfg)
 
                     elif 'tickets' in ch.name:
-                        embed = discord.Embed(title="🎫 PUSAT BANTUAN", description="Butuh bantuan? Klik tombol di bawah untuk membuat tiket.", color=discord.Color.blurple())
+                        embed = discord.Embed(title="🎫 PUSAT BANTUAN", description="Butuh bantuan atau mau lapor? Klik tombol di bawah untuk membuat tiket.", color=discord.Color.blurple())
                         await ch.send(embed=embed, view=TicketView())
 
-                    elif 'take-role' in ch.name:
-                        embed = discord.Embed(title="📜 PENDAFTARAN KARAKTER RP", description="Klik tombol di bawah untuk mengisi form profil karakter Anda.", color=discord.Color.blurple())
-                        await ch.send(embed=embed, view=CharView())
+                    elif 'self-roles' in ch.name:
+                        # Buat role komunitas otomatis kalau belum ada
+                        roles_to_create = ["🎮 Gamer", "🎵 Musik", "📢 Info Ping", "💬 Aktif Chat"]
+                        guild_roles = []
+                        for r_name in roles_to_create:
+                            r = discord.utils.get(ctx.guild.roles, name=r_name)
+                            if not r:
+                                r = await ctx.guild.create_role(name=r_name, reason='Auto Role Setup')
+                            guild_roles.append(r)
+                            
+                        embed = discord.Embed(title="🎭 AMBIL ROLE KOMUNITAS", description="Pilih role yang sesuai dengan minatmu di menu dropdown di bawah ini.\n\n*Lu bisa milih lebih dari satu.*", color=discord.Color.blurple())
+                        await ch.send(embed=embed, view=CommunityRoleView(guild_roles))
 
                     elif 'bot-commands' in ch.name:
                         view = HelpMainView()
                         await ch.send(embed=view._build_embed(), view=view)
-
+                        
                     elif 'general-chat' in ch.name:
-                        await ch.send("💬 **Selamat datang di General Chat!**")
+                        await ch.send("💬 **Selamat datang di General Chat!** Sapa member lain di sini 👋")
                     elif 'announcements' in ch.name:
                         await ch.send(embed=discord.Embed(title="📢 PENGUMUMAN", description="Info penting akan muncul di sini.", color=discord.Color.red()))
                     elif 'staff-chat' in ch.name:
-                        await ch.send("🛡️ **Staff Room.** Diskusi internal admin.")
-                    # ==============================
+                        await ch.send("🛡️ **Staff Room.** Diskusi internal admin & mod.")
 
                 elif ch_data['type'] == 'voice':
                     await ctx.guild.create_voice_channel(ch_data['name'], category=category)
                 
                 created += 1
-                await asyncio.sleep(1.5)  # Jeda rate limit
+                await asyncio.sleep(1.5)
             except Exception as e:
                 print(f'[BUILD] Gagal buat channel {ch_data["name"]}: {e}')
         
         await asyncio.sleep(1.5)
     
-    await msg.edit(content=f'✅ **Server Ultimate Berhasil Dibangun!** ({created} channel dibuat + panel otomatis terpasang).' + chr(10) + 'Tinggal tes klik tombolnya!')
-
+    await msg.edit(content=f'✅ **Server Komunitas Berhasil Dibangun!** ({created} channel dibuat).' + chr(10) + 'Semua panel (Verify, Ticket, Role) udah otomatis terpasang.')
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
