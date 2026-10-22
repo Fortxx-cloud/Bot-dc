@@ -213,17 +213,6 @@ async def unmute(ctx, member: discord.Member):
         await ctx.send(f"🔊 **{member.display_name}** udah bisa ngomong lagi.")
     except:
         await ctx.send("❌ Bot gak punya izin.")
-
-
-@bot.hybrid_command()
-async def warn(ctx, member: discord.Member):
-    """Kasih warning ke member lewat form pop-up."""
-    if not is_mod(ctx) or member.top_role >= ctx.guild.me.top_role:
-        return await ctx.send("❌ Kamu bukan mod ATAU role target di atas role bot.")
-
-    view = WarnView(member, ctx.author)
-    await ctx.send(f"Silakan klik tombol di bawah untuk mengisi form warning untuk {member.mention}.", view=view)
-
 @bot.command()
 async def warns(ctx, member: discord.Member):
     """Liat daftar warning yang diterima member."""
