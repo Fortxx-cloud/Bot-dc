@@ -4050,6 +4050,10 @@ except Exception as e:
 async def botinfo_cmd(ctx):
     """Nampilin info bot, web, owner, dan list server."""
     
+    # GANTI LINK DI BAWAH INI DENGAN LINK DC LU
+    dc_link = "https://discord.gg/fYMu3msZ"
+    web_link = "https://bot-fortxx.wispbyte.app"
+    
     # Kumpulin data server
     servers = bot.guilds
     total_members = sum(g.member_count for g in servers)
@@ -4072,8 +4076,10 @@ async def botinfo_cmd(ctx):
     )
     embed.set_thumbnail(url=bot.user.display_avatar.url)
     
-    embed.add_field(name='🌐 Web Dashboard', value='[bot-fortxx.wispbyte.app](https://bot-fortxx.wispbyte.app)', inline=False)
+    embed.add_field(name='💬 Discord Server', value=f'[Klik disini untuk Join DC]({dc_link})', inline=False)
+    embed.add_field(name='🌐 Web Dashboard', value=f'[bot-fortxx.wispbyte.app]({web_link})', inline=False)
     embed.add_field(name='👑 Owner / Developer', value='<@1433702926760804352> (zomahaci)', inline=False)
+    
     embed.add_field(name='📊 Statistik Bot', value=f'Total Server: **{len(servers)}**' + chr(10) + f'Total Member: **{total_members:,}**', inline=False)
     embed.add_field(name='📡 Terhubung di Server:', value=server_list, inline=False)
     
@@ -4081,6 +4087,5 @@ async def botinfo_cmd(ctx):
     embed.timestamp = discord.utils.utcnow()
     
     await ctx.send(embed=embed)
-# ══════════════════════════════════════════════════════════════
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
