@@ -1,3 +1,4 @@
+from discord.ext import tasks
 import unicodedata
 nl = chr(10)
 import discord
@@ -377,14 +378,42 @@ async def clearwarns(ctx, member: discord.Member):
 # ══════════════════════════════════════════════════
 # EVENTS & RUN
 # ══════════════════════════════════════════════════
+@tasks.loop(seconds=20)
+async def rotate_status():
+    """Fungsi buat muter status bot setiap 20 detik."""
+    guild_count = len(bot.guilds)
+    
+    # Ambil maksimal 2 nama server terbesar/aktif
+    server_names = [g.name for g in bot.guilds][:2]
+    server_str = ", ".join(server_names)
+    if guild_count > 2:
+        server_str += f" +{guild_count - 2} more"
+
+    statuses = [
+        discord.Activity(type=discord.ActivityType.playing, name="🌐 Web: bot-fortxx.wispbyte.app"),
+        discord.Activity(type=discord.ActivityType.watching, name=f"📡 Active in {guild_count} Servers"),
+        discord.Activity(type=discord.ActivityType.playing, name="👑 THEKINGFORXX | SYSTEM ONLINE"),
+        discord.Activity(type=discord.ActivityType.listening, name="🛒 FORTXX Mod Store & Support"),
+        discord.Activity(type=discord.ActivityType.watching, name=f"🌐 {server_str}")
+    ]
+
+    # Rotasi status
+    current = statuses[rotate_status.current_index % len(statuses)]
+    rotate_status.current_index += 1
+    
+    try:
+        await bot.change_presence(activity=current)
+    except Exception:
+        pass
+
+rotate_status.current_index = 0
+
 @bot.event
 async def on_ready():
-    await bot.change_presence(
-        status=discord.Status.online,
-        activity=discord.Game(name="👑 THEKINGFORXXX | SYSTEM ONLINE")
-    )
-    print(f'✅ Bot {bot.user} udah online!')
-    print('👑 Activity: THEKINGFORXXX | SYSTEM ONLINE')
+    print(f"✅ Bot {bot.user} udah online!")
+    # Mulai muter status kalau belum jalan
+    if not rotate_status.is_running():
+        rotate_status.start()
 
 @bot.command()
 async def test(ctx):
