@@ -1864,7 +1864,7 @@ async def ticket_cmd(ctx, action: str = None):
             await ctx.message.delete()
         except Exception:
             pass
-        await ctx.send(embed=embed, view=TicketView())
+        await ctx.send(embed=embed, view=TicketV2View())
     else:
         await ctx.send('❌ Format salah. Gunakan `!ticket setup` di channel yang kamu inginkan.')
 # ══════════════════════════════════════════════════════════════
@@ -2260,6 +2260,8 @@ async def on_raw_reaction_remove(payload):
 # ══════════════════════════════════════════════════════════════
 try:
     bot.add_view(TicketView())
+    bot.add_view(TicketV2View())
+    bot.add_view(TicketV2CloseView())
     bot.add_view(TicketCloseView())
     bot.add_view(CharView())
     print('[SYSTEM] Persistent views berhasil dimuat!')
@@ -2786,7 +2788,7 @@ async def buildcommunity_cmd(ctx):
 
                     elif 'tickets' in ch.name:
                         embed = discord.Embed(title="🎫 PUSAT BANTUAN", description="Butuh bantuan atau mau lapor? Klik tombol di bawah untuk membuat tiket.", color=discord.Color.blurple())
-                        await ch.send(embed=embed, view=TicketView())
+                        await ch.send(embed=embed, view=TicketV2View())
 
                     elif 'self-roles' in ch.name:
                         # Buat role komunitas otomatis kalau belum ada
@@ -2823,5 +2825,105 @@ async def buildcommunity_cmd(ctx):
         await asyncio.sleep(1.5)
     
     await msg.edit(content=f'✅ **Server Komunitas Berhasil Dibangun!** ({created} channel dibuat).' + chr(10) + 'Semua panel (Verify, Ticket, Role) udah otomatis terpasang.')
+
+
+# ══════════════════════════════════════════════════════════════
+# 🎫 TICKET SYSTEM V2 (KOMUNITAS)
+# ══════════════════════════════════════════════════════════════
+class TicketV2CloseView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        
+    @discord.ui.button(label="Tutup Ticket", style=discord.ButtonStyle.danger, emoji="🔒", custom_id="close_ticket_v2_btn")
+    async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("🔒 Ticket akan ditutup dan dihapus dalam 5 detik...", ephemeral=False)
+        await asyncio.sleep(5)
+        await interaction.channel.delete()
+
+class TicketV2Select(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label='Bantuan Umum', description='Tanya jawab seputar server atau hal umum.', emoji='❓', value='umum'),
+            discord.SelectOption(label='Laporan / Report', description='Laporkan pelanggaran aturan atau masalah member.', emoji='🚨', value='laporan'),
+            discord.SelectOption(label='Bantuan Teknis / Bug', description='Lapor error bot atau butuh bantuan teknis.', emoji='🛠️', value='teknis'),
+            discord.SelectOption(label='Kerjasama / Partner', description='Ajukan kerjasama atau partnership server.', emoji='🤝', value='partner'),
+            discord.SelectOption(label='Lainnya', description='Untuk hal-hal yang belum tercantum di atas.', emoji='📝', value='lainnya')
+        ]
+        super().__init__(placeholder="Pilih jenis tiket...", min_values=1, max_values=1, options=options, custom_id="ticket_v2_select_menu")
+
+    async def callback(self, interaction: discord.Interaction):
+        guild = interaction.guild
+        user = interaction.user
+        ticket_type = self.values[0]
+        
+        category = discord.utils.get(guild.categories, name='Tickets')
+        if category:
+            for ch in category.text_channels:
+                if ch.topic and f"({user.id})" in ch.topic:
+                    return await interaction.response.send_message(f"❌ Kamu sudah punya ticket terbuka di {ch.mention}!", ephemeral=True)
+        
+        await interaction.response.send_message(f"⏳ Sedang membuat channel tiket **{ticket_type}**...", ephemeral=True)
+        
+        if not category:
+            try:
+                category = await guild.create_category("Tickets", reason="Setup sistem ticket V2")
+            except Exception:
+                pass
+        
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            user: discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True, embed_links=True),
+            guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
+        }
+        
+        staff_roles = ["Staff", "Moderator", "Admin", "Owner", "Mod"]
+        for role_name in staff_roles:
+            role = discord.utils.get(guild.roles, name=role_name)
+            if role:
+                overwrites[role] = discord.PermissionOverwrite(read_messages=True, send_messages=True)
+        
+        try:
+            ticket_ch = await guild.create_text_channel(
+                name=f"ticket-{ticket_type}-{user.name}".lower(),
+                category=category,
+                overwrites=overwrites,
+                topic=f"Ticket milik {user.name} ({user.id}) | Tipe: {ticket_type} | Ketuk 🔒 Tutup Ticket untuk menghapus."
+            )
+            
+            role1 = discord.utils.get(guild.roles, name="Staff")
+            role2 = discord.utils.get(guild.roles, name="Admin")
+            tag1 = role1.mention if role1 else ""
+            tag2 = role2.mention if role2 else ""
+            
+            desc_text = f"Halo {user.mention}, tunggu sebentar ya. Staff akan segera merespons." + chr(10) + chr(10) + "Jika masalah sudah selesai, silakan klik tombol di bawah."
+            
+            embed = discord.Embed(
+                title=f"🎫 Ticket: {ticket_type.upper()}",
+                description=desc_text,
+                color=discord.Color.green()
+            )
+            
+            await ticket_ch.send(content=f"{user.mention} {tag1} {tag2}", embed=embed, view=TicketV2CloseView())
+            await interaction.edit_original_response(content=f"✅ Ticket kamu sudah dibuat: {ticket_ch.mention}")
+            
+        except Exception as e:
+            await interaction.edit_original_response(content=f"❌ Gagal membuat ticket: {e}")
+
+class TicketV2View(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(TicketV2Select())
+
+@bot.command(name='ticketv2')
+async def ticketv2_cmd(ctx):
+    """Bikin panel Ticket V2 (Komunitas)."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    embed = discord.Embed(
+        title="🎫 Pusat Bantuan (Support Ticket)",
+        description="Butuh bantuan dari Staff atau ingin melaporkan sesuatu?" + chr(10) + "Silakan pilih jenis tiket pada menu di bawah ini.",
+        color=discord.Color.blurple()
+    )
+    await ctx.send(embed=embed, view=TicketV2View())
+# ══════════════════════════════════════════════════════════════
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
