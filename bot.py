@@ -871,17 +871,19 @@ def _build_categories():
         ),
         "🏗️ Server Builder": (
             "buildcommunity", "buildcommunity2", "buildcommunity3",
-            "buildroles", "setup_permissions", "setup_channels", "aturroles", "ticketv2"
+            "buildsharemod", "buildsharemod2", "buildsharemod3",
+            "buildroles", "setup_permissions", "setup_channels", "aturroles",
+            "lockserver", "fixperms", "fixjoin", "fixtakerole"
         ),
-        "🎫 Ticket & Karakter": (
-            "ticket", "char", "setupchar"
+        "🎫 Ticket & Panel": (
+            "ticket", "ticketv2", "createticketmod", "char", "setupchar", "setupall"
         ),
         "🤖 Sistem AI": (
             "setupai", "testai", "ai", "rp"
         ),
         "⚙️ Settings & Log": (
-            "setupverify", "setupwelcome", "dekorasi", "buatpesan",
-            "setbotlog", "setwarnlog", "setwarntag", "loginfo", "testlog"
+            "setupverify", "setupwelcome", "welcomemod", "bannedmod", "invitemod",
+            "dekorasi", "buatpesan", "setbotlog", "setwarnlog", "setwarntag", "loginfo", "testlog"
         ),
         "🎭 Role & Channel": (
             "role", "addrole", "removerole", "createrole", "deleterole",
@@ -3917,5 +3919,60 @@ try:
 except Exception:
     pass
 # ══════════════════════════════════════════════════════════════
+
+
+@bot.command(name='setupall')
+async def setupall_cmd(ctx):
+    """Kirim semua panel (Ticket, Char, Help) sekaligus dan aktifkan permanen."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Mengirim semua panel ke channel masing-masing...**')
+    
+    # 1. Panel Ticket Mod
+    ch_ticket = discord.utils.find(lambda c: 'ticket' in c.name.lower(), ctx.guild.text_channels)
+    if ch_ticket:
+        embed = discord.Embed(title='🎫 FORTXX SUPPORT & STORE', description='Silakan pilih jenis tiket pada menu dropdown di bawah ini.', color=discord.Color.blurple())
+        await ch_ticket.send(embed=embed, view=ModTicketView())
+        
+    # 2. Panel Take Role
+    ch_role = discord.utils.find(lambda c: 'take-role' in c.name.lower(), ctx.guild.text_channels)
+    if ch_role:
+        roles_to_create = ["🎮 Gamer", "🎵 Musik", "🎨 Artist", "🐶 Pet Lover", "🍔 Foodie"]
+        guild_roles = []
+        for r_name in roles_to_create:
+            r = discord.utils.get(ctx.guild.roles, name=r_name)
+            if not r:
+                r = await ctx.guild.create_role(name=r_name)
+            guild_roles.append(r)
+        embed = discord.Embed(title='🎭 AMBIL ROLE KOMUNITAS', description='Silakan pilih role yang sesuai dengan minatmu.', color=discord.Color.blurple())
+        await ch_role.send(embed=embed, view=CommunityRoleView(guild_roles))
+        
+    # 3. Panel Help
+    ch_menu = discord.utils.find(lambda c: 'bot-menu' in c.name.lower() or 'bot-commands' in c.name.lower(), ctx.guild.text_channels)
+    if ch_menu:
+        view = HelpMainView()
+        await ch_menu.send(embed=view._build_embed(), view=view)
+        
+    await msg.edit(content='✅ **Semua panel berhasil dikirim & diaktifkan permanen!**' + chr(10) + 'Sekarang lu bisa Restart bot berkali-kali, tombolnya gak bakal mati lagi.')
+
+
+# ══════ PERSISTENT VIEWS (WAJIB BIAR TOMBOL GAK MATI) ══════
+try:
+    bot.add_view(ModTicketView())
+    bot.add_view(ModTicketCloseView())
+    bot.add_view(TicketView())
+    bot.add_view(TicketCloseView())
+    bot.add_view(TicketV2View())
+    bot.add_view(TicketV2CloseView())
+    bot.add_view(CharView())
+    bot.add_view(HelpMainView())
+    bot.add_view(EmbedBuilderView())
+    bot.add_view(AICreateView())
+    bot.add_view(AICloseView())
+    bot.add_view(CommunityRoleView([])) # Tambahan buat role
+    print("[SYSTEM] Semua Persistent Views berhasil dimuat!")
+except Exception as e:
+    print(f"[SYSTEM] Gagal memuat Persistent Views: {e}")
+# ═══════════════════════════════════════════════════════════
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
