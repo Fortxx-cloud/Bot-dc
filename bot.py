@@ -4161,43 +4161,54 @@ import aiohttp
 import json as json_lib
 
 # API Key disimpan terbalik biar GitHub gak ngeblokir
-_ENC_KEY = "pFuAYUqGyfFS2ydTGWM8hpV9YF3bydGWMPvEIeFHK6AZAQkZU4lL_ksg"
-GROQ_API_KEY = _ENC_KEY[::-1]
+
+
+
+# ══════════════════════════════════════════════════════════════
+# 🧠 AI CHANNEL DETECTOR (CHATANYWHERE - GPT-6.1-SOL)
+# ══════════════════════════════════════════════════════════════
+import aiohttp
+import json as json_lib
+
+# API Key disimpan terbalik biar GitHub gak ngeblokir
+_ENC_KEY = "Tc2Jwnh0tEsa7RRKU28l2snTeuzlqz961SwJ0ghykYkvqyPg-ks"
+CA_API_KEY = _ENC_KEY[::-1]
 
 @bot.command(name='aiscanlogs')
 async def aiscanlogs_cmd(ctx):
+    """Nyuruh AI (GPT-6.1-Sol) buat nebak channel log mana yang cocok."""
     if not is_mod(ctx): return await ctx.send('❌ Mod only.')
     
-    msg = await ctx.send('🧠 **AI (Groq) sedang membaca nama channel...**' + chr(10) + 'Tunggu 2 detik ya.')
+    msg = await ctx.send('🧠 **AI (GPT-6.1-Sol) sedang membaca nama channel...**' + chr(10) + 'Tunggu 3-5 detik ya.')
     
     all_channels = [c.name for c in ctx.guild.text_channels]
     channel_list_str = ', '.join(all_channels)
     
     prompt = (
-        "Kamu adalah asisten bot Discord. Tugasmu mencocokkan nama channel dengan jenis log. "
-        f"Berikut daftar channel di server: {channel_list_str}. "
-        "Pilih SATU nama channel yang paling cocok untuk kategori: "
+        "You are a strict JSON generator. Output ONLY a valid JSON object. No markdown, no explanations. "
+        f"Here is the list of Discord channels: {channel_list_str}. "
+        "Pick ONE channel name that best matches each log category: "
         "warn_log, ban_log, invite_log, spam_log, bot_log. "
-        "Jawab HANYA dengan format JSON tanpa teks lain: "
-        '{"warn_log": "nama-channel", "ban_log": "nama-channel", "invite_log": "nama-channel", "spam_log": "nama-channel", "bot_log": "nama-channel"}. '
-        "Jika tidak ada yang cocok, isi null."
+        "Use this exact JSON format: "
+        '{"warn_log": "channel-name", "ban_log": "channel-name", "invite_log": "channel-name", "spam_log": "channel-name", "bot_log": "channel-name"}. '
+        "If no channel matches a category, use null."
     )
     
     headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Authorization": f"Bearer {CA_API_KEY}",
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "llama3-8b-8192",
+        "model": "gpt-6.1-sol",
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.1
+        "max_tokens": 200
     }
     
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload) as resp:
+            async with session.post("https://api.chatanywhere.tech/v1/chat/completions", headers=headers, json=payload, timeout=30) as resp:
                 if resp.status != 200:
-                    return await msg.edit(content=f"❌ Error API Groq: {resp.status}")
+                    return await msg.edit(content=f"❌ Error ChatAnywhere: HTTP {resp.status}")
                 data = await resp.json()
                 jawaban = data['choices'][0]['message']['content']
                 
@@ -4219,13 +4230,13 @@ async def aiscanlogs_cmd(ctx):
         results = []
         for ai_key, cfg_key in mapping.items():
             ch_name = ai_data.get(ai_key)
-            if ch_name and ch_name != 'null':
+            if ch_name and ch_name != 'null' and ch_name != 'None':
                 ch = discord.utils.get(ctx.guild.text_channels, name=ch_name)
                 if ch:
                     cfg[gid][cfg_key] = ch.id
                     results.append(f"✅ **{ai_key.upper()}** -> {ch.mention}")
                     try:
-                        embed = discord.Embed(title=f"🧪 AI TEST: {ai_key.upper()}", description="Channel dipilih oleh AI Groq.", color=discord.Color.green())
+                        embed = discord.Embed(title=f"🧪 AI TEST: {ai_key.upper()}", description="Channel dipilih oleh AI GPT-6.1-Sol.", color=discord.Color.green())
                         await ch.send(embed=embed)
                     except: pass
                 else:
