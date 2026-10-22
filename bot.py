@@ -4043,4 +4043,44 @@ except Exception as e:
     print(f"[SYSTEM] Gagal memuat Persistent Views: {e}")
 # ═══════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════
+# 🤖 BOT INFO & SERVER LIST
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='botinfo', aliases=['info', 'vitur', 'status'])
+async def botinfo_cmd(ctx):
+    """Nampilin info bot, web, owner, dan list server."""
+    
+    # Kumpulin data server
+    servers = bot.guilds
+    total_members = sum(g.member_count for g in servers)
+    
+    # Bikin list server (maksimal 15 biar gak kepanjangan)
+    server_list = ''
+    for i, guild in enumerate(servers[:15], 1):
+        server_list += f'**{i}.** {guild.name} (`{guild.member_count:,}` Member)' + chr(10)
+        
+    if len(servers) > 15:
+        server_list += f'... dan **{len(servers) - 15}** server lainnya.'
+        
+    if not server_list:
+        server_list = '*(Bot belum masuk ke server mana pun)*'
+        
+    embed = discord.Embed(
+        title='👑 FORTXX SYSTEM INFO',
+        description='Terima kasih udah pakai bot ini! Berikut adalah detail sistem dan daftar server yang terhubung.',
+        color=discord.Color.gold()
+    )
+    embed.set_thumbnail(url=bot.user.display_avatar.url)
+    
+    embed.add_field(name='🌐 Web Dashboard', value='[bot-fortxx.wispbyte.app](https://bot-fortxx.wispbyte.app)', inline=False)
+    embed.add_field(name='👑 Owner / Developer', value='<@1433702926760804352> (zomahaci)', inline=False)
+    embed.add_field(name='📊 Statistik Bot', value=f'Total Server: **{len(servers)}**' + chr(10) + f'Total Member: **{total_members:,}**', inline=False)
+    embed.add_field(name='📡 Terhubung di Server:', value=server_list, inline=False)
+    
+    embed.set_footer(text=f'Requested by {ctx.author.display_name} | Latency: {round(bot.latency * 1000)}ms', icon_url=ctx.author.display_avatar.url)
+    embed.timestamp = discord.utils.utcnow()
+    
+    await ctx.send(embed=embed)
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
