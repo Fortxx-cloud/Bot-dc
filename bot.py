@@ -3293,43 +3293,6 @@ async def buildsharemod3_cmd(ctx):
 
 
 # ══════ EVENT LOGGERS (FORTXX SPECIFIC) ══════
-@bot.event
-async def on_member_ban(guild, user):
-    try:
-        async for e in guild.audit_logs(limit=1, action=discord.AuditLogAction.ban):
-            if e.target.id == user.id:
-                cfg = _cfg_load()
-                ch = guild.get_channel(cfg.get('banned_log_ch', 0))
-                if ch:
-                    embed = discord.Embed(title="🔨 MEMBER DI-BAN", description=f"**Target:** {user.mention} (`{user.id}`)\n**Mod:** {e.user.mention}\n**Alasan:** {e.reason or '-'}", color=discord.Color.dark_red())
-                    embed.set_thumbnail(url=user.display_avatar.url)
-                    await ch.send(embed=embed)
-                return
-    except Exception:
-        pass
-
-@bot.event
-async def on_member_remove(member):
-    g = member.guild
-    # Cek apakah ini kick
-    is_kick = False
-    try:
-        async for e in g.audit_logs(limit=1, action=discord.AuditLogAction.kick):
-            if e.target.id == member.id and (discord.utils.utcnow() - e.created_at).total_seconds() < 10:
-                is_kick = True
-                cfg = _cfg_load()
-                ch = g.get_channel(cfg.get('banned_log_ch', 0)) # Kick masuk ke banned log
-                if ch:
-                    embed = discord.Embed(title="👢 MEMBER DI-KICK", description=f"**Target:** {member.mention} (`{member.id}`)\n**Mod:** {e.user.mention}\n**Alasan:** {e.reason or '-'}", color=discord.Color.orange())
-                    embed.set_thumbnail(url=member.display_avatar.url)
-                    await ch.send(embed=embed)
-                break
-    except Exception:
-        pass
-        
-    if not is_kick:
-        # Kirim log leave biasa (opsional, ke channel bot-run general)
-        await bot_log(g, "🚪 LEAVE", f"**{member}** (`{member.id}`) keluar server", discord.Color.greyple())
 
 @bot.event
 async def on_member_update(before, after):
@@ -4210,18 +4173,10 @@ async def aiscanlogs_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 # 🛑 SISTEM WARN (FIXED & STABLE)
 # ══════════════════════════════════════════════════════════════
+
 class WarnModal(discord.ui.Modal, title='Form Warning Anggota'):
-    nama_ic = discord.ui.TextInput(
-        label='Nama IC',
-        placeholder='Contoh: Zoma_Haci',
-        required=True
-    )
-    alasan = discord.ui.TextInput(
-        label='Alasan Warn',
-        style=discord.TextStyle.paragraph,
-        placeholder='Contoh: Spam chat OOC',
-        required=True
-    )
+    nama_ic = discord.ui.TextInput(label='Nama IC', placeholder='Contoh: Zoma_Haci', required=True)
+    alasan = discord.ui.TextInput(label='Alasan Warn', style=discord.TextStyle.paragraph, placeholder='Contoh: Spam chat OOC', required=True)
 
     def __init__(self, member: discord.Member):
         super().__init__()
@@ -4244,6 +4199,14 @@ class WarnModal(discord.ui.Modal, title='Form Warning Anggota'):
         save_warns(warns)
         total = len(warns[gid][uid])
 
+        # --- FITUR HITLIST DIKEMBALIKAN ---
+        if "update_cartel_list" in globals():
+            try:
+                await update_cartel_list(interaction.guild)
+            except Exception as e:
+                print(f"[HITLIST] Error: {e}")
+        # ----------------------------------
+
         target_role = discord.utils.get(interaction.guild.roles, name=WARN_ROLES.get(total, ""))
         all_warn_roles = [discord.utils.get(interaction.guild.roles, name=n) for n in WARN_ROLES.values()]
 
@@ -4260,22 +4223,18 @@ class WarnModal(discord.ui.Modal, title='Form Warning Anggota'):
         _tid = _get_warn_tag_id() if '_get_warn_tag_id' in globals() else globals().get("WARN_TAG_ROLE_ID", 0)
         tag_mention = f"<@&{_tid}>" if _tid else "(gak ada)"
         
-        embed = discord.Embed(
-            title="🛑  Warn anggota",
-            description=f"!warn {member.mention}",
-            color=discord.Color.orange()
-        )
+        embed = discord.Embed(title="🛑  Warn anggota", description=f"!warn {member.mention}", color=discord.Color.orange())
         embed.add_field(name="Nama ic", value=nama_ic, inline=False)
         embed.add_field(name="Alasannya", value=reason, inline=False)
         embed.add_field(name="NOTE", value=f"Tag : {tag_mention}", inline=False)
         
-        log_name = _get_warn_log_name() if '_get_warn_log_name' in globals() else "logs-warning"
-        log_channel = discord.utils.find(lambda c: log_name in c.name.lower(), interaction.guild.channels)
+        # --- FIX LOGS WARNING (Cari kata 'warn' di nama channel) ---
+        log_channel = discord.utils.find(lambda c: 'logs-warning' in c.name.lower() or 'warn-logs' in c.name.lower(), interaction.guild.text_channels)
         if log_channel:
             try:
                 await log_channel.send(embed=embed)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[WARN-LOG] Gagal kirim: {e}")
         
         if total >= MAX_WARN:
             try:
@@ -4283,6 +4242,8 @@ class WarnModal(discord.ui.Modal, title='Form Warning Anggota'):
                 await interaction.channel.send(f"☠️ **{member.display_name}** mencapai {MAX_WARN} warn & ditendang.", delete_after=15)
                 warns[gid][uid] = []
                 save_warns(warns)
+                if "update_cartel_list" in globals():
+                    await update_cartel_list(interaction.guild)
             except Exception:
                 await interaction.channel.send(f"⚠️ {MAX_WARN} warn, tapi bot gagal nge-kick.")
         else:
@@ -4317,6 +4278,47 @@ async def warn_cmd(ctx, member: discord.Member):
     except Exception as e:
         await ctx.send(f"❌ **Error warn:** `{e}`")
 # ══════════════════════════════════════════════════════════════
+
+
+
+# ══════ LOG KICK/BAN/LEAVE KE IN-OUT-LOG ══════
+@bot.event
+async def on_member_remove(member):
+    guild = member.guild
+    # Cari channel bernama in-out-log atau banned-logs
+    ch = discord.utils.find(lambda c: 'in-out-log' in c.name.lower() or 'banned-logs' in c.name.lower(), guild.text_channels)
+    if not ch: return
+    
+    is_kick = False
+    try:
+        async for e in guild.audit_logs(limit=1, action=discord.AuditLogAction.kick):
+            if e.target.id == member.id and (discord.utils.utcnow() - e.created_at).total_seconds() < 10:
+                is_kick = True
+                embed = discord.Embed(title="👢 MEMBER DI-KICK", description=f"**Target:** {member.mention} (`{member.id}`)\n**Mod:** {e.user.mention}\n**Alasan:** {e.reason or '-'}", color=discord.Color.orange())
+                embed.set_thumbnail(url=member.display_avatar.url)
+                await ch.send(embed=embed)
+                break
+    except: pass
+    
+    if not is_kick:
+        embed = discord.Embed(title="🚪 MEMBER KELUAR (LEAVE)", description=f"**User:** {member.mention} (`{member.id}`)", color=discord.Color.dark_grey())
+        embed.set_thumbnail(url=member.display_avatar.url)
+        try: await ch.send(embed=embed)
+        except: pass
+
+@bot.event
+async def on_member_ban(guild, user):
+    ch = discord.utils.find(lambda c: 'in-out-log' in c.name.lower() or 'banned-logs' in c.name.lower(), guild.text_channels)
+    if not ch: return
+    try:
+        async for e in guild.audit_logs(limit=1, action=discord.AuditLogAction.ban):
+            if e.target.id == user.id:
+                embed = discord.Embed(title="🔨 MEMBER DI-BAN", description=f"**Target:** {user.mention} (`{user.id}`)\n**Mod:** {e.user.mention}\n**Alasan:** {e.reason or '-'}", color=discord.Color.red())
+                embed.set_thumbnail(url=user.display_avatar.url)
+                await ch.send(embed=embed)
+                break
+    except: pass
+# ═══════════════════════════════════════════════
 
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
