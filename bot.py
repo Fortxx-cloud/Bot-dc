@@ -3402,4 +3402,70 @@ async def buildsharemod_cmd(ctx):
 
 
 
+# ══════════════════════════════════════════════════════════════
+# 🏗️ PAMBOI TRAPS / GTA MOD SHARING BUILDER PART 2
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='buildsharemod2')
+async def buildsharemod2_cmd(ctx):
+    """Bikin kategori & channel tambahan untuk Radar, UI, Plugin, dll."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Membangun Bagian 2 Server Mod GTA...**' + nl + 'Proses ini memakan waktu 2-3 menit. Mohon tunggu.')
+    
+    structure = [
+        ('📡 〢 RADAR MAP', [
+            ('🗺️・radar-map', 'text'), ('🌐・radar-icon', 'text'), ('💿・radardisc-mod', 'text')
+        ]),
+        ('🖥️ 〢 INTERFACE', [
+            ('📱・hud-mobile', 'text'), ('👆・fist-icon', 'text'), ('🕹️・button-mod', 'text'), 
+            ('🎯・crosshair', 'text'), ('⬜・sampgui', 'text'), ('🖱️・mouse', 'text'), ('💭・kill-log', 'text')
+        ]),
+        ('🔤 〢 FONT MOD', [
+            ('🖥️・font-hud-pc', 'text'), ('📱・font-hud-mobile', 'text'), 
+            ('🖥️・font-chat-pc', 'text'), ('📱・font-chat-mobile', 'text')
+        ]),
+        ('🧩 〢 PLUGIN DESKTOP', [
+            ('🖥️・cleo-cs', 'text'), ('🖥️・asi', 'text'), ('🖥️・lua', 'text'), 
+            ('🖥️・interface', 'text'), ('🖥️・sampfuncs', 'text')
+        ]),
+        ('📱 〢 PLUGIN MOBILE', [
+            ('📱・cleo', 'text'), ('📱・aml', 'text'), ('📱・lua', 'text')
+        ]),
+        ('💻 〢 SAMP RESOURCES DESKTOP', [
+            ('🖥️・client-gta-desktop', 'text'), ('🖥️・data-gta-desktop', 'text'), 
+            ('🛠️・modding-tools', 'text'), ('🔑・modding-tutor', 'text'), 
+            ('💡・modding-fix', 'text'), ('🗂️・file-backup-ori', 'text')
+        ]),
+        ('📲 〢 SAMP RESOURCES MOBILE', [
+            ('📱・client-gta-mobile', 'text'), ('📱・data-gta-mobile', 'text'), 
+            ('🗂️・file-backup-ori-mobile', 'text'), ('🛠️・modding-tools-mobile', 'text'), 
+            ('🎧・modding-tutor-mobile', 'text'), ('💡・modding-fix-mobile', 'text')
+        ])
+    ]
+    
+    created = 0
+    
+    try:
+        for cat_name, channels in structure:
+            category = discord.utils.get(ctx.guild.categories, name=cat_name)
+            if not category:
+                category = await ctx.guild.create_category(cat_name)
+                await asyncio.sleep(1.5)
+            
+            for ch_name, ch_type in channels:
+                existing = discord.utils.get(category.channels, name=ch_name)
+                if not existing:
+                    if ch_type == 'text':
+                        await ctx.guild.create_text_channel(ch_name, category=category)
+                    elif ch_type == 'voice':
+                        await ctx.guild.create_voice_channel(ch_name, category=category)
+                    created += 1
+                    await asyncio.sleep(1.5)
+                
+        await msg.edit(content=f'✅ **Bagian 2 Berhasil Dibangun!** ({created} channel baru dibuat).' + nl + 'Silakan cek kategori RADAR MAP, INTERFACE, dll.' )
+        
+    except Exception as e:
+        await msg.edit(content=f'❌ Gagal membangun: {e}' + nl + 'Tunggu 5 menit, lalu jalankan command ini lagi (bot bakal lanjutin yang belum kebuat).')
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
