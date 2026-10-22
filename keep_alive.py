@@ -289,6 +289,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                         {{ name: '!buildroles', desc: 'Bikin semua role Staff, Minat, & Ping otomatis' }},
                         {{ name: '!setup_permissions', desc: 'Setel izin (perms) role otomatis' }},
                         {{ name: '!setup_channels', desc: 'Kunci channel informasi jadi Read-Only' }},
+                        {{ name: '!aturroles', desc: 'Urutin posisi role dari tertinggi ke terendah otomatis' }},
                         {{ name: '!ticketv2', desc: 'Pasang panel Ticket khusus komunitas' }}
                     ]}},
                     'mod': {{ title: '🛡 Moderation System', cmds: [

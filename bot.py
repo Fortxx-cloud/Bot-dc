@@ -895,7 +895,7 @@ def _build_categories():
         ),
         "🏗️ Server Builder": (
             "buildcommunity", "buildcommunity2", "buildcommunity3",
-            "buildroles", "setup_permissions", "setup_channels", "ticketv2"
+            "buildroles", "setup_permissions", "setup_channels", "aturroles", "ticketv2"
         ),
         "🎫 Ticket & Karakter": (
             "ticket", "char", "setupchar"
