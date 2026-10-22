@@ -3216,4 +3216,53 @@ async def setup_channels_cmd(ctx):
         await msg.edit(content=f'❌ Gagal mengatur izin channel: {e}')
 # ══════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════
+# 📊 AUTO ROLE SORTER
+# ══════════════════════════════════════════════════════════════
+@bot.command(name='aturroles')
+async def aturroles_cmd(ctx):
+    """Ngurutin posisi role dari paling tinggi ke paling rendah."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Mengurutkan Role...** Mohon tunggu sebentar.')
+    
+    # Urutan Role dari yang PALING TINGGI ke PALING RENDAH
+    role_order = [
+        '👑 Owner', '🛡️ Admin', '⚔️ Moderator', '🔰 Staff',
+        '✅ Verified', '🎮 Gamer', '🎵 Musik', '🎨 Artist',
+        '🐶 Pet Lover', '🍔 Foodie', '📢 Event Ping',
+        '🎁 Giveaway Ping', '📣 Announcement Ping'
+    ]
+    
+    # Cari role bot lu sendiri
+    bot_role = ctx.guild.me.top_role
+    
+    try:
+        # Kita iterasi dari bawah ke atas biar gak tabrakan posisinya
+        current_pos = 1 # Posisi paling bawah (di atas @everyone)
+        
+        # Balik urutannya buat di-loop dari bawah
+        for r_name in reversed(role_order):
+            role = discord.utils.get(ctx.guild.roles, name=r_name)
+            if role:
+                # Cek apakah role ini posisinya di atas role bot (gak bisa digeser)
+                if role >= bot_role:
+                    print(f'[SORT] Skip {r_name}: posisinya di atas role Bot.')
+                    continue
+                    
+                await role.edit(position=current_pos)
+                current_pos += 1
+                await asyncio.sleep(1.5) # Jeda anti rate limit
+                
+        embed = discord.Embed(
+            title='✅ Role Berhasil Diurutkan!',
+            description='Urutan role sekarang udah rapi dari yang tertinggi sampai terendah.' + nl + nl + '**⚠️ PENTING:**' + nl + 'Kalau masih ada role yang posisinya berantakan (kayak `Verified` masih di atas), itu karena **Role Bot (FORTXX) lu belum ditarik ke paling atas**. Tarik manual dulu Role Bot-nya, lalu jalankan command ini lagi.',
+            color=discord.Color.green()
+        )
+        await msg.edit(content='', embed=embed)
+        
+    except Exception as e:
+        await msg.edit(content=f'❌ Gagal mengurutkan role: {e}')
+# ══════════════════════════════════════════════════════════════
+
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())
