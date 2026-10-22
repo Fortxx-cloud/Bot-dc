@@ -4214,7 +4214,7 @@ async def automod_listener(message):
 
 
 # ══════ SETUP SLASH COMMANDS (SYSTEM UPGRADE) ══════
-bot.tree = app_commands.CommandTree(bot)
+# bot.tree otomatis dibuat oleh discord.py, tidak perlu di-assign manual.
 
 @bot.command(name='syncslash')
 async def syncslash_cmd(ctx):
