@@ -4027,25 +4027,37 @@ async def owner_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 
 
-# ══════ PERSISTENT VIEWS (WAJIB BIAR TOMBOL GAK MATI) ══════
+# ══════ PERSISTENT VIEWS (SAFE LOAD) ══════
+views_to_load = [
+    "ModTicketView", "ModTicketCloseView",
+    "TicketView", "TicketCloseView",
+    "TicketV2View", "TicketV2CloseView",
+    "CharView", "HelpMainView",
+    "EmbedBuilderView", "AICreateView",
+    "AICloseView", "OwnerView"
+]
+
+for v_name in views_to_load:
+    try:
+        if v_name in globals():
+            if v_name == "CommunityRoleView":
+                bot.add_view(CommunityRoleView([]))
+            else:
+                cls = globals()[v_name]
+                bot.add_view(cls())
+            print(f"[SYSTEM] Loaded View: {v_name}")
+    except Exception as e:
+        print(f"[SYSTEM] Gagal load view {v_name}: {e}")
+
+# Khusus CommunityRoleView yang butuh parameter
 try:
-    bot.add_view(ModTicketView())
-    bot.add_view(ModTicketCloseView())
-    bot.add_view(TicketView())
-    bot.add_view(TicketCloseView())
-    bot.add_view(TicketV2View())
-    bot.add_view(TicketV2CloseView())
-    bot.add_view(CharView()) # <--- INI DIA BIAR KARAKTER GAK MATI
-    bot.add_view(HelpMainView())
-    bot.add_view(EmbedBuilderView())
-    bot.add_view(AICreateView())
-    bot.add_view(AICloseView())
-    bot.add_view(CommunityRoleView([]))
-    bot.add_view(OwnerView())
-    print("[SYSTEM] Semua Persistent Views berhasil dimuat!")
+    if "CommunityRoleView" in globals():
+        bot.add_view(CommunityRoleView([]))
+        print("[SYSTEM] Loaded View: CommunityRoleView")
 except Exception as e:
-    print(f"[SYSTEM] Gagal memuat Persistent Views: {e}")
+    pass
 # ═══════════════════════════════════════════════════════════
+
 
 
 def is_mod_internal(member):
