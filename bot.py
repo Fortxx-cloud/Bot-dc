@@ -403,7 +403,12 @@ async def clearwarns(ctx, member: discord.Member):
 # ══════════════════════════════════════════════════
 @bot.event
 async def on_ready():
+    await bot.change_presence(
+        status=discord.Status.online,
+        activity=discord.Game(name="👑 THEKINGFORXXX | SYSTEM ONLINE")
+    )
     print(f'✅ Bot {bot.user} udah online!')
+    print('👑 Activity: THEKINGFORXXX | SYSTEM ONLINE')
 
 @bot.command()
 async def test(ctx):
@@ -2684,5 +2689,99 @@ async def setupwarnlist_cmd(ctx):
     _cfg_save(cfg)
     
     await ctx.send(f"✅ Cartel Hitlist berhasil di-setup di {ch.mention}!")
+
+# ══════════════════════════════════════════════════════════════
+# 🏗️ COMMUNITY SERVER BUILDER (dari templates.json)
+# ══════════════════════════════════════════════════════════════
+import json
+
+@bot.command(name='buildcommunity')
+async def buildcommunity_cmd(ctx):
+    """Bikin struktur server, isi pesan, DAN pasang panel interaktif."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    msg = await ctx.send('⏳ **Membangun Server Ultimate...** Mohon tunggu (1-2 menit).')
+    
+    try:
+        with open('templates.json', 'r') as f:
+            data = json.load(f)
+        template = data['community']
+    except Exception as e:
+        return await msg.edit(content=f'❌ Gagal baca templates.json: {e}')
+    
+    staff_overwrites = {
+        ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        ctx.guild.me: discord.PermissionOverwrite(read_messages=True)
+    }
+    for r_name in ['Admin', 'Moderator', 'Staff', 'Owner']:
+        r = discord.utils.get(ctx.guild.roles, name=r_name)
+        if r: staff_overwrites[r] = discord.PermissionOverwrite(read_messages=True)
+    
+    created = 0
+    for cat_data in template['categories']:
+        cat_overwrites = staff_overwrites if cat_data.get('private', False) else {}
+        try:
+            category = await ctx.guild.create_category(cat_data['name'], overwrites=cat_overwrites)
+        except Exception as e:
+            continue
+        
+        for ch_data in cat_data['channels']:
+            try:
+                if ch_data['type'] == 'text':
+                    ch = await ctx.guild.create_text_channel(ch_data['name'], category=category, topic=ch_data.get('topic', ''))
+                    
+                    # ===== ISI PESAN & PANEL OTOMATIS =====
+                    if 'rules' in ch.name:
+                        embed = discord.Embed(title="📜 PERATURAN SERVER", description="1. Hormati sesama member.\n2. Dilarang spam & toxic.\n3. Ikuti arahan Staff.\n4. Dilarang promosi tanpa izin.", color=discord.Color.gold())
+                        await ch.send(embed=embed)
+                        
+                    elif 'verify' in ch.name:
+                        # Bikin Role WARGA CJNG
+                        role = discord.utils.get(ctx.guild.roles, name='WARGA CJNG')
+                        if not role:
+                            role = await ctx.guild.create_role(name='WARGA CJNG', color=discord.Color.dark_red(), reason='Auto Setup')
+                        
+                        embed = discord.Embed(title="✅ VERIFIKASI SERVER", description="Klik reaksi **✅** di bawah ini untuk mendapatkan role **WARGA CJNG** dan membuka seluruh channel.", color=discord.Color.green())
+                        msg_v = await ch.send(embed=embed)
+                        await msg_v.add_reaction('✅')
+                        
+                        # Simpan config
+                        cfg = _cfg_load()
+                        cfg['verify_message_id'] = msg_v.id
+                        cfg['verify_role_id'] = role.id
+                        _cfg_save(cfg)
+
+                    elif 'tickets' in ch.name:
+                        embed = discord.Embed(title="🎫 PUSAT BANTUAN", description="Butuh bantuan? Klik tombol di bawah untuk membuat tiket.", color=discord.Color.blurple())
+                        await ch.send(embed=embed, view=TicketView())
+
+                    elif 'take-role' in ch.name:
+                        embed = discord.Embed(title="📜 PENDAFTARAN KARAKTER RP", description="Klik tombol di bawah untuk mengisi form profil karakter Anda.", color=discord.Color.blurple())
+                        await ch.send(embed=embed, view=CharView())
+
+                    elif 'bot-commands' in ch.name:
+                        view = HelpMainView()
+                        await ch.send(embed=view._build_embed(), view=view)
+
+                    elif 'general-chat' in ch.name:
+                        await ch.send("💬 **Selamat datang di General Chat!**")
+                    elif 'announcements' in ch.name:
+                        await ch.send(embed=discord.Embed(title="📢 PENGUMUMAN", description="Info penting akan muncul di sini.", color=discord.Color.red()))
+                    elif 'staff-chat' in ch.name:
+                        await ch.send("🛡️ **Staff Room.** Diskusi internal admin.")
+                    # ==============================
+
+                elif ch_data['type'] == 'voice':
+                    await ctx.guild.create_voice_channel(ch_data['name'], category=category)
+                
+                created += 1
+                await asyncio.sleep(1.5)  # Jeda rate limit
+            except Exception as e:
+                print(f'[BUILD] Gagal buat channel {ch_data["name"]}: {e}')
+        
+        await asyncio.sleep(1.5)
+    
+    await msg.edit(content=f'✅ **Server Ultimate Berhasil Dibangun!** ({created} channel dibuat + panel otomatis terpasang).' + chr(10) + 'Tinggal tes klik tombolnya!')
+
 
 bot.run(base64.b64decode("TVRVMk1EUTJOekU0TURnMk56STVOek0wTWcuR1R3Sm5kLjZfSl95ZFhNRkFVeUEyeXVoQ2FYUGlVZmw4RXVEOVdnd3hNdWpF").decode())

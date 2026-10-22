@@ -1,0 +1,53 @@
+{
+  "community": {
+    "categories": [
+      {
+        "name": "📌 〢 INFORMATION",
+        "channels": [
+          { "name": "📢・announcements", "type": "text", "topic": "Info penting server" },
+          { "name": "📜・rules", "type": "text", "topic": "Peraturan server" },
+          { "name": "✅・verify", "type": "text", "topic": "Verifikasi member baru" }
+        ]
+      },
+      {
+        "name": "💬 〢 COMMUNITY",
+        "channels": [
+          { "name": "💬・general-chat", "type": "text", "topic": "Obrolan bebas" },
+          { "name": "😂・memes", "type": "text", "topic": "Posting meme lucu" },
+          { "name": "🖼️・media", "type": "text", "topic": "Share foto & video" },
+          { "name": "🤖・bot-commands", "type": "text", "topic": "Pusat command bot" }
+        ]
+      },
+      {
+        "name": "🎫 〢 SUPPORT & ROLE",
+        "channels": [
+          { "name": "🎫・tickets", "type": "text", "topic": "Buat tiket bantuan" },
+          { "name": "📜・take-role", "type": "text", "topic": "Ambil role / Bikin karakter" }
+        ]
+      },
+      {
+        "name": "🎮 〢 GAMING",
+        "channels": [
+          { "name": "🎮・general-gaming", "type": "text", "topic": "Diskusi game" },
+          { "name": "👾・looking-for-group", "type": "text", "topic": "Cari temen mabar" }
+        ]
+      },
+      {
+        "name": "🔊 〢 VOICE CHANNELS",
+        "channels": [
+          { "name": "🔊・General VC", "type": "voice", "topic": "Voice channel utama" },
+          { "name": "🎮・Gaming VC", "type": "voice", "topic": "Mabar game" },
+          { "name": "💤・AFK", "type": "voice", "topic": "AFK zone" }
+        ]
+      },
+      {
+        "name": "🛡️ 〢 STAFF ONLY",
+        "channels": [
+          { "name": "💬・staff-chat", "type": "text", "topic": "Obrolan staff" },
+          { "name": "📝・mod-logs", "type": "text", "topic": "Log moderasi" }
+        ],
+        "private": true
+      }
+    ]
+  }
+}
