@@ -1970,165 +1970,6 @@ async def goodbye_event_cartel(member):
 # ══════════════════════════════════════════════════════════════
 # ✅ VERIFICATION GATEKEEPER (REACTION ROLE)
 # ══════════════════════════════════════════════════════════════
-@bot.command(name='setupverify')
-async def setupverify_cmd(ctx):
-    """Setup sistem verifikasi & lock channel otomatis."""
-    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
-    
-    try:
-        # 1. Bikin Role Verified
-        role = discord.utils.get(ctx.guild.roles, name='WARGA CJNG')
-        if not role:
-            role = await ctx.guild.create_role(name='WARGA CJNG', color=discord.Color.dark_red(), reason='Setup verifikasi CJNG')
-            
-        # 2. Kirim pesan reaksi
-        embed = discord.Embed(
-            title='🩸 VERIFIKASI CÁRTEL DE JALISCO',
-            description='Klik reaksi **✅** di bawah ini untuk membuka akses ke seluruh channel server.' + chr(10) + chr(10) + '*Note: Jika reaksi dihapus, akses akan dicabut otomatis.*',
-            color=discord.Color.green()
-        )
-        msg = await ctx.send(embed=embed)
-        await msg.add_reaction('✅')
-        
-        # 3. Simpan ID ke config
-        cfg = _cfg_load()
-        cfg['verify_message_id'] = msg.id
-        cfg['verify_role_id'] = role.id
-        _cfg_save(cfg)
-        
-        # 4. Lock semua channel kecuali channel ini
-        await ctx.send('⏳ Sedang mengunci channel lain...')
-        for ch in ctx.guild.channels:
-            try:
-                if ch.id != ctx.channel.id:
-                    await ch.set_permissions(ctx.guild.default_role, read_messages=False)
-                    await ch.set_permissions(role, read_messages=True)
-            except: pass
-        
-        await ctx.send('✅ **Selesai!** Server berhasil dikunci. Member baru sekarang harus klik ✅ untuk masuk.' + chr(10) + '⚠️ **PENTING:** Pindahkan Role `WARGA CJNG` ke atas role member lain agar sistem berjalan sempurna.')
-    except Exception as e:
-        await ctx.send(f'❌ Error: {e}')
-
-@bot.event
-async def on_raw_reaction_add(payload):
-    if payload.user_id == bot.user.id: return
-    cfg = _cfg_load()
-    if cfg.get('verify_message_id') == payload.message_id and str(payload.emoji) == '✅':
-        guild = bot.get_guild(payload.guild_id)
-        if not guild: return
-        role = guild.get_role(int(cfg.get('verify_role_id', 0)))
-        member = guild.get_member(payload.user_id)
-        
-        if role and member:
-            try: 
-                await member.add_roles(role)
-                
-                # --- BIKIN CHANNEL AI PRIVAT OTOMATIS ---
-                has_ch = False
-                for ch in guild.text_channels:
-                    if ch.topic and f'AI_CHANNEL_OWNER:{member.id}' in ch.topic:
-                        has_ch = True
-                        break
-                
-                if not has_ch:
-                    category = discord.utils.find(lambda c: c.name.upper() == 'PUBLIC ROOM', guild.categories)
-                    if not category:
-                        category = await guild.create_category('SETTINGS')
-                        
-                    overwrites = {
-                        guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                        member: discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True, embed_links=True),
-                        guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
-                    }
-                    staff_roles = ["Staff", "Moderator", "Admin", "Owner", "Mod", "⚠️HANDLE CJNG", "OWNER X CO OWNER"]
-                    for role_name in staff_roles:
-                        r = discord.utils.get(guild.roles, name=role_name)
-                        if r:
-                            overwrites[r] = discord.PermissionOverwrite(read_messages=True, send_messages=True)
-                            
-                    ai_ch = await guild.create_text_channel(
-                        name=f'🤖┃ai-{member.name}',
-                        category=category,
-                        overwrites=overwrites,
-                        topic=f'AI_CHANNEL_OWNER:{member.id} | Channel AI pribadi milik {member.name}.'
-                    )
-                    
-                    embed = discord.Embed(
-                        title='🤖 AI Asisten Pribadi',
-                        description=f'Halo {member.mention}! Ini channel AI pribadimu. Ketik apa aja di sini **tanpa command** buat ngobrol sama AI.',
-                        color=discord.Color.green()
-                    )
-                    await ai_ch.send(content=member.mention, embed=embed)
-                    
-            except Exception as e:
-                print(f"Error di reaction add: {e}")
-
-@bot.event
-async def on_raw_reaction_remove(payload):
-    cfg = _cfg_load()
-    if cfg.get('verify_message_id') == payload.message_id and str(payload.emoji) == '✅':
-        guild = bot.get_guild(payload.guild_id)
-        if not guild: return
-        role = guild.get_role(int(cfg.get('verify_role_id', 0)))
-        member = guild.get_member(payload.user_id)
-        if role and member:
-            try: await member.remove_roles(role)
-            except: pass
-# ══════════════════════════════════════════════════════════════
-
-# ══════════════════════════════════════════════════════════════
-# 🔄 PERSISTENT VIEWS (BIAR TOMBOL GAK MATI PAS RESTART)
-# ══════════════════════════════════════════════════════════════
-try:
-    bot.add_view(TicketView())
-    bot.add_view(TicketV2View())
-    bot.add_view(TicketV2CloseView())
-    bot.add_view(TicketCloseView())
-    bot.add_view(CharView())
-    print('[SYSTEM] Persistent views berhasil dimuat!')
-except Exception as e:
-    print(f'[SYSTEM] Gagal muat persistent views: {e}')
-# ══════════════════════════════════════════════════════════════
-
-# ══════════════════════════════════════════════════════════════
-# 🤖 AI DENGAN AION LABS (ROLEPLAY & CHAT)
-# ══════════════════════════════════════════════════════════════
-import aiohttp
-
-AION_API_KEY = base64.b64decode("YWx2Ml9kd19PMldlblN2UEtlOGMtLW1tREtfZjE4di16WVNwLXhIMU1wUG1WLWRr").decode()
-AION_BASE_URL = 'https://api.aionlabs.ai/v1'
-
-async def tanya_aion(prompt: str, system_prompt: str = None, model: str = 'aion-labs/aion-2.0'):
-    if not AION_API_KEY:
-        return '❌ API Key Aion Labs belum diset di Environment Variables (AION_API_KEY).'
-    
-    headers = {
-        'Authorization': f'Bearer {AION_API_KEY}',
-        'Content-Type': 'application/json'
-    }
-    
-    messages = []
-    if system_prompt:
-        messages.append({'role': 'system', 'content': system_prompt})
-    messages.append({'role': 'user', 'content': prompt})
-    
-    payload = {
-        'model': model,
-        'messages': messages,
-        'max_tokens': 500
-    }
-    
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f'{AION_BASE_URL}/chat/completions', headers=headers, json=payload) as resp:
-                if resp.status != 200:
-                    err_text = await resp.text()
-                    return f'❌ Error API Aion: HTTP {resp.status} - {err_text[:100]}'
-                data = await resp.json()
-                return data['choices'][0]['message']['content']
-    except Exception as e:
-        return f'❌ Gagal konek ke Aion: {e}'
-
 @bot.command(name='ai')
 async def ai_cmd(ctx, *, prompt: str):
     """Tanya AI apa aja. Contoh: !ai Apa itu Roleplay?"""
@@ -4318,6 +4159,94 @@ async def on_member_ban(guild, user):
                 await ch.send(embed=embed)
                 break
     except: pass
+# ═══════════════════════════════════════════════
+
+
+
+@bot.command(name='setupverify')
+async def setupverify_cmd(ctx):
+    """Setup sistem verifikasi & lock channel otomatis."""
+    if not is_mod(ctx): return await ctx.send('❌ Mod only.')
+    
+    try:
+        role = discord.utils.get(ctx.guild.roles, name='✅ Verified')
+        if not role:
+            role = await ctx.guild.create_role(name='✅ Verified', color=discord.Color.green(), reason='Setup verifikasi')
+            
+        desc = 'Klik reaksi **✅** di bawah ini untuk membuka akses ke seluruh channel server.' + chr(10) + chr(10) + '*Note: Jika reaksi dihapus, akses akan dicabut otomatis.*'
+        
+        embed = discord.Embed(
+            title='✅ VERIFIKASI SERVER',
+            description=desc,
+            color=discord.Color.green()
+        )
+        msg = await ctx.send(embed=embed)
+        await msg.add_reaction('✅')
+        
+        # Simpan ID ke config per-server
+        cfg = _cfg_load()
+        gid = str(ctx.guild.id)
+        if gid not in cfg: cfg[gid] = {}
+        cfg[gid]['verify_message_id'] = msg.id
+        cfg[gid]['verify_role_id'] = role.id
+        _cfg_save(cfg)
+        
+        # Lock channel lain
+        await ctx.send('⏳ Sedang mengunci channel lain...')
+        for ch in ctx.guild.channels:
+            try:
+                if ch.id != ctx.channel.id:
+                    await ch.set_permissions(ctx.guild.default_role, read_messages=False)
+                    await ch.set_permissions(role, read_messages=True)
+            except: pass
+            
+        await ctx.send('✅ **Selesai!** Server berhasil dikunci. Member baru sekarang harus klik ✅ untuk masuk.')
+    except Exception as e:
+        await ctx.send(f'❌ Error: {e}')
+
+
+# ══════ REACTION ROLE (VERIFY) PER-SERVER ══════
+@bot.event
+async def on_raw_reaction_add(payload):
+    if payload.user_id == bot.user.id: return
+    if str(payload.emoji) != '✅': return
+    
+    guild = bot.get_guild(payload.guild_id)
+    if not guild: return
+    
+    cfg = _cfg_load()
+    gid = str(guild.id)
+    
+    if cfg.get(gid, {}).get('verify_message_id') == payload.message_id:
+        role_id = cfg[gid].get('verify_role_id')
+        role = guild.get_role(role_id) if role_id else None
+        member = guild.get_member(payload.user_id)
+        
+        if role and member:
+            try: 
+                await member.add_roles(role)
+                print(f"[VERIFY] {member.name} berhasil diverifikasi.")
+            except Exception as e:
+                print(f"[VERIFY] Gagal kasih role: {e}")
+
+@bot.event
+async def on_raw_reaction_remove(payload):
+    if str(payload.emoji) != '✅': return
+    
+    guild = bot.get_guild(payload.guild_id)
+    if not guild: return
+    
+    cfg = _cfg_load()
+    gid = str(guild.id)
+    
+    if cfg.get(gid, {}).get('verify_message_id') == payload.message_id:
+        role_id = cfg[gid].get('verify_role_id')
+        role = guild.get_role(role_id) if role_id else None
+        member = guild.get_member(payload.user_id)
+        
+        if role and member:
+            try: await member.remove_roles(role)
+            except: pass
 # ═══════════════════════════════════════════════
 
 
